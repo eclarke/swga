@@ -5,79 +5,45 @@
 # Erik Clarke - ecl@mail.med.upenn.edu
 from itertools import combinations
 from argparse import ArgumentParser
-from multiprocessing import Pool
-from multiprocessing.pool import ThreadPool
+from collections import namedtuple
 import sys
 
+Primer = namedtuple('Primer', 'id, seq, bg_freq')
 
-def write_graph(num_nodes, arcs, fname):
+def write_graph(primers, arcs, fname):
     '''
     Writes graph in DIMACS graph format, specified in the cliquer user manual.
     See http://users.tkk.fi/~pat/cliquer.html
     
     An arc is simply a list of the form [first_node, second_node]
-    'arcs' is a list of arcs
+    "arcs" is a list of arcs
     '''
+    num_nodes = len(primers)
     with open(fname, 'w') as output:
         output.write('p sp {} {}\n'.format(num_nodes, len(arcs)))
+        for primer in primers:
+            output.write('n {} {}\n'.format(primer.id, primer.bg_freq))
         for arc in arcs:
             output.write('e {} {} \n'.format(arc[0], arc[1]))
 
 
-def read_primers(primer_fp, num_primers, bg=None):
+def read_primers(primer_fp):
     '''
-    Reads first <num_primers> lines of a tab-delimited file where the first 
-    column contains the primer sequences.
-    If bg != None, checks background binding frequencies.
-    Returns a list of primers in format [[primer_id primer_seq ]...]
+    Reads in a tab-delimited file where the first column is the primer
+    sequence and the second column is the background genome binding
+    count.
+    Returns a list of Primers.
     '''
-    primers = []
-    pool = None
-    with open(primer_fp) as primerfile:
-        for i, line in enumerate(primerfile.readlines()):
-            if i >= num_primers: break
-            primer = line.strip('\n').split('\t')[0]
-            primers.append((i, primer))
-    if bg:
-        print ('\t Determining background binding counts...')
-        bg_frequencies = [bg_binding_freq(primer, bg) for primer in primers]
-    return(primers, bg_frequencies)
-
-
-def bg_binding_freq_fp(primer, bg_fp):
-    '''
-    Searches for the primer in the background genome, specified by the
-    filename in bg_fp, using a sliding window of the size of the primer.
-    '''
-    count = 0
-    psize = len(primer) # assuming len of primer == number of bytes
-    i = 0
-    with open(bg_fp) as bg:
-        bg.readline()
-        start = bg.tell() # what's the index after the first line?
-        while True:
-            chunk = bg.read(psize)
-            # if the size is smaller than we requested, we've hit the end of
-            # the file
-            if len(chunk) < psize:
-                return count
-            if chunk[-1] == '\n':
-                chunk = chunk + bg.read(1)
-                chunk = chunk.replace('\n', '')
-            if chunk == primer:
-                count += 1
-            i += 1
-            bg.seek(start+i)
-
-
-def bg_binding_freq(primer, bg):
-    count = start = 0
-    while True:
-        start = bg.find(primer, start) + 1
-        if start > 0:
-            count += 1
-        else:
-            return count
+    with open(primer_fp) as primer_file:
+        primers = []
+        try:
+            for i, line in enumerate(primer_file):
+                seq, bg_freq = line.strip('\n').split('\t')
+                primers.append(Primer(i, seq, int(bg_freq)))
+        except ValueError as err:
+            sys.stderr.write("Invalid primer file format!")
+            raise err
+    return primers
 
 
 def test_pairs(starting_primers, max_binding):
@@ -86,9 +52,9 @@ def test_pairs(starting_primers, max_binding):
     filter using the max_binding cutoff.
     '''
     arcs = []
-    for x, y in combinations(starting_primers, 2):
-        if max_consecutive_binding(x[1], y[1]) < max_binding:
-            arcs.append([x[0], y[0]])
+    for p1, p2 in combinations(starting_primers, 2):
+        if max_consecutive_binding(p1.seq, p2.seq) < max_binding:
+            arcs.append([p1.id, p2.id])
     return arcs
 
 
@@ -126,37 +92,30 @@ def max_consecutive_binding(mer1, mer2):
 
 
 def main():
-    #--- Argument parsing ---#
-    description_string = '''Reads in primers from a tab-delimited file, performs heterodimer checks and calculates background genome binding frequency, then writes results in DIMACS format for use with cliquer.c.'''
-    parser = ArgumentParser(description = description_string)
-    parser.add_argument('-n', '--num_primers', help="Desired number of primers (read from top of input file", type=int, default=50)
-    parser.add_argument('-m', '--max_binding', help="Max number of consecutive complimentary bases allowed in the heterodimer filter", type=int, default=3)
-    parser.add_argument('-o', '--output', help="Filename to store the DIMACS output graph.", required=True)
-    parser.add_argument('-b', '--bg_genome', help="Location of the FASTA-format background genome. We'll be reading this all into memory. If unspecified, skip background checking.", default=None)
-    parser.add_argument('primers', action="store")
-    args = vars(parser.parse_args())
-
-
     
-    num_primers = args["num_primers"]
-    max_binding = args["max_binding"]
-    bg_fp = args["bg_genome"]
-    bg = None
-    if bg_fp:
-        print("Reading in background genome...")
-        with open(bg_fp) as bg_handle:
-            bg = "".join(_.strip('\n') for i, _ in enumerate(bg_handle.readlines()) if i > 0)
-        print("\tdone.")
-    print("Reading in primers and assigning bg hit counts...")
-    primers, bg_binding_counts = read_primers(args['primers'],
-                                              num_primers, bg)
-    print("\tdone.")
-    print("Testing all primer pairs in heterodimer filter...")
-    arcs = test_pairs(primers, max_binding)
-    print("\tdone.")
-    write_graph(num_primers+1, arcs, 'test_graph.gr')
-    print("Wrote graph to test_graph.gr.")
-    print("Done!")
+    description_string = '''Reads in primers from a tab-delimited
+    file, performs heterodimer checks and calculates background genome
+    binding frequency, then writes results in DIMACS format for use
+    with cliquer.c.''' 
+
+    parser = ArgumentParser(description = description_string)
+
+    parser.add_argument('-m', '--max_binding', help='''Max number of
+    consecutive complimentary bases allowed in the heterodimer
+    filter''', type=int, default=3)
+    
+    parser.add_argument('-o', '--output', help='''Filename to store the
+    DIMACS output graph.''', required=True) 
+
+    parser.add_argument('primers', action="store", help='''List of
+    primers (first column) with background genome binding counts
+    (second column)''')
+
+    args = vars(parser.parse_args())
+    
+    primers = read_primers(args['primers'])
+    arcs = test_pairs(primers, args['max_binding'])
+    write_graph(primers, arcs, args['output'])
 
 if __name__ == '__main__':
         main()
