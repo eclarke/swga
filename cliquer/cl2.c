@@ -384,7 +384,7 @@ void print_search(graph_t *g) {
 void print_clique(set_t s,graph_t *g) {
 	int i;
 
-	printf("size=%d, weight=%d:  ",set_size(s),graph_subgraph_weight(g,s));
+	printf("size=%d, bg/count=%lu:  ",set_size(s),bg_len/graph_subgraph_weight(g,s));
 	for (i=0; i<SET_MAX_SIZE(s); i++) {
 		if (SET_CONTAINS(s,i)) {
 			if (number1)
@@ -426,7 +426,7 @@ boolean print_clique_func(set_t s,graph_t *g,clique_options *opts) {
 boolean weight_clique_check_func(set_t s, graph_t *g, clique_options *opts) {
   long weight = graph_subgraph_weight(g,s);
   /* the division keeps it as an int; this may lead to problems? */
-  if (bg_len/weight > bg_freq) {
+  if (bg_len/weight < bg_freq) {
     return FALSE;
   } else {
     print_clique(s,g);
