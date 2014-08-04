@@ -39,7 +39,7 @@ def read_primers(primer_fp):
         try:
             for i, line in enumerate(primer_file):
                 seq, bg_freq = line.strip('\n').split('\t')
-                primers.append(Primer(i, seq, int(bg_freq)))
+                primers.append(Primer(i+1, seq, int(bg_freq)))
         except ValueError as err:
             sys.stderr.write("Invalid primer file format!")
             raise err

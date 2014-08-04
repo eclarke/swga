@@ -38,6 +38,9 @@ testcases: testcases.o cliquer.o graph.o reorder.o
 cl: cl.o cliquer.o graph.o reorder.o
 	$(CC) $(LDFLAGS) -o $@ cl.o cliquer.o graph.o reorder.o
 
+cl2: cl2.o cliquer.o graph.o reorder.o
+	$(CC) $(LDFLAGS) -o $@ cl2.o cliquer.o graph.o reorder.o
+
 
 cl.o testcases.o cliquer.o graph.o reorder.o: cliquer.h set.h graph.h misc.h reorder.h Makefile cliquerconf.h
 

@@ -158,8 +158,8 @@ void printhelp(char *prog) {
 	       " -M N  --max N        Search for cliques with weight at most N.  If N=0,\n"
 	       "                      no limit is imposed (default).  N being positive is\n"
 	       "                      incompatible with \"--min 0\" (\"--min 1\" is assumed).\n"
-               " -B N  --bg_freq N    Minimum value for genome/primer_counts in a set.\n"
-               " -L N  --bg_len N     Length of the background genome (in base pairs).\n"
+               " -B N  --bg_freq N    Minimum value for genome_length/primer_counts in a set.\n"
+               " -L N  --bg_len N     Length of the background genome (in bases).\n"
 	       " -x    --maximal      Require cliques to be maximal.\n"
 	       " -u    --unweighted   Assume weight 1 for all vertices.\n"
 	       " -0    --from-0       Number vertices 0 to n-1 instead of 1 to n when writing.\n"
@@ -425,11 +425,12 @@ boolean print_clique_func(set_t s,graph_t *g,clique_options *opts) {
  */
 boolean weight_clique_check_func(set_t s, graph_t *g, clique_options *opts) {
   long weight = graph_subgraph_weight(g,s);
-  /* the division keeps it as an int; this may lead to problems? */
-  if (bg_len/weight < bg_freq) {
-    return FALSE;
-  } else {
+  long ratio = bg_len/weight; /* doesn't matter that it's not a float */
+  if (ratio > bg_freq) {
     print_clique(s,g);
+    return TRUE;
+  } else {
+    /* fprintf(stderr, "Failed: ratio %f > limit %lu (len: %lu, weight: %lu)\n", ratio, bg_freq, bg_len, weight); */
     return TRUE;
   }
 }
