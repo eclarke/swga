@@ -3,6 +3,12 @@
 *.ko
 *.obj
 *.elf
+*.pyc
+
+# Save files
+*~
+*\#
+\.\#*
 
 # Libraries
 *.lib
@@ -21,3 +27,15 @@
 *.i*86
 *.x86_64
 *.hex
+
+primer_cliques_gt.py
+
+primers_binding2.txt
+
+*.gr
+
+cliquer/swga
+
+cliquer/cl2
+
+cliquer/cl
