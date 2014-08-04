@@ -18,7 +18,7 @@
 
 /* Default cliquer options */
 static clique_options clique_default_options_struct = {
-	reorder_by_default, NULL, clique_print_time, NULL, NULL, NULL, NULL, 0
+  reorder_by_default, NULL, clique_print_time, NULL, NULL, NULL, NULL, 0, 0
 };
 clique_options *clique_default_options=&clique_default_options_struct;
 
@@ -89,6 +89,7 @@ static boolean sub_unweighted_single(int *table, int size, int min_size,
 static int sub_unweighted_all(int *table, int size, int min_size, int max_size,
 			      boolean maximal, graph_t *g,
 			      clique_options *opts);
+
 static int sub_weighted_all(int *table, int size, int weight,
 			    int current_weight, int prune_low, int prune_high,
 			    int min_weight, int max_weight, boolean maximal,
@@ -450,6 +451,10 @@ static int sub_unweighted_all(int *table, int size, int min_size, int max_size,
 		return count;
 	}
 
+        if (opts->ecl_max_weight > 0 && graph_subgraph_weight(g, current_clique) > ecl_max_weight) {
+          return count;
+        }
+
 	/* Dynamic memory allocation with cache */
 	if (temp_count) {
 		temp_count--;
@@ -497,7 +502,6 @@ static int sub_unweighted_all(int *table, int size, int min_size, int max_size,
 	temp_list[temp_count++]=newtable;
 	return count;
 }
-
 
 
 

@@ -22,6 +22,7 @@ struct _clique_options {
 	void *user_data;
 	set_t *clique_list;
 	int clique_list_length;
+  int ecl_max_weight;
 };
 
 extern clique_options *clique_default_options;
