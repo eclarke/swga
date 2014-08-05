@@ -426,6 +426,7 @@ boolean print_clique_func(set_t s,graph_t *g,clique_options *opts) {
  */
 boolean weight_clique_check_func(set_t s, graph_t *g, clique_options *opts) {
   /* print_clique(s,g); */
-  record_clique_func(s, g, opts);
+  /* record_clique_func(s, g, opts); */
+  clique_count++;
   return TRUE;
 }
