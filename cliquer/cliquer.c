@@ -39,6 +39,7 @@ static int clique_list_count=0;  /* No. of cliques in opts->clique_list[] */
 static int weight_multiplier=1;  /* Weights multiplied by this when passing
 				  * to time_function(). */
 
+
 /* List cache (contains memory blocks of size g->n * sizeof(int)) */
 static int **temp_list=NULL;
 static int temp_count=0;
@@ -432,6 +433,7 @@ static int sub_unweighted_all(int *table, int size, int min_size, int max_size,
 	int *newtable;
 	int *p1, *p2;
 	int count=0;     /* Amount of cliques found */
+        int ecl_max_weight = opts->ecl_max_weight;
 
 	if (min_size <= 0) {
 		if ((!maximal) || is_maximal(current_clique,g)) {
@@ -451,7 +453,7 @@ static int sub_unweighted_all(int *table, int size, int min_size, int max_size,
 		return count;
 	}
 
-        if (opts->ecl_max_weight > 0 && graph_subgraph_weight(g, current_clique) > ecl_max_weight) {
+        if (ecl_max_weight > 0 && graph_subgraph_weight(g, current_clique) > ecl_max_weight) {
           return count;
         }
 
