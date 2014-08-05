@@ -39,3 +39,9 @@ cliquer/swga
 cliquer/cl2
 
 cliquer/cl
+
+filter_primers.sh
+
+*.fasta-counts
+
+selected-mers
