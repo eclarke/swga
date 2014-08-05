@@ -1,14 +1,16 @@
-## primer_cliques.py 
-# Uses cliquer to find maximal cliques (completely connected subgraphs) of 
-# primers. 
+# primer_cliques.py
+# Functions to read in a list of primers, test primer pairs for
+# heterodimer-ness, and write out a DIMACS graph file for use
+# downstream in cliquer.
 #
 # Erik Clarke - ecl@mail.med.upenn.edu
+
 from itertools import combinations
 from argparse import ArgumentParser
 from collections import namedtuple
 import sys
 
-Primer = namedtuple('Primer', 'id, seq, bg_freq')
+Primer = namedtuple('Primer', 'id, seq, bg_freq, fg_freq')
 
 def write_graph(primers, arcs, fname):
     '''
@@ -30,20 +32,28 @@ def write_graph(primers, arcs, fname):
 def read_primers(primer_fp):
     '''
     Reads in a tab-delimited file where the first column is the primer
-    sequence and the second column is the background genome binding
-    count.
-    Returns a list of Primers.
+    sequence, second column is the foreground genome bind count, and
+    third is the background genome binding count.
+    Returns a list of Primer objects.
     '''
     with open(primer_fp) as primer_file:
         primers = []
         try:
             for i, line in enumerate(primer_file):
-                seq, bg_freq = line.strip('\n').split('\t')
-                primers.append(Primer(i+1, seq, int(bg_freq)))
+                seq, fg_freq, bg_freq, ratio = line.strip('\n').split(' ')
+                primers.append(Primer(len(primers)+1, seq,
+                                      int(bg_freq), int(fg_freq)))
         except ValueError as err:
-            sys.stderr.write("Invalid primer file format!")
+            sys.stderr.write("Invalid primer file format.\n")
             raise err
     return primers
+
+
+def write_primers(primers, fname):
+    with open(fname, 'w') as output:
+        output.write('ID\tSEQ\tBG_FREQ\tFG_FREQ\n')
+        [output.write("\t".join([str(p.id), p.seq, str(p.bg_freq),
+                                str(p.fg_freq)])+'\n') for p in primers]
 
 
 def test_pairs(starting_primers, max_binding):
@@ -89,37 +99,3 @@ def max_consecutive_binding(mer1, mer2):
             else:
                 consecutive = 0
     return max_bind
-
-
-def main():
-    
-    description_string = '''Reads in primers from a tab-delimited
-    file, performs heterodimer checks and calculates background genome
-    binding frequency, then writes results in DIMACS format for use
-    with cliquer.c.''' 
-
-    parser = ArgumentParser(description = description_string)
-
-    parser.add_argument('-m', '--max_binding', help='''Max number of
-    consecutive complimentary bases allowed in the heterodimer
-    filter''', type=int, default=3)
-    
-    parser.add_argument('-o', '--output', help='''Filename to store the
-    DIMACS output graph.''', required=True) 
-
-    parser.add_argument('primers', action="store", help='''List of
-    primers (first column) with background genome binding counts
-    (second column)''')
-
-    args = vars(parser.parse_args())
-    
-    primers = read_primers(args['primers'])
-    arcs = test_pairs(primers, args['max_binding'])
-    write_graph(primers, arcs, args['output'])
-
-if __name__ == '__main__':
-        main()
-
-
-
-
