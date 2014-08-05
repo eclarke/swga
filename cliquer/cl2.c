@@ -114,9 +114,9 @@ int main(int argc, char **argv) {
 		if (quiet<=0) {
 			fprintf(stderr,"Found %d clique%s:\n",
 				clique_count,(clique_count==1)?"":"s");
-			for (i=0; i<clique_count; i++) {
-				print_clique(clique_list[i],g);
-			}
+			/* for (i=0; i<clique_count; i++) { */
+			/* 	print_clique(clique_list[i],g); */
+			/* } */
 		}
 	} else {
 		if (unweighted) {
@@ -427,10 +427,10 @@ boolean weight_clique_check_func(set_t s, graph_t *g, clique_options *opts) {
   long weight = graph_subgraph_weight(g,s);
   long ratio = bg_len/weight; /* doesn't matter that it's not a float */
   if (ratio > bg_freq) {
-    print_clique(s,g);
+    /* print_clique(s,g); */
+    record_clique_func(s,g,opts);
     return TRUE;
   } else {
-    /* fprintf(stderr, "Failed: ratio %f > limit %lu (len: %lu, weight: %lu)\n", ratio, bg_freq, bg_len, weight); */
     return TRUE;
   }
 }
