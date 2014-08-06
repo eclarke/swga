@@ -8,7 +8,7 @@ def main():
     opts = ps.read_config_file(ps.default_config_file)
     if not isfile(ps.default_config_file):
         opts.set('primer_filters', 'max_htdmr_bind', '0')
-        sys.sterr.write(ps.opts_errstr)
+        sys.stderr.write(ps.opts_errstr)
     
     description_string = '''Reads in primers from a tab-delimited
     file, performs heterodimer checks and then writes results in
@@ -30,11 +30,20 @@ def main():
     ratio (fourth col). If unspecified, reads from stdin.''', default=sys.stdin)
 
     args = vars(parser.parse_args())
+    if type(args['primer_file']) == str:
+        with open(args['primer_file']) as infile:
+            primers = ps.read_primers(infile)
+    else:
+        primers = ps.read_primers(args['primer_file'])
 
     primers = ps.read_primers(args['primer_file'])
     arcs = ps.test_pairs(primers, args['max_htdmr_bind'])
-    ps.write_graph(primers, arcs, args['output'])
 
+    if type(args['output']) == str:
+        with open(args['output'], 'w') as outfile:
+            ps.write_graph(primers, arcs, outfile)
+    else:
+        ps.write_graph(primers, arcs, args['output'])
 
 if __name__ == '__main__':
         main()

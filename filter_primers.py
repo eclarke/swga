@@ -7,7 +7,6 @@ from os.path import isfile
 def main():
     opts = read_config_file(default_config_file)
     if not isfile(default_config_file):
-        opts.add_section('primer_filters')
         opts.set('primer_filters', 'max_bg_binding', '0')
         opts.set('primer_filters', 'num_primers', '0')
         sys.stderr.write(opts_errstr)

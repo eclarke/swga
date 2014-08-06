@@ -10,16 +10,17 @@ from argparse import ArgumentParser
 from collections import namedtuple
 from ConfigParser import SafeConfigParser
 import sys
-from os.path import isfile
+import os
 
 Primer = namedtuple('Primer', 'id, seq, bg_freq, fg_freq')
 
-default_config_file = 'parameters.ini'
+default_config_file = os.environ.get('swga_params', 'parameters.ini')
 
 opts_errstr = """
 WARNING: Cannot find default config file, specified as '{}'.
-Ensure all values are specified on the command line, or alter PrimerSets.py with
-the correct location. Unspecified parameters set to None or 0. \n 
+Ensure all values are specified on the command line, or set
+swga_params environment variable.
+Unspecified parameters set to None or 0. \n 
 """.format(default_config_file)
 
 
@@ -30,57 +31,38 @@ def read_config_file(filename):
         parser.add_section('primer_filters')
     if not parser.has_section('set_opts'):
         parser.add_section('set_opts')
-    # Test code
-    # for section_name in parser.sections():
-    #     print 'Section:', section_name
-    #     print '\tOptions:', parser.options(section_name)
-    #     for name, value in parser.items(section_name):
-    #         print '\t  {} = {}'.format(name, value)
     return parser
 
 
-def write_graph(primers, arcs, fname):
+def write_graph(primers, edges, file_handle):
     '''
     Writes graph in DIMACS graph format, specified in the cliquer user manual.
     See http://users.tkk.fi/~pat/cliquer.html
     
-    An arc is simply a list of the form [first_node, second_node]
-    "arcs" is a list of arcs
+    An edge is a list of the form [first_node, second_node]
+    "edges" is a list of edges
     '''
-    def subwrite(output):
-        num_nodes = len(primers)
-        output.write('p sp {} {}\n'.format(num_nodes, len(arcs)))
-        for primer in primers:
-            output.write('n {} {}\n'.format(primer.id, primer.bg_freq))
-        for arc in arcs:
-            output.write('e {} {} \n'.format(arc[0], arc[1]))
-    if type(fname) == 'str':
-        with open(fname) as outfile:
-            subwrite(outfile)
-    else:
-        subwrite(fname)
+    num_nodes = len(primers)
+    file_handle.write('p sp {} {}\n'.format(num_nodes, len(edges)))
+    for primer in primers:
+        file_handle.write('n {} {}\n'.format(primer.id, primer.bg_freq))
+    for edge in edges:
+        file_handle.write('e {} {} \n'.format(edge[0], edge[1]))
 
 
-def read_primers(primer_fp):
+def read_primers(file_handle):
     '''
     Reads in a tab-delimited file where the first column is the primer
     sequence, second column is the foreground genome bind count, and
     third is the background genome binding count.
     Returns a list of Primer objects.
-    '''
-    def subread(infile):
+    '''    
+    try:
         primers = []
-        for i, line in enumerate(infile):
+        for i, line in enumerate(file_handle):
             seq, fg_freq, bg_freq, ratio = line.strip('\n').split(' ')
             primers.append(Primer(len(primers)+1, seq,
                                   int(bg_freq), int(fg_freq)))
-        return primers
-    try:
-        if type(primer_fp) == 'str':
-            with open(primer_fp) as infile:
-                primers = subread(infile)
-        else:
-            primers = subread(primer_fp)
     except ValueError as err:
         sys.stderr.write("Invalid primer file format.\n")
         raise err
@@ -96,14 +78,14 @@ def write_primers(primers, fname):
 
 def test_pairs(starting_primers, max_binding):
     '''
-    Adds a primer pair to the list of "arcs" if it passes the heterodimer
+    Adds a primer pair to the list of edges if it passes the heterodimer
     filter using the max_binding cutoff.
     '''
-    arcs = []
+    edges = []
     for p1, p2 in combinations(starting_primers, 2):
         if max_consecutive_binding(p1.seq, p2.seq) < max_binding:
-            arcs.append([p1.id, p2.id])
-    return arcs
+            edges.append([p1.id, p2.id])
+    return edges
 
 
 def max_consecutive_binding(mer1, mer2):
