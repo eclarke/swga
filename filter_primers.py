@@ -1,16 +1,20 @@
-from PrimerSets import *
+#!/usr/bin/env python
+
+import primer_sets as ps
 from signal import signal, SIGPIPE, SIG_DFL
 import subprocess
-from os.path import isfile
-
+import os
+import sys
+from argparse import ArgumentParser
 
 def main():
-    opts = read_config_file(default_config_file)
-    if not isfile(default_config_file):
+    config_file = os.environ.get('swga_params', ps.default_config_file)
+    opts = ps.read_config_file(config_file)
+    if not os.path.isfile(ps.default_config_file):
         opts.set('primer_filters', 'max_bg_binding', '0')
         opts.set('primer_filters', 'num_primers', '0')
-        sys.stderr.write(opts_errstr)
-    
+        sys.stderr.write(ps.opts_errstr.format(config_file))
+
     argparser = ArgumentParser(description = '''Reads in a list of
     primers, removing those that bind to the background genome over a
     threshold, and ordering the remaining by the fg/bg binding
