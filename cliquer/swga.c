@@ -17,6 +17,7 @@ void read_options(int argc, char **argv);
 void print_search(graph_t *g);
 boolean record_clique_func(set_t s,graph_t *g,clique_options *opts);
 boolean print_clique_func(set_t s,graph_t *g,clique_options *opts);
+boolean write_clique_func(set_t s,graph_t *g,clique_options *opts);
 boolean weight_clique_check_func(set_t s,graph_t *g,clique_options *opts);
 void print_clique(set_t s,graph_t *g);
 
@@ -36,6 +37,9 @@ static int quiet=0;
 static boolean only_weight=FALSE;
 static int *(*reorder)(graph_t *, boolean)=reorder_by_default;
 static char *file;
+static char *output_fp;
+static boolean output_specified=FALSE;
+static FILE *output;
 /* Dynamically allocated storage for cliques. */
 static set_t *clique_list;
 static int clique_count=0;
@@ -76,7 +80,17 @@ int main(int argc, char **argv) {
 	fclose(fp);
 
 	/* Set stdout to be line-buffered even if redirected. */
-	setvbuf(stdout,(char *)NULL,_IOLBF,0);
+	/* setvbuf(stdout,(char *)NULL,_IOLBF,0); */
+
+        /* Open the output file for writing if specified */
+        if (output_specified) {
+          fprintf(stderr, "Output file: %s\n", output_fp);
+          output=fopen(output_fp, "w");
+          setvbuf(output,(char *)NULL,_IOFBF,BUFSIZ);
+        } else {
+          fprintf(stderr, "No output file specified.\n");
+          output=stdout;
+        }
 
 	/* Initialize out clique_options */
 	opts=malloc(sizeof(clique_options));
@@ -87,7 +101,7 @@ int main(int argc, char **argv) {
 	opts->output=stderr;
 	opts->reorder_function=reorder;
 	opts->reorder_map=NULL;
-        opts->user_function=weight_clique_check_func;
+        opts->user_function=write_clique_func;
 	opts->user_data=NULL;
 	opts->clique_list=NULL;
 	opts->clique_list_length=0;
@@ -135,7 +149,7 @@ int main(int argc, char **argv) {
 		}
 		print_clique(s,g);
 	}
-
+        fclose(output);
 	return 0;
 }
 
@@ -167,6 +181,7 @@ void printhelp(char *prog) {
 	       " -r F  --reorder F    Reorder with function F.  See below for details.\n"
 	       " -q    --quiet        Suppresses progress output.  Specifying -q twice\n"
 	       "                      suppresses all output except the actual result.\n"
+               " -o F  --output F     Output results to file F."
 	       "\n"
 	       "Available reordering functions are the following:\n"
 	       "\n"
@@ -209,14 +224,15 @@ void read_options(int argc, char **argv) {
 			{ "reorder", required_argument, NULL, 'r' },
 			{ "from-0", no_argument, NULL, '0' },
 			{ "quiet", no_argument, NULL, 'q' },
+                        { "output_fp", required_argument, NULL, 'o'},
 			{ "help", no_argument, NULL, 'h' },
 			{ 0,0,0,0 }
 		};
 
-		c=getopt_long(argc,argv,"aswm:M:B:L:xur:1qh",
+		c=getopt_long(argc,argv,"aswm:M:B:L:xur:1qo:h",
 			      long_options,&option_index);
 #else  /* !ENABLE_LONG_OPTIONS */
-		c=getopt(argc,argv,"aswm:M:B:L:xur:1qh-");
+		c=getopt(argc,argv,"aswm:M:B:L:xur:1qo:h-");
 #endif /* !ENABLE_LONG_OPTIONS */
 		if (c==-1)
 			break;
@@ -319,6 +335,10 @@ void read_options(int argc, char **argv) {
 		case 'q':
 			quiet++;
 			break;
+                case 'o':
+                  output_fp=optarg;
+                  output_specified=TRUE;
+                  break;
 		case 'h':
 			printhelp(argv[0]);
 			break;
@@ -399,6 +419,22 @@ void print_clique(set_t s,graph_t *g) {
 }
 
 /*
+ */ 
+boolean write_clique_func(set_t s, graph_t *g, clique_options *opts) {
+  int i;
+  int num;
+  fprintf(output, "%d %lu", set_size(s), bg_len/graph_subgraph_weight(g,s));
+  for (i=0; i<SET_MAX_SIZE(s); i++) {
+    if (SET_CONTAINS(s, i)) {
+      num = number1 ? i+1 : i;
+      fprintf(output, " %d", num);
+    }
+  }
+  fprintf(output, "\n");
+  return TRUE;
+}
+
+/*
  * Records a clique into the clique list using dynamic allocation.
  * Used as opts->user_function.
  */
@@ -421,11 +457,13 @@ boolean print_clique_func(set_t s,graph_t *g,clique_options *opts) {
 	return TRUE;
 }
 
+
 /*
  * Modifies the print_clique function to check max weight
  */
 boolean weight_clique_check_func(set_t s, graph_t *g, clique_options *opts) {
   /* print_clique(s,g); */
+  /* write_clique(s,g); */
   /* record_clique_func(s, g, opts); */
   clique_count++;
   return TRUE;
