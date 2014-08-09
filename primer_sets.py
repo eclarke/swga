@@ -1,4 +1,4 @@
-# PrimerSets.py
+# primer_sets.py
 # Functions to read in a list of primers, test primer pairs for
 # heterodimer-ness, and write out a DIMACS graph file for use
 # downstream in cliquer.
@@ -9,20 +9,24 @@ from itertools import combinations
 from argparse import ArgumentParser
 from collections import namedtuple
 from ConfigParser import SafeConfigParser
+import mmap
+import multiprocessing
 import sys
 import os
+import re
+from contextlib import closing
 
 Primer = namedtuple('Primer', 'id, seq, bg_freq, fg_freq')
 
-default_config_file = os.environ.get('swga_params', 'parameters.ini')
+default_config_file = 'parameters.ini'
 
+# formatted by downstream modules
 opts_errstr = """
-WARNING: Cannot find default config file, specified as '{}'.
-Ensure all values are specified on the command line, or set
-swga_params environment variable.
-Unspecified parameters set to None or 0. \n 
-""".format(default_config_file)
-
+--WARNING: Cannot find default config file, specified as '{}'.--
+Ensure all values are specified on the command line, or set and export
+the swga_params environment variable. Unspecified parameters set to
+None or 0. \n
+"""
 
 def read_config_file(filename):
     parser = SafeConfigParser()
@@ -31,6 +35,8 @@ def read_config_file(filename):
         parser.add_section('primer_filters')
     if not parser.has_section('set_opts'):
         parser.add_section('set_opts')
+    if not parser.has_section('locations'):
+        parser.add_section('locations')
     return parser
 
 
@@ -42,21 +48,36 @@ def write_graph(primers, edges, file_handle):
     An edge is a list of the form [first_node, second_node]
     "edges" is a list of edges
     '''
-    num_nodes = len(primers)
-    file_handle.write('p sp {} {}\n'.format(num_nodes, len(edges)))
+
+    if type(file_handle) is not file:
+        raise ValueError(("file_handle must be a file, not "
+                          "a {}").format(type(file_handle))) 
+
+    file_handle.write('p sp {} {}\n'.format(len(primers), len(edges)))
     for primer in primers:
-        file_handle.write('n {} {}\n'.format(primer.id, primer.bg_freq))
+        try:
+            file_handle.write('n {} {}\n'.format(primer.id,
+                                                 primer.bg_freq))
+        except AttributeError:
+            raise ValueError("Primers must be of the form {}".format(type(Primer)))
     for edge in edges:
-        file_handle.write('e {} {} \n'.format(edge[0], edge[1]))
+        try:
+            file_handle.write('e {} {}\n'.format(edge[0], edge[1]))
+        except IndexError:
+            raise ValueError("Edges must be specified as a list with"+
+            "two elements. Invalid edge: {}".format(edge)) 
 
 
 def read_primers(file_handle):
     '''
-    Reads in a tab-delimited file where the first column is the primer
-    sequence, second column is the foreground genome bind count, and
-    third is the background genome binding count.
+    Reads in a space-delimited file where the first column is the
+    primer sequence, second column is the foreground genome bind
+    count, and third is the background genome binding count. 
     Returns a list of Primer objects.
-    '''    
+    '''
+    if not hasattr(file_handle, 'readline'):
+        raise AttributeError("Invalid file handle. Are you passing a "+
+                             "filename rather than a file?")
     try:
         primers = []
         for i, line in enumerate(file_handle):
@@ -64,16 +85,9 @@ def read_primers(file_handle):
             primers.append(Primer(len(primers)+1, seq,
                                   int(bg_freq), int(fg_freq)))
     except ValueError as err:
-        sys.stderr.write("Invalid primer file format.\n")
+        
         raise err
     return primers
-
-
-def write_primers(primers, fname):
-    with open(fname, 'w') as output:
-        output.write('ID\tSEQ\tBG_FREQ\tFG_FREQ\n')
-        [output.write("\t".join([str(p.id), p.seq, str(p.bg_freq),
-                                str(p.fg_freq)])+'\n') for p in primers]
 
 
 def test_pairs(starting_primers, max_binding):
@@ -119,3 +133,76 @@ def max_consecutive_binding(mer1, mer2):
             else:
                 consecutive = 0
     return max_bind
+
+
+# -- Experimental functions --
+# Here be monsters...
+
+def find_locations(substring, string):
+    '''
+    Very fast way of finding substring locations in a (potentially
+    large) string.
+    '''
+    locations = []
+    start = 0
+    while True:
+        start = string.find(substring, start) + 1
+        if start > 0:
+            locations.append(start-1)
+        else:
+            return locations
+
+
+def find_primer_locations(primer, genome_fp):
+    '''
+    Returns the matches in the genome of the primer, reverse primer,
+    and the chromosome end points. May be imprecise as the chromosome
+    start marker is occupied by a char (>), so possible off-by-one errors.
+    '''
+    with open(genome_fp) as f:
+        with closing(mmap.mmap(f.fileno(), 0,
+                               access=mmap.ACCESS_COPY)) as genome:
+            record_locations = find_locations('>', genome)
+            if len(record_locations) == 0:
+                raise ValueError('No records found in genome!')
+            primer_locations = find_locations(primer, genome)
+            rev_primer_locations = find_locations(primer[::-1], genome)
+            return (primer, sorted(primer_locations + rev_primer_locations + record_locations))
+
+
+def mp_find_primer_locations(primers, genome_fp,
+                             cores=multiprocessing.cpu_count(),
+                             chatty=True):
+    '''
+    Uses multiple processes to find the locations of all primer
+    sequences in the target genome. 
+    '''
+    locations = {}
+    progressbar(0, len(primers))
+    def update_locations(loc):
+        primer = loc[0]
+        p_locs = loc[1]
+        locations[primer] = p_locs
+        if chatty:
+            progressbar(len(locations.keys()), len(primers))
+
+    
+    pool = multiprocessing.Pool(cores)
+    for primer in primers:
+        pool.apply_async(find_primer_locations,
+                         args=(primer, genome_fp),
+                         callback=update_locations)
+    pool.close()
+    pool.join()
+
+    return locations
+
+
+def progressbar(i, length):
+    if i >= 1:
+        i = i/(length*1.0)
+    sys.stdout.write('\r[%-20s] %-3d%%' % ('='*int(round(i*20)), i*100))
+    sys.stdout.flush()
+
+    
+
