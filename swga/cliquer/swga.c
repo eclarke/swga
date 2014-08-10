@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
 	graph_t *g;
 	set_t s;
 	clique_options *opts;
-	int i,j;
+	int j;
 
 	if (argc<=1)
 		printhelp(argv[0]);
