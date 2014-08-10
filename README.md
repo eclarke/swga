@@ -1,12 +1,12 @@
 PrimerSets
 ==========
 
-Module to select sets of primers
+Find compatible sets of primers for selective whole genome amplification.
 
 Installation
 -----------
 
-This module depends on numpy > 1.6.1.
+This program has no external dependencies besides a C compiler such as `gcc`.
 
 Download the most recent copy of the source [here](https://github.com/BrissonEEDS/PrimerSets/archive/master.zip). From a terminal:
 ```sh
@@ -80,6 +80,8 @@ swga.py make_graph -i filtered_primers | swga.py find_sets | swga.py process_set
 The `find_sets` command is the heart of this module. It takes the primer compatibility graph and attempts to find completely connected subgraphs (cliques) where the cumulative background genome binding frequency of the primers in the clique is lower than a certain amount. See [theory](#theory) below for more explanation.
 
 The `process_sets` command takes the output from `find_sets` and runs further statistics on the sets, only outputting a set if the primers in the set have a max distance on the foreground genome below a certain threshold. It also currently calculates the standard deviation of the binding distances on the foreground genome. The output of this command has the format per row of `[stdev] [max_dist] [primer seq 1] [primer seq 2] ...`.
+
+There are often billions of valid sets possible, and it would be extremely time-consuming to find all of them. Therefore, `process_sets` can read the output from `find_sets` live and will exit after it finds `max_sets` valid primer sets. Alternatively, one could let the `find_sets` write to a file and find all sets, then pass it to `process_sets` and test different parameters.
 
 
 ## Theory
