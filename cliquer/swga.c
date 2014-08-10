@@ -88,7 +88,9 @@ int main(int argc, char **argv) {
           output=fopen(output_fp, "w");
           setvbuf(output,(char *)NULL,_IOFBF,BUFSIZ);
         } else {
-          fprintf(stderr, "No output file specified.\n");
+          if (quiet<=1) {
+            fprintf(stderr, "No output file specified.\n");
+          }
           output=stdout;
         }
 
