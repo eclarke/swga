@@ -42,11 +42,11 @@ utils/fasta_flattener.sh fg-genome.fasta > fg-genome.fasta.flattened
 ```
 Right now the `valid_sets` file is in a space-delimited format where the first col is set standard deviation, second is the max foreground genome binding distance, and remaining numbers are the indexes of the primers in `filtered_primers`.
 
-If you wanted to be really cool, you can do a lot in only three lines (and the first two only need to be run once):
+If you wanted to be really cool, you can do a lot in only two lines:
 ```shell
 utils/fasta_flattener.sh fg-genome.fasta > fg-genome.fasta.flattened
-./swga.py filter_primers selected-mers | ./swga.py fg_locations -v --fg_genome fg-genome.fasta.flattened
-./swga.py make_graph | ./swga.py find_sets | ./swga.py process_sets > valid_sets.txt
+./swga.py filter_primers selected-mers | ./swga.py fg_locations \
+    | ./swga.py make_graph | ./swga.py find_sets | ./swga.py process_sets > valid_sets.txt
 ```
 since most of these commands will default to stdin/stdout if input and output are not specified.
 
