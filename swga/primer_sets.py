@@ -79,9 +79,6 @@ def read_primers(file_handle):
     count, and third is the background genome binding count. 
     Returns a list of Primer objects.
     '''
-    if not hasattr(file_handle, 'readline'):
-        raise AttributeError("Invalid file handle. Are you passing a "+
-                             "filename rather than a file?")
     try:
         primers = []
         for i, line in enumerate(file_handle):
@@ -193,6 +190,7 @@ def mp_find_primer_locations(primers, genome_fp,
         locations[primer.id] = {'seq': primer.seq,
                                 'loc': p_locs}
         if chatty:
+            sys.stderr.write("%i\n" % len(locations.keys()))
             progressbar(len(locations.keys()), len(primers))
 
     
@@ -214,7 +212,6 @@ def mp_find_primer_locations(primers, genome_fp,
     else:
         pool.close()
         pool.join()
-    print("")
     return locations
 
 
@@ -236,8 +233,8 @@ def fg_bind_distances(setline, primer_locations):
 def progressbar(i, length):
     if i >= 1:
         i = i/(length*1.0)
-    sys.stdout.write('\r[%-20s] %-3d%%' % ('='*int(round(i*20)), i*100))
-    sys.stdout.flush()
+    sys.stderr.write('\r[%-20s] %-3d%%' % ('='*int(round(i*20)), i*100))
+    sys.stderr.flush()
 
     
 class DefaultValueError(Exception):

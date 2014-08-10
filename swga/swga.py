@@ -98,6 +98,8 @@ variable, or override certain settings by specifying them as arguments.
                                the primer sequence, fg binding number, bg
                                binding number, and fg/bg binding ratio, in that
                                order. If blank, reads from stdin.''', metavar='F')
+    fg_loc_parser.add_argument('--no_passthrough', action='store_true',
+                               help='''Prevent input from passing through''')
     fg_loc_parser.add_argument('--fg_bind_locations', action='store',
                                metavar='F', help='''Where to store the serialized output.''')
     fg_loc_parser.add_argument('--ncores', action='store', type=int, metavar='N',
@@ -199,16 +201,23 @@ def filter_primers(args):
 
 
 def fg_locations(args):
-    primers = ps.read_primers(args.input)
+    primers = []
+    if args.no_passthrough:
+        primers = ps.read_primers(args.input)
+    else:
+        pinput = [line for line in args.input]
+        primers = ps.read_primers(pinput)
+        sys.stdout.writelines(pinput)
+
     if args.verbose:
-        print(("Populating genome binding locations for {} "
-               "primers...").format(len(primers)))
+        sys.stderr.write(("Populating genome binding locations for {} "
+                          "primers...\n").format(len(primers)))
     locations = ps.mp_find_primer_locations(primers, args.fg_genome,
                                             args.ncores, args.verbose)
-    with gzip.GzipFile(args.output, 'w') as out:
+    with gzip.GzipFile(args.fg_bind_locations, 'w') as out:
         cPickle.dump(locations, out)
         if args.verbose:
-            print("Locations serialized to {}".format(out.name))
+            sys.stderr.write("Locations serialized to {}".format(out.name))
 
 
 def make_graph(args):
