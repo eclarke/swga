@@ -98,7 +98,7 @@ variable, or override certain settings by specifying them as arguments.
                                the primer sequence, fg binding number, bg
                                binding number, and fg/bg binding ratio, in that
                                order. If blank, reads from stdin.''', metavar='F')
-    fg_loc_parser.add_argument('-o', '--output', action='store',
+    fg_loc_parser.add_argument('--fg_bind_locations', action='store',
                                metavar='F', help='''Where to store the serialized output.''')
     fg_loc_parser.add_argument('--ncores', action='store', type=int, metavar='N',
                                default=multiprocessing.cpu_count(),
@@ -171,7 +171,9 @@ variable, or override certain settings by specifying them as arguments.
                                     distance calculations''')
     processsets_parser.add_argument('--max_sets', type=int,
                                     help='''How many sets pass filter before we exit''')
-                                    
+    processsets_parser.add_argument('--max_fg_bind_dist', type=int,
+                                    help='''Maximum distance between primers in
+                                    a set on the foreground genome.''')
     processsets_parser.add_argument('--fg_bind_locations',
                                     help='''Location of the output file that
                                     contains foreground genome binding locations
