@@ -8,14 +8,17 @@ import ConfigParser
 import subprocess
 import cPickle
 import gzip
+import os
 import multiprocessing
+import numpy as np
+from multiprocessing.pool import ThreadPool
 from signal import signal, SIGPIPE, SIG_DFL, SIGTERM
 
-signal(SIGTERM, lambda signum, stack_frame: sys.exit(1))
+
 
 def main():
-    usage="""swga.py command
-    
+    usage="""swga.py [-c CONFIG_FILE] command
+
 Available commands:
 \t filter_primers: removes invalid primers from input
 \t fg_locations:   finds and stores primer binding locations in foreground genome
@@ -23,18 +26,24 @@ Available commands:
 \t find_sets:      find initial sets of compatible primers
 \t process_sets:   do additional filtering on compatible primer sets
 
-"""
+By default, settings for all commands loaded from '{config}'. Override
+config file location by setting the 'swga_params' environment
+variable, or override certain settings by specifying them as arguments.
+
+""".format(config=ps.default_config_file)
+
+    
     parser = argparse.ArgumentParser(usage=usage,
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
                                      add_help=False)
-    parser.add_argument('-c', '--config_file', help='config file',
-                        metavar="FILE")
                            
     args, remaining = parser.parse_known_args()
     fp_defaults = fl_defaults = mg_defaults = fs_defaults = ps_defaults = {}
-    if args.config_file:
-        config = ConfigParser.SafeConfigParser()
-        config.read([args.config_file])
+
+    config = ConfigParser.SafeConfigParser()
+    cfg_file = os.environ.get('swga_params', ps.default_config_file)
+    if os.path.isfile(cfg_file):
+        config.read([cfg_file])
         fp_defaults = dict(config.items('filter_primers'))
         fl_defaults = dict(config.items('fg_locations'))
         mg_defaults = dict(config.items('make_graph'))
@@ -136,30 +145,37 @@ Available commands:
     findsets_parser.add_argument('-i', '--input', action='store',
                                  help='''Primer graph in DIMACS format where
                                  edges are between compatible primers. Default
-                                 to stdin if unspecified.''',
-                                 type=argparse.FileType('-r'),
-                                 default=sys.stdin)
+                                 to stdin if unspecified.''', default='-')
     findsets_parser.add_argument('-o', '--output', action='store',
                                  help='''Where to store results. Default to
-                                 stdout if unspecified.''',
-                                 type=argparse.FileType('w', 0),
-                                 default=sys.stdout)
+                                 stdout if unspecified.''', default='')
 
 
     # Filter sets command
     processsets_parser.set_defaults(**ps_defaults)
     processsets_parser.set_defaults(func=process_sets)
     processsets_parser.add_argument('-i', '--input', default=sys.stdin,
-                                    type=argparse.FileType('r'),
                                     help='''Compatible sets of primers. One set
                                     per row, first number is the size of the
                                     set, following numbers are primer ids in
                                     that set, separated from spaces (output from
-                                    find_sets command. Defaults to stdin if unspecified.''')  
+                                    find_sets command. Defaults to
+                                    stdin if unspecified.''')
+    processsets_parser.add_argument('-o', '--output',
+                                    default=sys.stdout,
+                                    type=argparse.FileType('w'),
+                                    help='''Where to send output''')
+    processsets_parser.add_argument('--ncores', type=int,
+                                    default=multiprocessing.cpu_count(),
+                                    help='''Number of cores to use to do
+                                    distance calculations''')
+    processsets_parser.add_argument('--max_sets', type=int,
+                                    help='''How many sets pass filter before we exit''')
+                                    
     processsets_parser.add_argument('--fg_bind_locations',
-                                    help='''Location of the sqlite database that
+                                    help='''Location of the output file that
                                     contains foreground genome binding locations
-                                    for each primer.''')  
+                                    for each primer (from the fg_locations command).''')  
 
     # parses the remaining subcommand options
     new_args = parser.parse_args(remaining)
@@ -179,8 +195,9 @@ def filter_primers(args):
     subprocess.call(filter_cmd, shell=True, preexec_fn = lambda:
                         signal(SIGPIPE, SIG_DFL))
 
+
 def fg_locations(args):
-    primers = [line.strip('\n').split(' ')[0] for line in args.input]
+    primers = ps.read_primers(args.input)
     if args.verbose:
         print(("Populating genome binding locations for {} "
                "primers...").format(len(primers)))
@@ -191,14 +208,71 @@ def fg_locations(args):
         if args.verbose:
             print("Locations serialized to {}".format(out.name))
 
-        
 
 def make_graph(args):
-    pass
+    primers = ps.read_primers(args.input)
+    arcs = ps.test_pairs(primers, args.max_hetdimer_bind)
+    ps.write_graph(primers, arcs, args.output)
+
+    
 def find_sets(args):
-    pass
-def process_sets(args, parser):
-    pass
+    kwargs = vars(args)
+    kwargs['output'] = '> '+args.output if args.output else ''
+    find_set_cmd = ("{set_finder} -q -q -B {min_bg_bind_dist} -L {bg_genome_len}"
+    " -m {min_size} -M {max_size} -a -u -r unweighted-coloring"
+    " {input} {output}").format(**kwargs)
+    subprocess.call(find_set_cmd, shell=True)
+    
+
+def process_sets(args):
+    pool = multiprocessing.Pool(args.ncores, ps._init_worker)
+    count = [0]
+    def update_func(primers, max_dist, stdev):
+        print max_dist, stdev
+        if max_dist <= args.max_fg_bind_dist:
+            primer_str = " ".join([str(primer) for primer in primers])
+            args.output.write("{} {} {}".format(stdev, max_dist,
+                                                primer_str))
+            count[0] += 1
+            if count[0] > args.max_sets:
+                raise MaxSetsSignal()
+    
+    primer_locations = None
+    with gzip.GzipFile(args.fg_bind_locations, 'r') as infile:
+        primer_locations = cPickle.load(infile)
+    for line in args.input:
+        pset_line = line.strip('\n').split(' ')
+        psize = pset_line[0]
+        pweight = pset_line[1]
+        primer_set = [int(_) for _ in pset_line[2::]]
+        primer_str = " ".join([str(primer) for primer in primer_set])
+        locations = sum([primer_locations[primer] for primer in
+                         primer_set], [])
+        stdev = np.std(locations, ddof=1)
+        max_dist = max(np.ediff1d(sorted(locations)))
+        if max_dist <= args.max_fg_bind_dist:
+            args.output.write("{} {} {}\n".format(stdev, max_dist,
+                                                   primer_str))
+
+    #     pool.apply_async(ps.find_fg_bind_distances,
+    #                      args=(line, primer_locations),
+    #                      callback=update_func)
+    # try:
+    #     time.sleep(10)
+    # except KeyboardInterrupt as k:
+    #     pool.terminate()
+    #     pool.join()
+    #     raise k
+    # except MaxSetsSignal:
+    #     print "Reached max number of valid sets"
+    #     sys.exit()
+    #     pool.close()
+    #     pool.join()
+    # else:
+    #     pool.close()
+    #     pool.join()
+
+        
     
 
         

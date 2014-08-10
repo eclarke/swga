@@ -17,11 +17,12 @@ import re
 import itertools
 import signal
 import time
+import numpy as np
 from contextlib import closing
 
 Primer = namedtuple('Primer', 'id, seq, bg_freq, fg_freq')
 
-default_config_file = 'parameters.ini'
+default_config_file = 'parameters.cfg'
 
 # formatted by downstream modules
 opts_errstr = """
@@ -168,8 +169,8 @@ def find_primer_locations(primer, genome_fp):
             record_locations = find_locations('>', genome)
             if len(record_locations) == 0:
                 raise ValueError('No records found in genome!')
-            primer_locations = find_locations(primer, genome)
-            rev_primer_locations = find_locations(primer[::-1], genome)
+            primer_locations = find_locations(primer.seq, genome)
+            rev_primer_locations = find_locations(primer.seq[::-1], genome)
             return (primer, sorted(primer_locations + rev_primer_locations + record_locations))
 
 
@@ -184,30 +185,25 @@ def mp_find_primer_locations(primers, genome_fp,
     sequences in the target genome. 
     '''
     locations = {}
-    progressbar(0, len(primers))
+    if chatty:
+        progressbar(0, len(primers))
     def update_locations(loc):
         primer = loc[0]
         p_locs = loc[1]
-        locations[primer] = p_locs
+        locations[primer.id] = p_locs
         if chatty:
             progressbar(len(locations.keys()), len(primers))
 
     
     pool = multiprocessing.Pool(cores, _init_worker)
-    # the .get(9999999) call on here is a workaround for a bug
-    # if a timeout is not specified, the workers will never receive a
-    # keyboard interrupt.
-    def _find_primer_locs(primer):
-        return find_primer_locations(primer, genome_fp)
-#    arglist = [(primer, genome_fp) for primer in primers]
-#    pool.map_async(find_primer_locations, arglist,
-#                   itertools.izip_longest(primers, (genome_fp),
-#                                          fillvalue=genome_fp),
-#                   callback=update_locations).get(999999)      
     for primer in primers:
         pool.apply_async(find_primer_locations,
                          args=(primer, genome_fp),
                          callback=update_locations)
+
+    # it's unclear to me why this works, but it allows a keyboard
+    # interrupt to be caught whereas normally interrupts cause it
+    # to hang
     try:
         time.sleep(10)
     except KeyboardInterrupt as k:
@@ -221,6 +217,19 @@ def mp_find_primer_locations(primers, genome_fp,
     return locations
 
 
+def find_fg_bind_distances(setline, primer_locations):
+    pset_line = setline.strip('\n').split(' ')
+    psize = pset_line[0]
+    pweight = pset_line[1]
+    primer_set = [int(_) for _ in pset_line[2::]]
+    locations = sum([primer_locations[primer] for primer in
+                    primer_set], [])
+    stdev = np.std(locations, ddof=1)
+    max_dist = max(np.ediff1d(sorted(locations)))
+    return (primer_set, max_dist, stdev)
+        
+
+
 def progressbar(i, length):
     if i >= 1:
         i = i/(length*1.0)
@@ -232,3 +241,6 @@ class DefaultValueError(Exception):
     def __init__(self, missing_arg):
         super(DefaultValueError, self).__init__(missing_arg+" not specified and no"+
                                             " default found in config file.")
+
+class MaxSetsSignal(Exception):
+    pass
