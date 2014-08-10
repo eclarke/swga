@@ -227,55 +227,16 @@ def find_sets(args):
     
 
 def process_sets(args):
-    pool = multiprocessing.Pool(args.ncores, ps._init_worker)
-    count = [0]
-    def update_func(primers, max_dist, stdev):
-        print max_dist, stdev
-        if max_dist <= args.max_fg_bind_dist:
-            primer_str = " ".join([str(primer) for primer in primers])
-            args.output.write("{} {} {}".format(stdev, max_dist,
-                                                primer_str))
-            count[0] += 1
-            if count[0] > args.max_sets:
-                raise MaxSetsSignal()
-    
     primer_locations = None
     with gzip.GzipFile(args.fg_bind_locations, 'r') as infile:
         primer_locations = cPickle.load(infile)
     for line in args.input:
-        pset_line = line.strip('\n').split(' ')
-        psize = pset_line[0]
-        pweight = pset_line[1]
-        primer_set = [int(_) for _ in pset_line[2::]]
-        primer_str = " ".join([str(primer) for primer in primer_set])
-        locations = sum([primer_locations[primer] for primer in
-                         primer_set], [])
-        stdev = np.std(locations, ddof=1)
-        max_dist = max(np.ediff1d(sorted(locations)))
+        primer_set, primers, max_dist, stdev = ps.fg_bind_distances(line, primer_locations)
+        primer_str = " ".join(primers)
         if max_dist <= args.max_fg_bind_dist:
             args.output.write("{} {} {}\n".format(stdev, max_dist,
                                                    primer_str))
 
-    #     pool.apply_async(ps.find_fg_bind_distances,
-    #                      args=(line, primer_locations),
-    #                      callback=update_func)
-    # try:
-    #     time.sleep(10)
-    # except KeyboardInterrupt as k:
-    #     pool.terminate()
-    #     pool.join()
-    #     raise k
-    # except MaxSetsSignal:
-    #     print "Reached max number of valid sets"
-    #     sys.exit()
-    #     pool.close()
-    #     pool.join()
-    # else:
-    #     pool.close()
-    #     pool.join()
-
-        
-    
 
         
 def missing_default_value(missing_val):

@@ -190,7 +190,8 @@ def mp_find_primer_locations(primers, genome_fp,
     def update_locations(loc):
         primer = loc[0]
         p_locs = loc[1]
-        locations[primer.id] = p_locs
+        locations[primer.id] = {'seq': primer.seq,
+                                'loc': p_locs}
         if chatty:
             progressbar(len(locations.keys()), len(primers))
 
@@ -222,11 +223,13 @@ def fg_bind_distances(setline, primer_locations):
     psize = pset_line[0]
     pweight = pset_line[1]
     primer_set = [int(_) for _ in pset_line[2::]]
-    locations = sum([primer_locations[primer] for primer in
+    locations = sum([primer_locations[primer]['loc'] for primer in
                     primer_set], [])
+    primers = [primer_locations[primer]['seq'] for primer in \
+               primer_set] 
     stdev = np.std(locations, ddof=1)
     max_dist = max(np.ediff1d(sorted(locations)))
-    return (primer_set, max_dist, stdev)
+    return (primer_set, primers, max_dist, stdev)
         
 
 

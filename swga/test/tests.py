@@ -121,10 +121,13 @@ class FgBindDistanceTest(unittest.TestCase):
 
     def test_fg_bind_dist(self):
         self.line = "5 5 1 2 3"
-        self.locations = {1:[1, 2, 3],
-                          2:[4, 5, 6],
-                          3:[7, 8, 10]}
-        primer_set, max_dist, stdev = ps.fg_bind_distances(self.line, self.locations)
+        self.locations = {1:{'seq':'',
+                             'loc':[1, 2, 3]},
+                          2:{'seq':'',
+                             'loc':[4, 5, 6]},
+                          3:{'seq':'',
+                             'loc':[7, 8, 10]}}
+        primer_set, primers, max_dist, stdev = ps.fg_bind_distances(self.line, self.locations)
         self.assertEqual(max_dist, 2)
         self.assertEqual(round(stdev, 4), 2.9345)
         self.assertEqual(primer_set, [1, 2, 3])
