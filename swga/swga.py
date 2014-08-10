@@ -180,7 +180,7 @@ variable, or override certain settings by specifying them as arguments.
                                     help='''Location of the output file that
                                     contains foreground genome binding locations
                                     for each primer (from the fg_locations command).''')  
-
+    processsets_parser.add_argument('-q', '--quiet', action='store_true', help='''Suppress progress output''')
     # parses the remaining subcommand options
     new_args = parser.parse_args(remaining)
     # calls the function corresponding to the subcommand with the specified options
@@ -237,14 +237,27 @@ def find_sets(args):
 
 def process_sets(args):
     primer_locations = None
+    passed = 0
+    processed = 0
     with gzip.GzipFile(args.fg_bind_locations, 'r') as infile:
         primer_locations = cPickle.load(infile)
     for line in args.input:
         primer_set, primers, max_dist, stdev = ps.fg_bind_distances(line, primer_locations)
         primer_str = " ".join(primers)
+        processed += 1
         if max_dist <= args.max_fg_bind_dist:
+            passed += 1
             args.output.write("{} {} {}\n".format(stdev, max_dist,
                                                    primer_str))
+        if not args.quiet:
+            sys.stderr.write('\rSets passing filter: \t{}/{}'.format(passed, processed))
+        if passed >= args.max_sets:
+            sys.stderr.write('\nDone. If process fails to exit, press Ctrl-C. All data saved.')
+            break
+    if not args.quiet:
+        sys.stderr.write('\n')
+    sys.exit()
+        
 
 
         

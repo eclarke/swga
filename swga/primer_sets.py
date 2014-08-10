@@ -190,7 +190,6 @@ def mp_find_primer_locations(primers, genome_fp,
         locations[primer.id] = {'seq': primer.seq,
                                 'loc': p_locs}
         if chatty:
-            sys.stderr.write("%i\n" % len(locations.keys()))
             progressbar(len(locations.keys()), len(primers))
 
     
@@ -212,6 +211,8 @@ def mp_find_primer_locations(primers, genome_fp,
     else:
         pool.close()
         pool.join()
+    if chatty:
+        sys.stderr.write('\n')
     return locations
 
 
