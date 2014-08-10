@@ -14,6 +14,9 @@ import multiprocessing
 import sys
 import os
 import re
+import itertools
+import signal
+import time
 from contextlib import closing
 
 Primer = namedtuple('Primer', 'id, seq, bg_freq, fg_freq')
@@ -170,6 +173,9 @@ def find_primer_locations(primer, genome_fp):
             return (primer, sorted(primer_locations + rev_primer_locations + record_locations))
 
 
+def _init_worker():
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
 def mp_find_primer_locations(primers, genome_fp,
                              cores=multiprocessing.cpu_count(),
                              chatty=True):
@@ -187,14 +193,31 @@ def mp_find_primer_locations(primers, genome_fp,
             progressbar(len(locations.keys()), len(primers))
 
     
-    pool = multiprocessing.Pool(cores)
+    pool = multiprocessing.Pool(cores, _init_worker)
+    # the .get(9999999) call on here is a workaround for a bug
+    # if a timeout is not specified, the workers will never receive a
+    # keyboard interrupt.
+    def _find_primer_locs(primer):
+        return find_primer_locations(primer, genome_fp)
+#    arglist = [(primer, genome_fp) for primer in primers]
+#    pool.map_async(find_primer_locations, arglist,
+#                   itertools.izip_longest(primers, (genome_fp),
+#                                          fillvalue=genome_fp),
+#                   callback=update_locations).get(999999)      
     for primer in primers:
         pool.apply_async(find_primer_locations,
                          args=(primer, genome_fp),
                          callback=update_locations)
-    pool.close()
-    pool.join()
-
+    try:
+        time.sleep(10)
+    except KeyboardInterrupt as k:
+        pool.terminate()
+        pool.join()
+        raise k
+    else:
+        pool.close()
+        pool.join()
+    print("")
     return locations
 
 
@@ -205,4 +228,7 @@ def progressbar(i, length):
     sys.stdout.flush()
 
     
-
+class DefaultValueError(Exception):
+    def __init__(self, missing_arg):
+        super(DefaultValueError, self).__init__(missing_arg+" not specified and no"+
+                                            " default found in config file.")
