@@ -28,20 +28,10 @@
 *.x86_64
 *.hex
 
-primer_cliques_gt.py
-
-primers_binding2.txt
 
 *.gr
-
-cliquer/swga
-
-cliquer/cl2
-
-cliquer/cl
-
-filter_primers.sh
-
-*.fasta-counts
-
+*.gz
+swga/cliquer/swga
+swga/cliquer/cl2
+swga/cliquer/cl
 selected-mers
