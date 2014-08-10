@@ -60,13 +60,26 @@ From the `swga` directory, run `./swga.py command`.
 - `find_sets`: finds initial sets of compatible primers using branch-and-bound algorithm
 - `process_sets`: filters sets that match criteria
 
-Default options for these commands are specified in `parameters.cfg`. All options can be overriden on the command line.
+Default options for these commands are specified in `parameters.cfg`. All options can be overriden on the command line; type `swga.py <command> -h` for options.
 
 To begin, use [SelectiveWholeGenomeAmplification](https://github.com/mutantturkey/SelectiveWholeGenomeAmplification) to find a list of starting primers. This list should have one primer per line, with foreground binding numbers, background binding numbers, and weight ratio following, separated by spaces. For instance:
 ```
 AATTGGCC 120000 1200 0.001
 AATTCCGG 14000 2300 0.1642
 ```
+
+The first step is to run `swga.py filter_primers` on this list. This removes any primers that bind to the background genome more than the number of times specified either on the command line or in the config file. It then reorders them according to the fourth column, which is usually a modified ratio of the number of foreground/background binding sites. The command usually outputs straight to standard out, so to save its output, simply redirect it with `> output_file`.
+
+The next step involves finding the binding sites of these filtered primers on the foreground genome. For the sake of easier coding, this module searches through a "flat" FASTA file, which is basically a FASTA file with all the header text and newlines removed. Use the `utils/fasta_flattener.sh` tool to convert your foreground genome, and update `parameters.cfg` with the flattened FASTA file's location. Next, run `swga.py fg_locations -i filtered_primers` where `filtered_primers` is the file from step 1. Normally this command echos its input to stdout so you can chain it together with other commands. To avoid this behavior, simply add `--no_passthrough` to the command. For particularly large foreground genomes, you can add `-v` to the command to track progress.
+
+At this point, we can now create the primer compatibility graph. This graph contains each primer as a vertex and adds an edge between two primer vertices if they are not heterodimers (according to the thresholds specified). This is done with the `swga.py make_graph` command, and is usually extremely fast, so there is no need to save its output. Instead, it is equally easy to chain it together with the `swga.py find_sets` and `swga.py process_sets` commands, like so:
+```sh
+swga.py make_graph -i filtered_primers | swga.py find_sets | swga.py process_sets -o valid_sets.txt
+```
+
+The `find_sets` command is the heart of this module. It takes the primer compatibility graph and attempts to find completely connected subgraphs (cliques) where the cumulative background genome binding frequency of the primers in the clique is lower than a certain amount. See [theory](#theory) below for more explanation.
+
+The `process_sets` command takes the output from `find_sets` and runs further statistics on the sets, only outputting a set if the primers in the set have a max distance on the foreground genome below a certain threshold. It also currently calculates the standard deviation of the binding distances on the foreground genome. The output of this command has the format per row of `[stdev] [max_dist] [primer seq 1] [primer seq 2] ...`.
 
 
 ## Theory
@@ -75,8 +88,6 @@ We need to select a compatible set of primers that binds to a target (foreground
 
 Given a list of primers, the goal of finding a group of _n_ compatible primers (where _n_ is the desired set size) is mappable to finding the largest [clique](https://en.wikipedia.org/wiki/Clique_(graph_theory)) in a graph.
 
-A clique in graph theory is a set of nodes in an undirected graph that are all connected to one another. If we visualize all the primers as nodes on a graph, and connect each compatible pair of primers with an edge, we can see that a set of mutually compatible primers takes the form of a clique in this graph.
+A clique in graph theory is a set of nodes in an undirected graph that are all connected to one another. If we visualize all the primers as nodes on a graph, and connect each compatible pair of primers with an edge, we can see that a set of mutually compatible primers takes the form of a clique in this graph. 
 
 Unfortunately, this is a known NP-complete problem, so no known efficient solution exists. Exponential-time solutions do exist, however, and we will be using an implementation of the branch-and-bound algorithm called [cliquer](http://users.tkk.fi/~pat/cliquer.html) to find the desired primer sets.
-
-Development will be focused on wrapping cliquer in Python to manage the workflow, devising a way of splitting the computational workload amongst multiple cores, and integrating with the rest of the SWGA pipeline.
