@@ -6,7 +6,12 @@ import sys
 import argparse
 import ConfigParser
 import subprocess
-from signal import signal, SIGPIPE, SIG_DFL
+import cPickle
+import gzip
+import multiprocessing
+from signal import signal, SIGPIPE, SIG_DFL, SIGTERM
+
+signal(SIGTERM, lambda signum, stack_frame: sys.exit(1))
 
 def main():
     usage="""swga.py command
@@ -57,6 +62,7 @@ Available commands:
 
     # Filter primers command
     filter_parser.set_defaults(**fp_defaults)
+    filter_parser.set_defaults(func=filter_primers)
     filter_parser.add_argument('--max_bg_binding', action='store',
                                type=int, help='''Max times a primer is allowed
                                to bind to the background genome.''')   
@@ -72,21 +78,30 @@ Available commands:
 
     # Foreground binding locations command
     fg_loc_parser.set_defaults(**fl_defaults)
+    fg_loc_parser.set_defaults(func=fg_locations)
     fg_loc_parser.add_argument('--fg_genome', action='store',
                                help='''path to foreground genome
                                sequence, passed through the
                                utils/genome_flattener.sh program''')
     fg_loc_parser.add_argument('-i', '--input', action='store',
                                default=sys.stdin, type=argparse.FileType('r'),
-                               help='''Input file. If blank, reads from
-                               stdin.''') 
+                               help='''Space-delimited file where each row has
+                               the primer sequence, fg binding number, bg
+                               binding number, and fg/bg binding ratio, in that
+                               order. If blank, reads from stdin.''', metavar='F')
     fg_loc_parser.add_argument('-o', '--output', action='store',
-                               help='''Where to store the output (in sqlite
-                               format).''')
+                               metavar='F', help='''Where to store the serialized output.''')
+    fg_loc_parser.add_argument('--ncores', action='store', type=int, metavar='N',
+                               default=multiprocessing.cpu_count(),
+                               help='''Number of cores to use when
+                               searching.''')
+    fg_loc_parser.add_argument('-v', '--verbose', action='store_true',
+                               help='''Display progress''')
 
     
     # Make primer graph command
     mkgraph_parser.set_defaults(**mg_defaults)
+    mkgraph_parser.set_defaults(func=make_graph)
     mkgraph_parser.add_argument('--max_hetdimer_bind', type=int, help='''Max
     number of consecutive complimentary bases allowed between two primers.''')
     mkgraph_parser.add_argument('-i', '--input', action='store',
@@ -104,6 +119,7 @@ Available commands:
 
     # Find sets command
     findsets_parser.set_defaults(**fs_defaults)
+    findsets_parser.set_defaults(func=find_sets)
     findsets_parser.add_argument('-m', '--min_size', type=int,
                                  help='''Minimum size of primer sets.''')
     findsets_parser.add_argument('-M', '--max_size', type=int,
@@ -132,6 +148,7 @@ Available commands:
 
     # Filter sets command
     processsets_parser.set_defaults(**ps_defaults)
+    processsets_parser.set_defaults(func=process_sets)
     processsets_parser.add_argument('-i', '--input', default=sys.stdin,
                                     type=argparse.FileType('r'),
                                     help='''Compatible sets of primers. One set
@@ -144,24 +161,53 @@ Available commands:
                                     contains foreground genome binding locations
                                     for each primer.''')  
 
-    args = parser.parse_args(remaining)
-    
-    if args.command == 'filter_primers':
-        filter_cmd = """
-sort -t ' ' -n -k 3 < {} | awk '{{if ($3 < {}) print $0}}' | sort -t ' ' -n -r -k 4 | head -n {}
-        """.format(args.primer_file, args.max_bg_binding, args.num_primers)
-        print filter_cmd
-        subprocess.call(filter_cmd, shell=True, preexec_fn = lambda:
+    # parses the remaining subcommand options
+    new_args = parser.parse_args(remaining)
+    # calls the function corresponding to the subcommand with the specified options
+    new_args.func(new_args)
+
+
+
+def filter_primers(args):
+    if not args.max_bg_binding:
+        missing_default_value('max_bg_binding')
+    elif not args.num_primers:
+        missing_default_value('num_primers')
+    filter_cmd = """sort -t ' ' -n -k 3 < {} | awk '{{if ($3 < {}) print
+    $0}}' | sort -t ' ' -n -r -k 4 | head -n {}""".format(args.primer_file,
+    args.max_bg_binding, args.num_primers) 
+    subprocess.call(filter_cmd, shell=True, preexec_fn = lambda:
                         signal(SIGPIPE, SIG_DFL))
+
+def fg_locations(args):
+    primers = [line.strip('\n').split(' ')[0] for line in args.input]
+    if args.verbose:
+        print(("Populating genome binding locations for {} "
+               "primers...").format(len(primers)))
+    locations = ps.mp_find_primer_locations(primers, args.fg_genome,
+                                            args.ncores, args.verbose)
+    with gzip.GzipFile(args.output, 'w') as out:
+        cPickle.dump(locations, out)
+        if args.verbose:
+            print("Locations serialized to {}".format(out.name))
+
         
-    elif args.command == 'fg_locations':
-        print "Finding foreground locations"
-    elif args.command == 'make_graph':
-        print "Making primer graph"
-    elif args.command == 'find_sets':
-        print "Finding sets..."
-    elif args.command == 'process_sets':
-        print "Processing sets"
+
+def make_graph(args):
+    pass
+def find_sets(args):
+    pass
+def process_sets(args, parser):
+    pass
+    
+
+        
+def missing_default_value(missing_val):
+    sys.stderr.write(("Error: {} not specified and no default found in config "
+                     "file. Try -h for help.\n").format(missing_val))
+    sys.exit(1)
+                  
+    
 
 
 if __name__ == "__main__":
