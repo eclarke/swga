@@ -217,7 +217,7 @@ def fg_locations(args):
     with gzip.GzipFile(args.fg_bind_locations, 'w') as out:
         cPickle.dump(locations, out)
         if args.verbose:
-            sys.stderr.write("Locations serialized to {}".format(out.name))
+            sys.stderr.write("Locations stored in {}\n".format(out.name))
 
 
 def make_graph(args):
@@ -257,8 +257,6 @@ def process_sets(args):
     if not args.quiet:
         sys.stderr.write('\n')
     sys.exit()
-        
-
 
         
 def missing_default_value(missing_val):
@@ -266,8 +264,6 @@ def missing_default_value(missing_val):
                      "file. Try -h for help.\n").format(missing_val))
     sys.exit(1)
                   
-    
-
 
 if __name__ == "__main__":
     main()
