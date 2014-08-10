@@ -135,9 +135,6 @@ def max_consecutive_binding(mer1, mer2):
     return max_bind
 
 
-# -- Experimental functions --
-# Here be monsters...
-
 def find_locations(substring, string):
     '''
     Very fast way of finding overlapping substring locations in a
