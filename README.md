@@ -20,7 +20,7 @@ make install
 Assuming you have a list of primers together with foreground and background binding rates and ratio in a file called `selected-mers`, a foreground genome at "fg-genome.fasta" and you have compiled the set_finder as above, the following commands will do the following:
 
 
-```shell
+```sh
 cd swga
 
 # select at most 200 primers with fewer than 12000 bg binding sites
