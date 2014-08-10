@@ -29,7 +29,7 @@ LONGOPTS = -DENABLE_LONG_OPTIONS
 ##### End of configurable options
 
 
-all: cl
+all: cl set_finder
 
 
 testcases: testcases.o cliquer.o graph.o reorder.o
@@ -37,10 +37,6 @@ testcases: testcases.o cliquer.o graph.o reorder.o
 
 cl: cl.o cliquer.o graph.o reorder.o
 	$(CC) $(LDFLAGS) -o $@ cl.o cliquer.o graph.o reorder.o
-
-cl2: cl2.o cliquer.o graph.o reorder.o
-	$(CC) $(LDFLAGS) -o $@ cl2.o cliquer.o graph.o reorder.o
-
 
 cl.o testcases.o cliquer.o graph.o reorder.o: cliquer.h set.h graph.h misc.h reorder.h Makefile cliquerconf.h
 
@@ -57,5 +53,8 @@ backup:
 test: testcases
 	./testcases
 
-swga: swga.o cliquer.o graph.o reorder.o
-	$(CC) $(LDFLAGS) -o $@ swga.o cliquer.o graph.o reorder.o
+set_finder: set_finder.o cliquer.o graph.o reorder.o
+	$(CC) $(LDFLAGS) -o $@ set_finder.o cliquer.o graph.o reorder.o
+
+install:
+	mv set_finder ../bin/set_finder
