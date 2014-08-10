@@ -17,7 +17,6 @@ import re
 import itertools
 import signal
 import time
-import numpy as np
 from contextlib import closing
 
 Primer = namedtuple('Primer', 'id, seq, bg_freq, fg_freq')
@@ -216,7 +215,7 @@ def mp_find_primer_locations(primers, genome_fp,
     return locations
 
 
-def fg_bind_distances(setline, primer_locations):
+def fg_bind_distances(setline, primer_locations, stat_func):
     pset_line = setline.strip('\n').split(' ')
     psize = pset_line[0]
     pweight = pset_line[1]
@@ -225,11 +224,31 @@ def fg_bind_distances(setline, primer_locations):
                     primer_set], [])
     primers = [primer_locations[primer]['seq'] for primer in \
                primer_set] 
-    stdev = np.std(locations, ddof=1)
-    max_dist = max(np.ediff1d(sorted(locations)))
+    stdev = stat_func(locations)
+    max_dist = max_seq_diff(sorted(locations))
     return (primer_set, primers, max_dist, stdev)
-        
 
+
+def max_seq_diff(seq):
+    '''
+    Calculates the sequential difference along a sorted sequence of
+    integers and returns the max value.
+    '''
+    max_diff = 0
+    for i in range(len(seq)-1):
+        diff = seq[i+1] - seq[i]
+        assert diff >= 0
+        if diff > max_diff:
+            max_diff = diff
+    return max_diff
+
+
+def stdev(seq):
+    from math import sqrt
+    n = float(len(seq))
+    mu = sum(seq)/n
+    return sqrt(sum((x-mu)**2 for x in seq) / (n-1))
+    
 
 def progressbar(i, length):
     if i >= 1:
