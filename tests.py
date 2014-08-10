@@ -75,19 +75,46 @@ TTTTCCC''')
 class HeterodimerTests(unittest.TestCase):
 
     def setUp(self):
-        self.primer1 = ps.Primer(1, "ATGCTC", 0, 0)
-        # 3 contiguous
-        self.primer2 = ps.Primer(2, "TACAAC", 0, 0)
+        self.primers = []
+        self.primers.append(ps.Primer(1, "ATGCTC", 0, 0))
+        # 4 contiguous
+        self.primers.append(ps.Primer(2, "CAGCAT", 0, 0))
         # 3 contiguous, alt
-        self.primer3 = ps.Primer(3, "ATGGAG", 0, 0)
+        self.primers.append(ps.Primer(3, "GAGGTA", 0, 0))
         # 3 contiguous, alt 2
-        self.primer4 = ps.Primer(4, "ATCGAC", 0, 0)
+        self.primers.append(ps.Primer(4, "ATCGAC", 0, 0))
         # valid
-        self.primer5 = ps.Primer(5, "TTCCAC", 0, 0)
+        self.primers.append(ps.Primer(5, "TTCCAC", 0, 0))
                             
 
     def test_compatible_primers(self):
+        edges = ps.test_pairs(self.primers[0:2], 3)
+        self.assertEqual(edges, [])
+        edges = ps.test_pairs([self.primers[0], self.primers[4]], 3)
+        self.assertEqual(edges, [[1, 5]])
+
+
+class FgBindLocationsTest(unittest.TestCase):
+
+    def setUp(self):
         pass
+
+    def test_find_locations(self):
+        test_str = "TATATATAT"
+        substr = "TAT"
+        locs = ps.find_locations(substr, test_str)
+        self.assertEqual(locs, [0, 2, 4, 6])
+
+    def test_find_primer_locations(self):
+        test_str = ">TATATATAT>TATA"
+        with tempfile.NamedTemporaryFile() as tmp:
+            tmp.write(test_str)
+            tmp.flush()
+            filename = tmp.name
+            primer = ps.Primer(1, "TATA", 0, 0)
+            _, test_locs = ps.find_primer_locations(primer, filename)
+        locs = sorted([0, 10, 1, 3, 5, 11, 2, 4, 6])
+        self.assertEqual(test_locs, locs)
 
 
 class FgBindDistanceTest(unittest.TestCase):
@@ -97,12 +124,14 @@ class FgBindDistanceTest(unittest.TestCase):
         self.locations = {1:[1, 2, 3],
                           2:[4, 5, 6],
                           3:[7, 8, 10]}
-        primer_set, max_dist, stdev = ps.find_fg_bind_distances(self.line, self.locations)
+        primer_set, max_dist, stdev = ps.fg_bind_distances(self.line, self.locations)
         self.assertEqual(max_dist, 2)
         self.assertEqual(round(stdev, 4), 2.9345)
         self.assertEqual(primer_set, [1, 2, 3])
         
-        
+
+
+
         
 # def test_test_pairs():
 #     pass

@@ -101,7 +101,7 @@ def test_pairs(starting_primers, max_binding):
     '''
     edges = []
     for p1, p2 in combinations(starting_primers, 2):
-        if max_consecutive_binding(p1.seq, p2.seq) < max_binding:
+        if max_consecutive_binding(p1.seq, p2.seq) <= max_binding:
             edges.append([p1.id, p2.id])
     return edges
 
@@ -144,8 +144,8 @@ def max_consecutive_binding(mer1, mer2):
 
 def find_locations(substring, string):
     '''
-    Very fast way of finding substring locations in a (potentially
-    large) string.
+    Very fast way of finding overlapping substring locations in a
+    (potentially large) string.
     '''
     locations = []
     start = 0
@@ -217,7 +217,7 @@ def mp_find_primer_locations(primers, genome_fp,
     return locations
 
 
-def find_fg_bind_distances(setline, primer_locations):
+def fg_bind_distances(setline, primer_locations):
     pset_line = setline.strip('\n').split(' ')
     psize = pset_line[0]
     pweight = pset_line[1]
