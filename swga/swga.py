@@ -242,7 +242,9 @@ def process_sets(args):
     with gzip.GzipFile(args.fg_bind_locations, 'r') as infile:
         primer_locations = cPickle.load(infile)
     for line in args.input:
-        primer_set, primers, max_dist, stdev = ps.fg_bind_distances(line, primer_locations)
+        primer_set, primers, max_dist, stdev = ps.fg_bind_distances(line,
+                                                                    primer_locations,
+                                                                    ps.stdev)
         primer_str = " ".join(primers)
         processed += 1
         if max_dist <= args.max_fg_bind_dist:

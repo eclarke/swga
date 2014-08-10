@@ -68,7 +68,7 @@ TTTTCCC''')
                               self.bad_input)
 
     def test_bad_handle(self):
-        self.failUnlessRaises(AttributeError, ps.read_primers,
+        self.failUnlessRaises(ValueError, ps.read_primers,
                               self.bad_handle)
 
 
@@ -127,7 +127,7 @@ class FgBindDistanceTest(unittest.TestCase):
                              'loc':[4, 5, 6]},
                           3:{'seq':'',
                              'loc':[7, 8, 10]}}
-        primer_set, primers, max_dist, stdev = ps.fg_bind_distances(self.line, self.locations)
+        primer_set, primers, max_dist, stdev = ps.fg_bind_distances(self.line, self.locations, ps.stdev)
         self.assertEqual(max_dist, 2)
         self.assertEqual(round(stdev, 4), 2.9345)
         self.assertEqual(primer_set, [1, 2, 3])
