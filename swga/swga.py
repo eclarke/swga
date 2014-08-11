@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import primer_sets as ps
+import stats
 import shlex
 import sys
 import argparse
@@ -244,7 +245,7 @@ def process_sets(args):
     for line in args.input:
         primer_set, primers, max_dist, stdev = ps.fg_bind_distances(line,
                                                                     primer_locations,
-                                                                    ps.stdev)
+                                                                    stats.stdev)
         primer_str = " ".join(primers)
         processed += 1
         if max_dist <= args.max_fg_bind_dist:

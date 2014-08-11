@@ -35,3 +35,7 @@ swga/cliquer/swga
 swga/cliquer/cl2
 swga/cliquer/cl
 selected-mers
+
+swga/bin/set_finder
+
+swga/valid_sets
