@@ -6,14 +6,11 @@ setup(
     author='Erik Clarke',
     author_email='ecl@mail.med.upenn.edu',
     packages=['swga'],
-    scripts=['bin/set_finder'],
+    scripts=['swga/bin/set_finder', 'swga/swga.py'],
     url='https://github.com/BrissonEEDS/PrimerSets',
     license='LICENSE.txt',
     description='Pipeline to select compatible primer sets for selective whole-genome amplification.',
     long_description=open('README.md').read(),
-    install_requires=[
-        "numpy > 1.6.1"
-    ],
 )
     
     

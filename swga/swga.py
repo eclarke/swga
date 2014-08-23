@@ -2,7 +2,6 @@
 
 import primer_sets as ps
 import stats
-import shlex
 import sys
 import argparse
 import ConfigParser
@@ -16,9 +15,8 @@ from multiprocessing.pool import ThreadPool
 from signal import signal, SIGPIPE, SIG_DFL, SIGTERM
 
 
-
 def main():
-    usage="""swga.py [-c CONFIG_FILE] command
+    usage="""swga.py <command>
 
 Available commands:
 \t filter_primers: removes invalid primers from input
@@ -32,7 +30,6 @@ config file location by setting the 'swga_params' environment
 variable, or override certain settings by specifying them as arguments.
 
 """.format(config=ps.default_config_file)
-
     
     parser = argparse.ArgumentParser(usage=usage,
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -64,10 +61,9 @@ variable, or override certain settings by specifying them as arguments.
     findsets_parser = subparsers.add_parser('find_sets', prog='find_sets',
                                             help='''find compatible sets of
                                             primers''') 
-    processsets_parser = subparsers.add_parser('process_sets',
+    process_sets_parser = subparsers.add_parser('process_sets',
                                                prog='process_sets', help='''filter
                                                and analyze sets of primers''')
-
 
 
     # Filter primers command
@@ -155,41 +151,51 @@ variable, or override certain settings by specifying them as arguments.
 
 
     # Filter sets command
-    processsets_parser.set_defaults(**ps_defaults)
-    processsets_parser.set_defaults(func=process_sets)
-    processsets_parser.add_argument('-i', '--input', default=sys.stdin,
-                                    help='''Compatible sets of primers. One set
-                                    per row, first number is the size of the
-                                    set, following numbers are primer ids in
-                                    that set, separated from spaces (output from
-                                    find_sets command. Defaults to
-                                    stdin if unspecified.''')
-    processsets_parser.add_argument('-o', '--output',
-                                    default=sys.stdout,
-                                    type=argparse.FileType('w'),
-                                    help='''Where to send output''')
-    processsets_parser.add_argument('--ncores', type=int,
-                                    default=multiprocessing.cpu_count(),
-                                    help='''Number of cores to use to do
-                                    distance calculations''')
-    processsets_parser.add_argument('--max_sets', type=int,
-                                    help='''How many sets pass filter before we exit''')
-    processsets_parser.add_argument('--max_fg_bind_dist', type=int,
-                                    help='''Maximum distance between primers in
-                                    a set on the foreground genome.''')
-    processsets_parser.add_argument('--fg_bind_locations',
-                                    help='''Location of the output file that
-                                    contains foreground genome binding locations
-                                    for each primer (from the fg_locations command).''')  
-    processsets_parser.add_argument('-q', '--quiet', action='store_true', help='''Suppress progress output''')
+    process_sets_parser.set_defaults(**ps_defaults)
+    process_sets_parser.set_defaults(func=process_sets)
+    process_sets_parser.add_argument('-i', '--input', default=sys.stdin,
+                                     help='''Compatible sets of primers. One set
+                                     per row, first number is the size of the
+                                     set, following numbers are primer ids in
+                                     that set, separated from spaces (output from
+                                     find_sets command. Defaults to
+                                     stdin if unspecified.''')
+    process_sets_parser.add_argument('-o', '--output',
+                                     default=sys.stdout,
+                                     type=argparse.FileType('w'),
+                                     help='''Where to send output''')
+    process_sets_parser.add_argument('--ncores', type=int,
+                                     default=multiprocessing.cpu_count(),
+                                     help='''Number of cores to use to do
+                                     distance calculations. Default is
+                                     number of cores in the machine.''')
+    process_sets_parser.add_argument('--max_sets', type=int,
+                                     help='''How many sets pass filter before we exit''')
+    process_sets_parser.add_argument('--max_fg_bind_dist', type=int,
+                                     help='''Maximum distance between primers in
+                                     a set on the foreground genome.''')
+    process_sets_parser.add_argument('--fg_bind_locations',
+                                     help='''Location of the output file that
+                                     contains foreground genome binding locations
+                                     for each primer (from the fg_locations command).''')  
+    process_sets_parser.add_argument('-q', '--quiet',
+                                     action='store_true',
+                                     help='''Suppress progress output''')  
     # parses the remaining subcommand options
     new_args = parser.parse_args(remaining)
-    # calls the function corresponding to the subcommand with the specified options
+    # Calls the function corresponding to the subcommand with the specified options
+    # The functions are generally specified below.
     new_args.func(new_args)
 
 
-
 def filter_primers(args):
+    '''
+    Uses a hacky shell command to filter primers for a given
+    background binding frequency and sorts results by the fg/bg ratio,
+    returning at most num_primers primers to output.
+
+    args: Namespace object from the argument parser
+    '''
     if not args.max_bg_binding:
         missing_default_value('max_bg_binding')
     elif not args.num_primers:
@@ -202,6 +208,12 @@ def filter_primers(args):
 
 
 def fg_locations(args):
+    '''
+    Finds the foreground genome binding locations of the primers from
+    the input.
+
+    args: Namespace object from the argument parser
+    '''
     primers = []
     if args.no_passthrough:
         primers = ps.read_primers(args.input)
@@ -222,12 +234,24 @@ def fg_locations(args):
 
 
 def make_graph(args):
+    '''
+    Creates the heterodimer compatibility graph.
+
+    args: Namespace object from the argument parser
+    '''
     primers = ps.read_primers(args.input)
     arcs = ps.test_pairs(primers, args.max_hetdimer_bind)
     ps.write_graph(primers, arcs, args.output)
 
     
 def find_sets(args):
+    '''
+    Calls the set_finder binary with the specified options on the
+    heterodimer compatibility graph and outputs valid sets for
+    post-processing.
+
+    args: Namespace object from the argument parser
+    '''
     kwargs = vars(args)
     kwargs['output'] = '> '+args.output if args.output else ''
     find_set_cmd = ("{set_finder} -q -q -B {min_bg_bind_dist} -L {bg_genome_len}"
@@ -237,6 +261,13 @@ def find_sets(args):
     
 
 def process_sets(args):
+    '''
+    Takes the output from the set_finder binary and scores the sets,
+    outputting only sets that pass a max foreground genome binding
+    distance filter, specified in args.
+
+    args: Namespace object from the argument parser
+    '''
     primer_locations = None
     passed = 0
     processed = 0
