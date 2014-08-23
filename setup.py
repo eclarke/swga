@@ -6,7 +6,7 @@ setup(
     author='Erik Clarke',
     author_email='ecl@mail.med.upenn.edu',
     packages=['swga'],
-    scripts=['swga/bin/set_finder', 'swga/swga.py'],
+    scripts=['swga/bin/set_finder', 'primersets.py'],
     url='https://github.com/BrissonEEDS/PrimerSets',
     license='LICENSE.txt',
     description='Pipeline to select compatible primer sets for selective whole-genome amplification.',

@@ -57,4 +57,4 @@ set_finder: set_finder.o cliquer.o graph.o reorder.o
 	$(CC) $(LDFLAGS) -o $@ set_finder.o cliquer.o graph.o reorder.o
 
 install:
-	mv set_finder ../bin/set_finder
+	mv set_finder ../../set_finder
