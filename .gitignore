@@ -31,9 +31,10 @@
 
 *.gr
 *.gz
-swga/cliquer/swga
-swga/cliquer/cl2
-swga/cliquer/cl
+lib/swga
+lib/cl2
+lib/cl
+lib/set_finder
 selected-mers
 
 swga/bin/set_finder
