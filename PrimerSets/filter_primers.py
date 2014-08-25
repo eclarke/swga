@@ -38,8 +38,8 @@ def main():
     help="""Filename to store the filtered primers (tab-delimited).
     (default: stdout)""")
 
-    parser.add_argument('-v', '--verbose', action='store_true',
-    help="Display warnings (default: %(default)s)")
+    parser.add_argument('-q', '--quiet', action='store_true',
+    help="Suppress messages (default: %(default)s)")
 
     args = parser.parse_args()
     if not args.quiet and args.input.name == '<stdin>':
@@ -50,7 +50,7 @@ def main():
 
 
 def filter_primers(args):
-    primers = PrimerSets.read_primer_file(args.input, False, args.verbose)
+    primers = PrimerSets.read_primer_file(args.input, False, args.quiet)
     # sort by bg binding count
     primers = sorted(primers, key=attrgetter("bg_freq"))
     # remove primers that bind too many times to bg

@@ -13,11 +13,11 @@ setup(
     long_description=open('README.md').read(),
     entry_points = {
         'console_scripts': [
-            'filter-primers = PrimerSets.filter_primers:main',
-            'fg-locations = PrimerSets.fg_locations:main',
-            'mk-primer-graph = PrimerSets.make_graph:main',
-            'find-sets = PrimerSets.find_sets:main',
-            'process-sets = PrimerSets.process_sets:main',
+            'filter_primers = PrimerSets.filter_primers:main',
+            'fg_locations = PrimerSets.fg_locations:main',
+            'mk_primer_graph = PrimerSets.make_graph:main',
+            'find_sets = PrimerSets.find_sets:main',
+            'process_sets = PrimerSets.process_sets:main',
         ]
     }
 )

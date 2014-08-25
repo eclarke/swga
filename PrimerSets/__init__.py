@@ -25,7 +25,7 @@ def parse_primer(string, line_no=0):
     return Primer(line_no, seq, int(bg_freq), int(fg_freq), float(ratio))
 
 
-def read_primer_file(file_handle, echo_input=False, verbose=False):
+def read_primer_file(file_handle, echo_input=False, quiet=False):
     '''
     Calls parse_primer() on each line of the input file. If a malformed line is
     found, will skip parsing and (optionally) output a warning message.
@@ -44,7 +44,7 @@ def read_primer_file(file_handle, echo_input=False, verbose=False):
             if echo_input:
                 sys.stdout.write(line)
         except ValueError as e:
-            if verbose:
+            if not quiet:
                 sys.stderr.write("Cannot parse line %i (reason: %s), "\
                 "skipping...\n" % (i, e.message))
             continue
@@ -202,6 +202,36 @@ def mp_find_primer_locations(primers, genome_fp, cores, verbose):
     if verbose:
         sys.stderr.write('\n')
     return locations
+
+
+## Set processing functions
+
+def fg_bind_distances(setline, primer_locations, stat_func):
+    pset_line = setline.strip('\n').split(' ')
+    psize = pset_line[0]
+    pweight = pset_line[1]
+    primer_set = [int(_) for _ in pset_line[2::]]
+    locations = sum([primer_locations[primer]['loc'] for primer in
+                    primer_set], [])
+    primers = [primer_locations[primer]['seq'] for primer in \
+               primer_set]
+    stat = stat_func(locations)
+    max_dist = max_seq_diff(sorted(locations))
+    return (primer_set, primers, max_dist, stat)
+
+
+def max_seq_diff(seq):
+    '''
+    Calculates the sequential difference along a sorted sequence of
+    integers and returns the max value.
+    '''
+    max_diff = 0
+    for i in range(len(seq)-1):
+        diff = seq[i+1] - seq[i]
+        assert diff >= 0
+        if diff > max_diff:
+            max_diff = diff
+    return max_diff
 
 
 def progressbar(i, length):

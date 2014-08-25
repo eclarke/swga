@@ -13,19 +13,19 @@ def main():
     defaults = {}
     if os.path.isfile(cfg_file):
         config.read([cfg_file])
-        defaults = dict(config.items('filter_primers'))
+        defaults = dict(config.items('fg_locations'))
 
     parser = argparse.ArgumentParser(description="""Find binding locations of
     primers in the foreground genome.""")
     parser.set_defaults(**defaults)
 
-    parser.add_argument('-i', '--input', default=sys.stdin,
+    parser.add_argument('-i', '--input', default=sys.stdin, metavar='FILE',
     type=argparse.FileType('r'), help="""Input file where each row contains a
     primer, fg binding #, bg binding #, and fg/bg binding ratio, separated by
     whitespace. (default: stdin)""")
 
-    parser.add_argument('-f', '--fg_genome', help="""Path to flattened
-    foreground genome file. (default: %(default)s)""")
+    parser.add_argument('-f', '--fg_genome', metavar='FILE',
+    help="""Path to flattened foreground genome file. (default: %(default)s)""")
 
     parser.add_argument('-l', '--fg_bind_locations', metavar='FILE',
     help="Where to store the binding locations. (default: %(default)s)")

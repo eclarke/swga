@@ -221,9 +221,9 @@ def fg_bind_distances(setline, primer_locations, stat_func):
                     primer_set], [])
     primers = [primer_locations[primer]['seq'] for primer in \
                primer_set]
-    stdev = stat_func(locations)
+    stat = stat_func(locations)
     max_dist = max_seq_diff(sorted(locations))
-    return (primer_set, primers, max_dist, stdev)
+    return (primer_set, primers, max_dist, stat)
 
 
 def max_seq_diff(seq):
