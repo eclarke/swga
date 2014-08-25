@@ -47,14 +47,14 @@ def write_graph(primers, edges, file_handle):
     '''
     Writes graph in DIMACS graph format, specified in the cliquer user manual.
     See http://users.tkk.fi/~pat/cliquer.html
-    
+
     An edge is a list of the form [first_node, second_node]
     "edges" is a list of edges
     '''
 
     if type(file_handle) is not file:
         raise ValueError(("file_handle must be a file, not "
-                          "a {}").format(type(file_handle))) 
+                          "a {}").format(type(file_handle)))
 
     file_handle.write('p sp {} {}\n'.format(len(primers), len(edges)))
     for primer in primers:
@@ -68,14 +68,14 @@ def write_graph(primers, edges, file_handle):
             file_handle.write('e {} {}\n'.format(edge[0], edge[1]))
         except IndexError:
             raise ValueError("Edges must be specified as a list with"+
-            "two elements. Invalid edge: {}".format(edge)) 
+            "two elements. Invalid edge: {}".format(edge))
 
 
 def read_primers(file_handle):
     '''
     Reads in a space-delimited file where the first column is the
     primer sequence, second column is the foreground genome bind
-    count, and third is the background genome binding count. 
+    count, and third is the background genome binding count.
     Returns a list of Primer objects.
     '''
     try:
@@ -85,7 +85,7 @@ def read_primers(file_handle):
             primers.append(Primer(len(primers)+1, seq,
                                   int(bg_freq), int(fg_freq)))
     except ValueError as err:
-        
+
         raise err
     return primers
 
@@ -108,7 +108,7 @@ def max_consecutive_binding(mer1, mer2):
     when comparing two different mers, using the reverse compliment.
     '''
     binding = { 'A': 'T', 'T': 'A',
-                'C': 'G', 'G': 'C',   
+                'C': 'G', 'G': 'C',
                 '_':  False}
 
     # Swap variables if the second is longer than the first
@@ -175,7 +175,7 @@ def mp_find_primer_locations(primers, genome_fp,
                              chatty=True):
     '''
     Uses multiple processes to find the locations of all primer
-    sequences in the target genome. 
+    sequences in the target genome.
     '''
     locations = {}
     if chatty:
@@ -188,7 +188,7 @@ def mp_find_primer_locations(primers, genome_fp,
         if chatty:
             progressbar(len(locations.keys()), len(primers))
 
-    
+
     pool = multiprocessing.Pool(cores, _init_worker)
     for primer in primers:
         pool.apply_async(find_primer_locations,
@@ -220,7 +220,7 @@ def fg_bind_distances(setline, primer_locations, stat_func):
     locations = sum([primer_locations[primer]['loc'] for primer in
                     primer_set], [])
     primers = [primer_locations[primer]['seq'] for primer in \
-               primer_set] 
+               primer_set]
     stdev = stat_func(locations)
     max_dist = max_seq_diff(sorted(locations))
     return (primer_set, primers, max_dist, stdev)
@@ -245,7 +245,7 @@ def stdev(seq):
     n = float(len(seq))
     mu = sum(seq)/n
     return sqrt(sum((x-mu)**2 for x in seq) / (n-1))
-    
+
 
 def progressbar(i, length):
     if i >= 1:
@@ -253,7 +253,7 @@ def progressbar(i, length):
     sys.stderr.write('\r[%-20s] %-3d%%' % ('='*int(round(i*20)), i*100))
     sys.stderr.flush()
 
-    
+
 class DefaultValueError(Exception):
     def __init__(self, missing_arg):
         super(DefaultValueError, self).__init__(missing_arg+" not specified and no"+

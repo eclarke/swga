@@ -5,7 +5,7 @@ setup(
     version='0.1.0',
     author='Erik Clarke',
     author_email='ecl@mail.med.upenn.edu',
-    packages=['swga'],
+    packages=['PrimerSets'],
     scripts=['lib/set_finder', 'utils/fasta_flattener.sh'],
     url='https://github.com/BrissonEEDS/PrimerSets',
     license='LICENSE.txt',
@@ -13,13 +13,11 @@ setup(
     long_description=open('README.md').read(),
     entry_points = {
         'console_scripts': [
-            'filter_primers = swga.filter_primers:main',
-            'fg_locations = swga.fg_locations:main',
-            'mk_primer_graph = swga.make_graph:main',
-            'find_sets = swga.find_sets:main',
-            'process_sets = swga.process_sets:main',
+            'filter-primers = PrimerSets.filter_primers:main',
+            'fg-locations = PrimerSets.fg_locations:main',
+            'mk-primer-graph = PrimerSets.make_graph:main',
+            'find-sets = PrimerSets.find_sets:main',
+            'process-sets = PrimerSets.process_sets:main',
         ]
     }
 )
-    
-    
