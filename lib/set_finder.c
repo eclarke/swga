@@ -421,7 +421,9 @@ void print_clique(set_t s,graph_t *g) {
 }
 
 /*
- */ 
+ * Custom write function for SWGA.
+ * Outputs a line with the format [set_size bg_bind_weight primer_id1,primer_id2,...]
+ */
 boolean write_clique_func(set_t s, graph_t *g, clique_options *opts) {
   int i;
   int num;
@@ -429,7 +431,7 @@ boolean write_clique_func(set_t s, graph_t *g, clique_options *opts) {
   for (i=0; i<SET_MAX_SIZE(s); i++) {
     if (SET_CONTAINS(s, i)) {
       num = number1 ? i+1 : i;
-      fprintf(output, " %d", num);
+      fprintf(output, ",%d", num);
     }
   }
   fprintf(output, "\n");
@@ -442,7 +444,7 @@ boolean write_clique_func(set_t s, graph_t *g, clique_options *opts) {
  */
 boolean record_clique_func(set_t s,graph_t *g,clique_options *opts) {
   if (clique_count>=clique_list_size) {
-    clique_list=realloc(clique_list,(clique_list_size+512) * 
+    clique_list=realloc(clique_list,(clique_list_size+512) *
                         sizeof(set_t));
     clique_list_size+=512;
   }
