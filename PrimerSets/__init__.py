@@ -1,5 +1,4 @@
 import re
-import os
 import sys
 import gzip
 import time
@@ -133,12 +132,12 @@ def write_graph(primers, edges, file_handle):
 ## Genome binding location functions
 
 def check_if_flattened(fasta_fp):
-    '''Checks if file exists and only has one line'''
+    '''Checks if file only has one line'''
     with open(fasta_fp) as fasta:
-        i = 0
         for i, _ in enumerate(fasta):
-            pass
-        return i==0
+            if i > 0:
+                return False
+        return True
 
 
 def find_locations(substring, string):
@@ -303,6 +302,27 @@ def get_user_fun(spec_str):
         "format modulename.possible_submodule:function_name""")
     module = importlib.import_module(module)
     return getattr(module, fun)
+
+
+def default_score_set(expression, primer_set, primer_locs, max_dist, bg_ratio,
+    output_handle):
+    # Calculate various metrics
+    namespace = {
+        'set_size': len(primer_set),
+        'fg_dist_mean': sum(primer_locs)/len(primer_locs),
+        'fg_dist_std': stats.stdev(primer_locs),
+        'fg_dist_gini': stats.gini(primer_locs),
+        'bg_ratio': bg_ratio,
+        'fg_max_dist': max_dist,
+        '__builtins__': None}
+    permitted_var_str = ", ".join([key for key in namespace.keys() if key is not "__builtins__"])
+    score = None
+    try:
+        score = eval(expression, namespace, {'__builtins__': {}})
+    except NameError as e:
+        raise NameError(e.message + '. Permitted variables are %s. Refer to README or docs for help.' % permitted_var_str)
+    print_primer_set(primer_set, [score, namespace['fg_dist_gini'],
+        namespace['fg_max_dist']], output_handle)
 
 
 def score_set(primer_set, primer_locs, max_dist, bg_ratio, output_handle):

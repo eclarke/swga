@@ -2,12 +2,8 @@ import argparse
 import ConfigParser
 import os
 import sys
-import stats
-import gzip
-import cPickle
-import multiprocessing
 import PrimerSets as ps
-
+from functools import partial
 
 def main():
     config = ConfigParser.SafeConfigParser()
@@ -39,6 +35,17 @@ def main():
     file that contains binding locations for each primer (from the fg_locations
     command). (default: %(default)s)''')
 
+    score_funs = parser.add_mutually_exclusive_group()
+    score_funs.add_argument('-s', '--score_expression', help="""Specify an
+    expression to calculate the score added to the output. For variables
+    available to use, see the README or docs. Incompatible with
+    --plugin_score_fun argument. (default: %(default)s)""")
+
+    score_funs.add_argument('-p', '--plugin_score_fun', help="""Specify a path
+    to a function to use instead of the normal scoring function to create custom
+    metrics or output. For help, see README or docs. Incompatible with
+    --score_expression argument. (default: %(default)s)""")
+
     parser.add_argument('-q', '--quiet', action='store_true', help='''Suppress
     progress output''')
 
@@ -60,7 +67,16 @@ def process_sets(args):
     '''
     primer_store = ps.load_locations(args.fg_bind_locations)
     # Find the user-defined scoring function
-    score_fun = ps.get_user_fun(args.score_fun)
+    score_fun = None
+    if args.score_expression and args.plugin_score_fun:
+        sys.stderr.write("Warning: User or config file specified both scoring "
+        "expression and plugin score function. Using the plugin score function "
+        "given by %s." % args.plugin_score_fun)
+        score_fun = ps.get_user_fun(args.score_fun)
+    elif args.score_expression:
+        score_fun = partial(ps.default_score_set, expression=args.score_expression)
+        # score_fun = lambda args: ps.default_score_set(args.score_expression, **args)
+
     passed = processed = 0
     for line in args.input:
         # Parse output from find_sets
@@ -72,7 +88,7 @@ def process_sets(args):
         if max_dist <= args.max_fg_bind_dist:
             passed += 1
             # Pass the set and attributes to the user-defined scoring function
-            score_fun(primer_set, primer_locs, max_dist, bg_ratio, args.output)
+            score_fun(primer_set=primer_set, primer_locs=primer_locs, max_dist=max_dist, bg_ratio=bg_ratio, output_handle=args.output)
 
         if not args.quiet:
             sys.stderr.write("\rSets passing filter: \t{}/{}".format(passed, processed))
