@@ -1,9 +1,14 @@
 import re
+import os
 import sys
+import gzip
 import time
 import mmap
+import stats
 import signal
+import cPickle
 import itertools
+import importlib
 import multiprocessing
 from collections import namedtuple
 from contextlib import closing
@@ -13,7 +18,7 @@ Primer = namedtuple('Primer', 'id, seq, bg_freq, fg_freq, ratio')
 default_config_file = 'parameters.cfg'
 
 # Functions
-def parse_primer(string, line_no=0):
+def parse_primer(string, line_no=1):
     '''
     Takes a line from a tab- or space-delimited file where each row specifies
     a primer sequence, fg binding count, bg binding count, and fg/bg binding
@@ -40,7 +45,7 @@ def read_primer_file(file_handle, echo_input=False, quiet=False):
     primers = []
     for i, line in enumerate(file_handle):
         try:
-            primers.append(parse_primer(line, i))
+            primers.append(parse_primer(line, i+1))
             if echo_input:
                 sys.stdout.write(line)
         except ValueError as e:
@@ -127,6 +132,15 @@ def write_graph(primers, edges, file_handle):
 
 ## Genome binding location functions
 
+def check_if_flattened(fasta_fp):
+    '''Checks if file exists and only has one line'''
+    with open(fasta_fp) as fasta:
+        i = 0
+        for i, _ in enumerate(fasta):
+            pass
+        return i==0
+
+
 def find_locations(substring, string):
     '''
     Very fast way of finding overlapping substring locations in a
@@ -172,10 +186,11 @@ def mp_find_primer_locations(primers, genome_fp, cores, verbose):
     locations = {}
     if verbose:
         progressbar(0, len(primers))
+
     def update_locations(loc):
         primer = loc[0]
         p_locs = loc[1]
-        locations[primer.id] = {'seq': primer.seq,
+        locations[primer.id] = {'primer': primer,
                                 'loc': p_locs}
         if verbose:
             progressbar(len(locations.keys()), len(primers))
@@ -204,20 +219,60 @@ def mp_find_primer_locations(primers, genome_fp, cores, verbose):
     return locations
 
 
-## Set processing functions
+def save_locations(locations, filename, verbose=False):
+    '''Saves primer binding locations to a gzipped pickle file.'''
+    with gzip.GzipFile(filename, 'w') as dest:
+        cPickle.dump(locations, dest)
+        if verbose:
+            sys.stderr.write("Locations stored in %s\n" % dest.name)
 
-def fg_bind_distances(setline, primer_locations, stat_func):
-    pset_line = setline.strip('\n').split(' ')
-    psize = pset_line[0]
-    pweight = pset_line[1]
-    primer_set = [int(_) for _ in pset_line[2::]]
-    locations = sum([primer_locations[primer]['loc'] for primer in
-                    primer_set], [])
-    primers = [primer_locations[primer]['seq'] for primer in \
-               primer_set]
-    stat = stat_func(locations)
-    max_dist = max_seq_diff(sorted(locations))
-    return (primer_set, primers, max_dist, stat)
+
+def load_locations(filename):
+    '''Loads primer binding locations from gzipped pickled file.'''
+    with gzip.GzipFile(filename, 'r') as f:
+        try:
+            return cPickle.load(f)
+        except (IOError, cPickle.UnpicklingError):
+            raise IOError("Cannot read primer locations from file '%s'" % filename)
+
+
+## Set processing functions
+def read_set_finder_line(line):
+    '''
+    Reads a line in the format [size weight primer_id1,primer_id2,...] and returns
+    a tuple (size, weight, [primer_id1, primer_id2, ...]).
+    '''
+    primer_set, weight = line.strip('\n').split(' ')
+    primer_set = [int(_)-1 for _ in primer_set.split(',')]
+    return (primer_set, float(weight))
+
+
+def get_primers_from_ids(primer_ids, primer_store):
+    '''
+    Retrieves the Primer object for each id in a list from the stored locations.
+
+    Arguments:
+    primer_ids: a list of primer ids (integers)
+    primer_store: A dict of the form {primer_id: {'primer':Primer, 'loc':[locations]}}
+
+    Returns: a list of Primers
+    '''
+    return [primer_store[primer]['primer'] for primer in primer_ids]
+
+
+def get_primer_locations(primer_ids, primer_store):
+    '''
+    Retrieves the primer binding locations for each id in a list from the stored
+    binding locations.
+
+    Arguments:
+    primer_ids: a list of primer ids (integers)
+    primer_store: A dict of the form {primer_id: {'primer':Primer, 'loc':[locations]}}
+
+    Returns: a list with all the binding sites of the primers in a set, aggregated
+    '''
+    # Aggregates all the locations into one list
+    return sum([primer_store[primer]['loc'] for primer in primer_ids], [])
 
 
 def max_seq_diff(seq):
@@ -225,6 +280,7 @@ def max_seq_diff(seq):
     Calculates the sequential difference along a sorted sequence of
     integers and returns the max value.
     '''
+    seq.sort()
     max_diff = 0
     for i in range(len(seq)-1):
         diff = seq[i+1] - seq[i]
@@ -232,6 +288,56 @@ def max_seq_diff(seq):
         if diff > max_diff:
             max_diff = diff
     return max_diff
+
+
+def get_user_fun(spec_str):
+    '''
+    Parses a string to get a function from a module. The string format is simply
+    modulename.possible_submodule:function_name. For instance, this function's
+    string would be PrimerSets:get_user_fun.
+    '''
+    try:
+        module, fun = spec_str.split(':')
+    except ValueError:
+        raise ValueError("Invalid function specification string. Must have the "
+        "format modulename.possible_submodule:function_name""")
+    module = importlib.import_module(module)
+    return getattr(module, fun)
+
+
+def score_set(primer_set, primer_locs, max_dist, bg_ratio, output_handle):
+    '''
+    This user-replaceable function calculates a series of metrics from the input
+    variables, including an overall 'score', and passes the primers and metrics
+    to a print function for output.
+
+    When writing a replacement for this function, ensure that it accepts the above
+    number of arguments (even if they're ignored; for instance, group unused
+    variables in *args like so: def my_function(primer_set, primer_locs, *args)).
+    '''
+    # Calculate various metrics
+    set_size = len(primer_set)
+    fg_mean_dist = sum(primer_locs)/len(primer_locs)
+    fg_std_dist = stats.stdev(primer_locs)
+    fg_gini_idx = stats.gini(primer_locs)
+
+    # Simple scoring formula from SWGA
+    score = set_size * (fg_mean_dist * fg_std_dist) / bg_ratio
+
+    # Write primers, then values
+    print_primer_set(primer_set, [score, fg_gini_idx, max_dist], output_handle)
+
+
+def print_primer_set(primers, other_vals, output_handle):
+    '''
+    Writes the primer sequences (joined by commas) and the other_vals (separated
+    by tabs) to the specified output.
+    Example output:
+    AAATTT,GGGCCC,ATGCATGC  val1    val2    val3
+    '''
+    primers_str = ",".join([primer.seq for primer in primers])
+    line = "\t".join([primers_str] + [str(_) for _ in other_vals])
+    output_handle.write(line+'\n')
 
 
 def progressbar(i, length):

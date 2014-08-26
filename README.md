@@ -55,7 +55,7 @@ Assuming you have a list of primers together with foreground and background bind
 filter_primers -i selected-mers -o filtered_primers
 
 # flatten the foreground genome for easier searching
-fasta_flattener fg-genome.fasta > fg-genome.fasta.flattened
+fasta_flattener.sh fg-genome.fasta > fg-genome.fasta.flattened
 
 # find locations of filtered primers in foreground genome
 find_fg_locations -v -i filtered_primers --fg_genome fg-genome.fasta.flattened
@@ -106,7 +106,7 @@ AATTCCGG 14000 2300 0.1642
     with all the header text and newlines removed. Use the `fasta_flattener` tool to convert your foreground
     genome, and update `parameters.cfg` with the flattened FASTA file's location.
     ```sh
-    fasta_flattener fg-genome.fasta > fg-genome.fasta.flattened
+    fasta_flattener.sh fg-genome.fasta > fg-genome.fasta.flattened
     ```
 
 3. To actually find the locations of the primers, run `find_fg_locations -i filtered_primers` where

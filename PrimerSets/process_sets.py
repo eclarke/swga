@@ -30,14 +30,14 @@ def main():
     type=argparse.FileType('w'), help='''Where to send output (default: stdout)''')
 
     parser.add_argument('--max_sets', type=int, help='''How many sets pass
-    filter before we exit''')
+    filter before we exit. (default: %(default)s)''')
 
     parser.add_argument('--max_fg_bind_dist', type=int, help='''Maximum distance
-    between primers in a set on the foreground genome.''')
+    between primers in a set on the foreground genome. (default: %(default)s)''')
 
     parser.add_argument('--fg_bind_locations', help='''Location of the output
-    file that contains foreground genome binding locations for each primer
-    (from the fg_locations command).''')
+    file that contains binding locations for each primer (from the fg_locations
+    command). (default: %(default)s)''')
 
     parser.add_argument('-q', '--quiet', action='store_true', help='''Suppress
     progress output''')
@@ -46,36 +46,46 @@ def main():
     process_sets(args)
 
 
+
 def process_sets(args):
     '''
-    Takes the output from the set_finder binary and scores the sets,
-    outputting only sets that pass a max foreground genome binding
-    distance filter, specified in args.
+    Retrieves the primers and their binding locations from the output of
+    find_sets and calculates the max binding distance between primers in the
+    foreground genome.
 
-    args: Namespace object from the argument parser
+    If the max distance is below a specified threshold, it passes the set
+    and some additional attributes to a user-defined score function.
+
+    After a specified number of sets pass the filter, it exits the process.
     '''
-    primer_locations = None
-    passed = 0
-    processed = 0
-    with gzip.GzipFile(args.fg_bind_locations, 'r') as infile:
-        primer_locations = cPickle.load(infile)
+    primer_store = ps.load_locations(args.fg_bind_locations)
+    # Find the user-defined scoring function
+    score_fun = ps.get_user_fun(args.score_fun)
+    passed = processed = 0
     for line in args.input:
-        primer_set, primers, max_dist, stdev = ps.fg_bind_distances(line,
-        primer_locations, stats.stdev)
-        primer_str = " ".join(primers)
+        # Parse output from find_sets
+        primer_ids, bg_ratio = ps.read_set_finder_line(line)
+        primer_set = ps.get_primers_from_ids(primer_ids, primer_store)
+        primer_locs = ps.get_primer_locations(primer_ids, primer_store)
+        max_dist = ps.max_seq_diff(primer_locs)
         processed += 1
         if max_dist <= args.max_fg_bind_dist:
             passed += 1
-            args.output.write("{} {} {}\n".format(stdev, max_dist,
-                                                   primer_str))
+            # Pass the set and attributes to the user-defined scoring function
+            score_fun(primer_set, primer_locs, max_dist, bg_ratio, args.output)
+
         if not args.quiet:
-            sys.stderr.write('\rSets passing filter: \t{}/{}'.format(passed, processed))
+            sys.stderr.write("\rSets passing filter: \t{}/{}".format(passed, processed))
         if passed >= args.max_sets:
-            sys.stderr.write('\nDone. If process fails to exit, press Ctrl-C. All data saved.')
+            sys.stderr.write("\nDone (scored %i sets). To quit, press Ctrl-C.")
             break
     if not args.quiet:
         sys.stderr.write('\n')
     sys.exit()
+
+
+
+
 
 if __name__ == '__main__':
     main()

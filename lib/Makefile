@@ -11,7 +11,7 @@ CC=gcc
 CFLAGS=-Wall -O3 -fomit-frame-pointer -funroll-loops
 
 # GCC w/ debugging:
-#CFLAGS=-Wall -g -DINLINE=
+# CFLAGS=-Wall -g -DINLINE=
 
 # Compaq C / Digital C:
 #CFLAGS=-arch=host -fast

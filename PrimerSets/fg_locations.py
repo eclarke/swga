@@ -5,11 +5,11 @@ import sys
 import multiprocessing
 import cPickle
 import gzip
-import PrimerSets
+import PrimerSets as ps
 
 def main():
     config = ConfigParser.SafeConfigParser()
-    cfg_file = os.environ.get('swga_params', PrimerSets.default_config_file)
+    cfg_file = os.environ.get('swga_params', ps.default_config_file)
     defaults = {}
     if os.path.isfile(cfg_file):
         config.read([cfg_file])
@@ -37,23 +37,31 @@ def main():
     parser.add_argument('-p', '--passthrough', help="""Echo input to stdout
     (for argument chaining). (default: %(default)s)""", action='store_true')
 
-    parser.add_argument('-v', '--verbose', action='store_true', help="""Display
-    progress.""")
+    parser.add_argument('-q', '--quiet', action='store_true', help="""Display
+    messages.""")
 
     args = parser.parse_args()
-    if args.verbose and args.input.name == '<stdin>':
+
+    # Check to make sure foreground genome is valid-ish
+    if not os.path.isfile(args.fg_genome):
+        raise ValueError('Foreground genome specified by %s does not exist.' %
+        args.fg_genome)
+    if not ps.check_if_flattened(args.fg_genome):
+        raise ValueError('Foreground genome does not appear to be flattened; '
+        'use fasta_flattener.sh first.')
+
+    if not args.quiet and args.input.name == '<stdin>':
         sys.stderr.write("Receiving input from stdin...\n")
 
-    primers = PrimerSets.read_primer_file(args.input, args.passthrough,
-    args.verbose)
+    primers = ps.read_primer_file(args.input, args.passthrough,
+    not args.quiet)
 
-    locations = PrimerSets.mp_find_primer_locations(primers, args.fg_genome,
-    args.ncores, args.verbose)
+    # Find locations using multiple processes
+    locations = ps.mp_find_primer_locations(primers, args.fg_genome,
+    args.ncores, not args.quiet)
 
-    with gzip.GzipFile(args.fg_bind_locations, 'w') as out:
-        cPickle.dump(locations, out)
-        if args.verbose:
-            sys.stderr.write("Locations stored in {}\n".format(out.name))
+    # Save to gzipped pickled file (optimized for large numbers of sites)
+    ps.save_locations(locations, args.fg_bind_locations, not args.quiet)
 
 
 

@@ -3,7 +3,6 @@ import ConfigParser
 import os
 import re
 import sys
-import csv
 from operator import attrgetter
 import PrimerSets
 
@@ -45,8 +44,9 @@ def main():
     if not args.quiet and args.input.name == '<stdin>':
         sys.stderr.write("Receiving input from stdin...\n")
     primers = filter_primers(args)
-    writer = csv.writer(args.output, delimiter='\t', quoting=csv.QUOTE_MINIMAL)
-    writer.writerows(primers)
+    for primer in primers:
+        args.output.write("{seq}\t{fg_freq}\t{bg_freq}\t{ratio}\n".format(**vars(primer)))
+        # args.output.write('\t'.join([str(_) for _ in primer[1:]])+'\n')
 
 
 def filter_primers(args):
