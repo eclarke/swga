@@ -10,7 +10,6 @@ import cPickle
 import gzip
 import os
 import multiprocessing
-import numpy as np
 from multiprocessing.pool import ThreadPool
 from signal import signal, SIGPIPE, SIG_DFL, SIGTERM
 
@@ -30,11 +29,11 @@ config file location by setting the 'swga_params' environment
 variable, or override certain settings by specifying them as arguments.
 
 """.format(config=ps.default_config_file)
-    
+
     parser = argparse.ArgumentParser(usage=usage,
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
                                      add_help=False)
-                           
+
     args, remaining = parser.parse_known_args()
     fp_defaults = fl_defaults = mg_defaults = fs_defaults = ps_defaults = {}
 
@@ -54,13 +53,13 @@ variable, or override certain settings by specifying them as arguments.
     primers''', prog="filter_primers")
     fg_loc_parser = subparsers.add_parser('fg_locations', prog="fg_locations",
                                           help='''find primer binding locations
-                                          in the foreground genome''') 
+                                          in the foreground genome''')
     mkgraph_parser = subparsers.add_parser('make_graph', prog='make_graph',
                                            help='''make initial primer
-                                           compatibility graph''') 
+                                           compatibility graph''')
     findsets_parser = subparsers.add_parser('find_sets', prog='find_sets',
                                             help='''find compatible sets of
-                                            primers''') 
+                                            primers''')
     process_sets_parser = subparsers.add_parser('process_sets',
                                                prog='process_sets', help='''filter
                                                and analyze sets of primers''')
@@ -71,7 +70,7 @@ variable, or override certain settings by specifying them as arguments.
     filter_parser.set_defaults(func=filter_primers)
     filter_parser.add_argument('--max_bg_binding', action='store',
                                type=int, help='''Max times a primer is allowed
-                               to bind to the background genome.''')   
+                               to bind to the background genome.''')
     filter_parser.add_argument('--num_primers', action='store', type=int,
                                help='''The max number of primers to use after
                                filtering.''')
@@ -106,7 +105,7 @@ variable, or override certain settings by specifying them as arguments.
     fg_loc_parser.add_argument('-v', '--verbose', action='store_true',
                                help='''Display progress''')
 
-    
+
     # Make primer graph command
     mkgraph_parser.set_defaults(**mg_defaults)
     mkgraph_parser.set_defaults(func=make_graph)
@@ -119,10 +118,10 @@ variable, or override certain settings by specifying them as arguments.
                                 binding number, and fg/bg binding ratio, in that
                                 order. If blank, reads from stdin.''')
     mkgraph_parser.add_argument('-o', '--output', action='store',
-                                type=argparse.FileType('w', 0), 
+                                type=argparse.FileType('w', 0),
                                 default=sys.stdout, help='''Filename to store
                                 the DIMACS-format output graph. If blank, writes
-                                to stdout.''') 
+                                to stdout.''')
 
 
     # Find sets command
@@ -177,10 +176,10 @@ variable, or override certain settings by specifying them as arguments.
     process_sets_parser.add_argument('--fg_bind_locations',
                                      help='''Location of the output file that
                                      contains foreground genome binding locations
-                                     for each primer (from the fg_locations command).''')  
+                                     for each primer (from the fg_locations command).''')
     process_sets_parser.add_argument('-q', '--quiet',
                                      action='store_true',
-                                     help='''Suppress progress output''')  
+                                     help='''Suppress progress output''')
     # parses the remaining subcommand options
     new_args = parser.parse_args(remaining)
     # Calls the function corresponding to the subcommand with the specified options
@@ -202,7 +201,7 @@ def filter_primers(args):
         missing_default_value('num_primers')
     filter_cmd = """sort -t ' ' -n -k 3 < {} | awk '{{if ($3 < {}) print
     $0}}' | sort -t ' ' -n -r -k 4 | head -n {}""".format(args.primer_file,
-    args.max_bg_binding, args.num_primers) 
+    args.max_bg_binding, args.num_primers)
     subprocess.call(filter_cmd, shell=True, preexec_fn = lambda:
                         signal(SIGPIPE, SIG_DFL))
 
@@ -243,7 +242,7 @@ def make_graph(args):
     arcs = ps.test_pairs(primers, args.max_hetdimer_bind)
     ps.write_graph(primers, arcs, args.output)
 
-    
+
 def find_sets(args):
     '''
     Calls the set_finder binary with the specified options on the
@@ -258,7 +257,7 @@ def find_sets(args):
     " -m {min_size} -M {max_size} -a -u -r unweighted-coloring"
     " {input} {output}").format(**kwargs)
     subprocess.call(find_set_cmd, shell=True)
-    
+
 
 def process_sets(args):
     '''
@@ -292,12 +291,12 @@ def process_sets(args):
         sys.stderr.write('\n')
     sys.exit()
 
-        
+
 def missing_default_value(missing_val):
     sys.stderr.write(("Error: {} not specified and no default found in config "
                      "file. Try -h for help.\n").format(missing_val))
     sys.exit(1)
-                  
+
 
 if __name__ == "__main__":
     main()
