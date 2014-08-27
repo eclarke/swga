@@ -59,7 +59,7 @@ def find_sets(args):
     args: Namespace object from the argument parser
     '''
     kwargs = vars(args)
-    kwargs['output'] = '> '+args.output if args.output else ''
+    kwargs['output'] = '> '+kwargs['output'] if kwargs['output'] else ''
     find_set_cmd = ("{set_finder} -q -q -B {min_bg_bind_dist} -L {bg_genome_len}"
     " -m {min_size} -M {max_size} -a -u -r unweighted-coloring"
     " {input} {output}").format(**kwargs)
