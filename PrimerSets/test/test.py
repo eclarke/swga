@@ -13,11 +13,11 @@ class ReadPrimersTests(unittest.TestCase):
     def setUp(self):
         pass
 
-    def testParsePrimer(self):
+    def test_primer_parsing(self):
         primer = ps.parse_primer("""ATGC 100 200 0.5""")
         self.assertEqual(primer, ps.Primer(1, "ATGC", 200, 100, 0.5))
 
-    def testReadPrimerFile(self):
+    def test_read_primer_file(self):
         infile = StringIO("""AAAA 1 2 3
 TTTT 1 2 3 4
 GGGG 1 2 3""")

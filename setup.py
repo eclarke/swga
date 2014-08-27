@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='PrimerSets',
@@ -19,5 +19,6 @@ setup(
             'find_sets = PrimerSets.find_sets:main',
             'process_sets = PrimerSets.process_sets:main',
         ]
-    }
+    },
+    test_suite='PrimerSets.test'
 )
