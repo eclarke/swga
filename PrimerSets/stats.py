@@ -25,18 +25,11 @@ def gini(distances):
 
     distances: a sequence of distances. Does not need to be sorted.
     '''
-<<<<<<< HEAD:PrimerSets/stats.py
+
     distances.sort()
-=======
-    distances = sorted(distances)
->>>>>>> master:swga/stats.py
     height = area = 0
     for value in distances:
         height += value
         area += height - value / 2.
     fair_area = height * len(distances) / 2
     return (fair_area - area) / fair_area
-
-
-def score_seq(**kwargs):
-    pass
