@@ -228,12 +228,14 @@ def save_locations(locations, filename, verbose=False):
 
 def load_locations(filename):
     '''Loads primer binding locations from gzipped pickled file.'''
-    with gzip.GzipFile(filename, 'r') as f:
-        try:
-            return cPickle.load(f)
-        except (IOError, cPickle.UnpicklingError):
-            raise IOError("Cannot read primer locations from file '%s'" % filename)
-
+    try:
+        with gzip.GzipFile(filename, 'r') as f:
+            try:
+                return cPickle.load(f)
+            except (IOError, cPickle.UnpicklingError):
+                raise IOError("Cannot read primer locations from file '%s'" % filename)
+    except TypeError:
+        raise ValueError("No primer location file specified.")
 
 ## Set processing functions
 def read_set_finder_line(line):
