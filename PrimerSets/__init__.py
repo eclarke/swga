@@ -277,19 +277,18 @@ def get_primer_locations(primer_ids, primer_store):
     return sum([primer_store[primer]['loc'] for primer in primer_ids], [])
 
 
-def max_seq_diff(seq):
+def seq_diff(seq):
     '''
-    Calculates the sequential difference along a sorted sequence of
-    integers and returns the max value.
+    Returns the sequential differences along a sorted sequence of numbers.
+    If the sequence is not already sorted, it will sort it first.
     '''
     seq.sort()
-    max_diff = 0
-    for i in range(len(seq)-1):
+    diffs = []
+    for i in xrange(len(seq)-1):
         diff = seq[i+1] - seq[i]
         assert diff >= 0
-        if diff > max_diff:
-            max_diff = diff
-    return max_diff
+        diffs.append(diff)
+    return diffs
 
 
 def get_user_fun(spec_str):
@@ -310,11 +309,12 @@ def get_user_fun(spec_str):
 def default_score_set(expression, primer_set, primer_locs, max_dist, bg_ratio,
     output_handle):
     # Calculate various metrics
+    binding_distances = seq_diff(primer_locs)
     namespace = {
         'set_size': len(primer_set),
-        'fg_dist_mean': float(sum(primer_locs))/len(primer_locs),
-        'fg_dist_std': stats.stdev(primer_locs),
-        'fg_dist_gini': stats.gini(primer_locs),
+        'fg_dist_mean': stats.mean(binding_distances),
+        'fg_dist_std': stats.stdev(binding_distances),
+        'fg_dist_gini': stats.gini(binding_distances),
         'bg_ratio': bg_ratio,
         'fg_max_dist': max_dist,
         '__builtins__': None}
