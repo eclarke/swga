@@ -1,5 +1,7 @@
 import re
+import os
 import sys
+
 import gzip
 import time
 import mmap
@@ -8,7 +10,9 @@ import signal
 import cPickle
 import itertools
 import importlib
+import ConfigParser
 import multiprocessing
+
 from collections import namedtuple
 from contextlib import closing
 
@@ -17,6 +21,24 @@ Primer = namedtuple('Primer', 'id, seq, bg_freq, fg_freq, ratio')
 default_config_file = 'parameters.cfg'
 
 # Functions
+def print_args(args):
+    # argstr = json.dumps(args, sort_keys=True, indent=2, separators=(',', ': '))
+    sys.stderr.write("Parameters: %s\n" % str(args))
+
+def parse_config(cfg_file, section):
+    '''
+    Parses a config file and returns a dictionary of the values found
+    in the specified section, along with the ConfigParser itself
+    '''
+    config = ConfigParser.SafeConfigParser()
+    cfg_file = os.environ.get('swga_params', default_config_file)
+    defaults = {}
+    if os.path.isfile(cfg_file):
+        config.read([cfg_file])
+        defaults = dict(config.items(section))
+    return defaults, config
+
+
 def parse_primer(string, line_no=1):
     '''
     Takes a line from a tab- or space-delimited file where each row specifies

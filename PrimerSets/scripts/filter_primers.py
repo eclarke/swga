@@ -1,19 +1,11 @@
 import argparse
-import ConfigParser
-import os
-import re
 import sys
 from operator import attrgetter
-import PrimerSets
+import PrimerSets as ps
 
 
-def main():
-    config = ConfigParser.SafeConfigParser()
-    cfg_file = os.environ.get('swga_params', PrimerSets.default_config_file)
-    defaults = {}
-    if os.path.isfile(cfg_file):
-        config.read([cfg_file])
-        defaults = dict(config.items('filter_primers'))
+def main(argv, cfg_file):
+    defaults, _ = ps.parse_config(cfg_file, 'filter_primers')
 
     parser = argparse.ArgumentParser(description="""Filter primers according to
     specified criteria.""")
@@ -40,17 +32,16 @@ def main():
     parser.add_argument('-q', '--quiet', action='store_true',
     help="Suppress messages (default: %(default)s)")
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv) if argv else parser.parse_args()
     if not args.quiet and args.input.name == '<stdin>':
         sys.stderr.write("Receiving input from stdin...\n")
     primers = filter_primers(args)
     for primer in primers:
         args.output.write("{seq}\t{fg_freq}\t{bg_freq}\t{ratio}\n".format(**vars(primer)))
-        # args.output.write('\t'.join([str(_) for _ in primer[1:]])+'\n')
 
 
 def filter_primers(args):
-    primers = PrimerSets.read_primer_file(args.input, False, args.quiet)
+    primers = ps.read_primer_file(args.input, False, args.quiet)
     # sort by bg binding count
     primers = sorted(primers, key=attrgetter("bg_freq"))
     # remove primers that bind too many times to bg
@@ -62,4 +53,4 @@ def filter_primers(args):
 
 
 if __name__ == '__main__':
-    main()
+    main(None, None)

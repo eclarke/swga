@@ -439,7 +439,7 @@ boolean write_clique_func(set_t s, graph_t *g, clique_options *opts) {
       }
     }
   }
-  fprintf(output, " %lu\n", bg_len/graph_subgraph_weight(g,s));
+  fprintf(output, " %f\n", (1.0*bg_len)/graph_subgraph_weight(g,s));
   return TRUE;
 }
 
