@@ -68,7 +68,8 @@ def find_sets(args):
                     '-L', args.bg_genome_len, '-m', args.min_size, '-M',
                     args.max_size, '-a', '-u', '-r', 'unweighted-coloring',
                     args.input, output]
-    subprocess.check_call(find_set_cmd, shell=True)
+    find_set_cmd = [str(_) for _ in find_set_cmd]
+    subprocess.check_call(" ".join(find_set_cmd), shell=True)
 
 if __name__ == '__main__':
     main(None, None)
