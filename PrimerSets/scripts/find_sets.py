@@ -6,8 +6,9 @@ import subprocess
 import PrimerSets as ps
 
 
-def main(argv, cfg_file):
+def main():
     config = ConfigParser.SafeConfigParser()
+    argv = cfg_file = None
     if not cfg_file:
         cfg_file = os.environ.get('swga_params', ps.default_config_file)
     defaults = {}
@@ -68,7 +69,8 @@ def find_sets(args):
                     '-L', args.bg_genome_len, '-m', args.min_size, '-M',
                     args.max_size, '-a', '-u', '-r', 'unweighted-coloring',
                     args.input, output]
-    subprocess.check_call(find_set_cmd, shell=True)
+    find_set_cmd = [str(_) for _ in find_set_cmd]
+    subprocess.check_call(" ".join(find_set_cmd), shell=True)
 
 if __name__ == '__main__':
-    main(None, None)
+    main()

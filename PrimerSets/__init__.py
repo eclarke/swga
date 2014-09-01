@@ -3,6 +3,7 @@ import sys
 import gzip
 import time
 import mmap
+import math
 import stats
 import signal
 import cPickle
@@ -311,7 +312,7 @@ def default_score_set(expression, primer_set, primer_locs, max_dist, bg_ratio,
     # Calculate various metrics
     namespace = {
         'set_size': len(primer_set),
-        'fg_dist_mean': sum(primer_locs)/len(primer_locs),
+        'fg_dist_mean': float(sum(primer_locs))/len(primer_locs),
         'fg_dist_std': stats.stdev(primer_locs),
         'fg_dist_gini': stats.gini(primer_locs),
         'bg_ratio': bg_ratio,
@@ -323,8 +324,8 @@ def default_score_set(expression, primer_set, primer_locs, max_dist, bg_ratio,
         score = eval(expression, namespace, {'__builtins__': {}})
     except NameError as e:
         raise NameError(e.message + '. Permitted variables are %s. Refer to README or docs for help.' % permitted_var_str)
-    print_primer_set(primer_set, [score, namespace['fg_dist_gini'],
-        namespace['fg_max_dist']], output_handle)
+    del namespace['__builtins__']
+    print_primer_set(primer_set, [score, namespace], output_handle)
 
 
 def score_set(primer_set, primer_locs, max_dist, bg_ratio, output_handle):
@@ -339,7 +340,7 @@ def score_set(primer_set, primer_locs, max_dist, bg_ratio, output_handle):
     '''
     # Calculate various metrics
     set_size = len(primer_set)
-    fg_mean_dist = sum(primer_locs)/len(primer_locs)
+    fg_mean_dist = float(sum(primer_locs))/len(primer_locs)
     fg_std_dist = stats.stdev(primer_locs)
     fg_gini_idx = stats.gini(primer_locs)
 
