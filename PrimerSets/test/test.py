@@ -3,8 +3,8 @@ import unittest
 from collections import namedtuple, OrderedDict
 from StringIO import StringIO
 import PrimerSets as ps
-from PrimerSets.filter_primers import filter_primers
-from PrimerSets.find_sets import find_sets
+from PrimerSets.scripts.filter_primers import filter_primers
+from PrimerSets.scripts.find_sets import find_sets
 
 class ReadPrimersTests(unittest.TestCase):
     '''
@@ -107,6 +107,7 @@ e 1 3
         The only clique of the two that should satisfy those reqs is the first
         one, with a bg_ratio of 10/sum(1,2,3) = 1 (bc of integer division).
         '''
+        # DIMACS graph
         test_graph = '''p sp 6 7
 n 1 1
 n 2 2
@@ -136,7 +137,7 @@ e 5 6
         argvals = args(**argvals)
         find_sets(argvals)
         result = self.tmp_outfile.read()
-        self.assertEqual(result, "1,2,3 1\n")
+        self.assertEqual(result, "1,2,3 1.666667\n")
 
     def tearDown(self):
         self.tmp_outfile.close()

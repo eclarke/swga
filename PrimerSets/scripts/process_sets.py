@@ -53,7 +53,6 @@ def main():
     process_sets(args)
 
 
-
 def process_sets(args):
     '''
     Retrieves the primers and their binding locations from the output of
@@ -83,7 +82,7 @@ def process_sets(args):
         primer_ids, bg_ratio = ps.read_set_finder_line(line)
         primer_set = ps.get_primers_from_ids(primer_ids, primer_store)
         primer_locs = ps.get_primer_locations(primer_ids, primer_store)
-        max_dist = ps.max_seq_diff(primer_locs)
+        max_dist = max(ps.seq_diff(primer_locs))
         processed += 1
         if max_dist <= args.max_fg_bind_dist:
             passed += 1
@@ -98,8 +97,6 @@ def process_sets(args):
     if not args.quiet:
         sys.stderr.write('\n')
     sys.exit()
-
-
 
 
 
