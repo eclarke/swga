@@ -102,10 +102,10 @@ e 1 3
     def test_set_finder(self):
         '''
         Gives the set_finder a simple graph with two possible cliques, between
-        edges {1,2,3} and {4,5,6}, where each edge weight is equal to its index
-        and the background genome length is set to 10, and min_bg_bind_dist = 2.
+        edges {1,2,3} and {4,5,6}, where each edge weight is given in the 2nd col,
+        the background genome length is set to 10, and min_bg_bind_dist = 2.
         The only clique of the two that should satisfy those reqs is the first
-        one, with a bg_ratio of 10/sum(1,2,3) = 1 (bc of integer division).
+        one, with a bg_ratio of 10/sum(1,2,1) > 2.
         '''
         # DIMACS graph
         test_graph = '''p sp 6 7
@@ -138,7 +138,46 @@ e 5 6
         find_sets(argvals)
         result = self.tmp_outfile.read()
         self.assertEqual(result, "1,2,3 2.500000\n")
-        # self.assertEqual(result, "1,2,3 2.500000\n")
+
+    def test_bad_set_finder(self):
+        '''
+        Gives the set_finder a simple graph with two possible cliques, between
+        edges {1,2,3} and {4,5,6}, where each edge weight is equal to its index
+        and the background genome length is set to 10, and min_bg_bind_dist = 2.
+        Neither clique should satisfy the requirements.
+        '''
+        # DIMACS graph, no valid sets
+        test_graph = '''p sp 6 7
+    n 1 1
+    n 2 2
+    n 3 3
+    n 4 4
+    n 5 5
+    n 6 6
+    e 1 2
+    e 1 3
+    e 2 3
+    e 2 4
+    e 4 5
+    e 4 6
+    e 5 6
+    '''
+        self.tmp_infile.write(test_graph)
+        self.tmp_infile.flush()
+        self.tmp_outfile = tempfile.NamedTemporaryFile()
+        argvals = OrderedDict({'set_finder': 'set_finder',
+            'min_bg_bind_dist': 2,
+            'bg_genome_len': 10,
+            'min_size': 3,
+            'max_size': 3,
+            'input': self.tmp_infile.name,
+            'output': self.tmp_outfile.name})
+        args = namedtuple('args', argvals.keys())
+        argvals = args(**argvals)
+        find_sets(argvals)
+        result = self.tmp_outfile.read()
+        self.assertEqual(result, "")
+
 
     def tearDown(self):
         self.tmp_outfile.close()
