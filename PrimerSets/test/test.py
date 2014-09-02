@@ -111,7 +111,7 @@ e 1 3
         test_graph = '''p sp 6 7
 n 1 1
 n 2 2
-n 3 3
+n 3 1
 n 4 4
 n 5 5
 n 6 6
@@ -137,7 +137,8 @@ e 5 6
         argvals = args(**argvals)
         find_sets(argvals)
         result = self.tmp_outfile.read()
-        self.assertEqual(result, "1,2,3 1.666667\n")
+        self.assertEqual(result, "1,2,3 2.500000\n")
+        # self.assertEqual(result, "1,2,3 2.500000\n")
 
     def tearDown(self):
         self.tmp_outfile.close()

@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
   opts->user_data=NULL;
   opts->clique_list=NULL;
   opts->clique_list_length=0;
-  opts->ecl_max_weight=bg_len/bg_freq;
+  opts->ecl_max_weight=(1.0*bg_len)/bg_freq;
 
   /* Report what we are doing. */
   if (quiet<=1)
@@ -439,7 +439,7 @@ boolean write_clique_func(set_t s, graph_t *g, clique_options *opts) {
       }
     }
   }
-  fprintf(output, " %lu\n", bg_len/graph_subgraph_weight(g,s));
+  fprintf(output, " %f\n", (1.0*bg_len)/graph_subgraph_weight(g,s));
   return TRUE;
 }
 

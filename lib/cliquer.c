@@ -2,7 +2,7 @@
 /*
  * This file contains the clique searching routines.
  *
- * Copyright (C) 2002 Sampo Niskanen, Patric Östergård.
+ * Copyright (C) 2002 Sampo Niskanen, Patric ï¿½stergï¿½rd.
  * Licensed under the GNU GPL, read the file LICENSE for details.
  */
 
@@ -435,6 +435,10 @@ static int sub_unweighted_all(int *table, int size, int min_size, int max_size,
 	int count=0;     /* Amount of cliques found */
         int ecl_max_weight = opts->ecl_max_weight;
 
+    if ((ecl_max_weight > 0) && (graph_subgraph_weight(g, current_clique) > ecl_max_weight)) {
+      return count;
+    }
+
 	if (min_size <= 0) {
 		if ((!maximal) || is_maximal(current_clique,g)) {
 			/* We've found one.  Store it. */
@@ -452,10 +456,6 @@ static int sub_unweighted_all(int *table, int size, int min_size, int max_size,
 	if (size < min_size) {
 		return count;
 	}
-
-        if (ecl_max_weight > 0 && graph_subgraph_weight(g, current_clique) > ecl_max_weight) {
-          return count;
-        }
 
 	/* Dynamic memory allocation with cache */
 	if (temp_count) {
@@ -574,7 +574,7 @@ static int weighted_clique_search_single(int *table, int min_weight,
 		}
 		return 0;
 	}
-	
+
 	localopts.time_function=NULL;
 	localopts.reorder_function=NULL;
 	localopts.reorder_map=NULL;
@@ -820,7 +820,7 @@ static int sub_weighted_all(int *table, int size, int weight,
 		if (current_weight >= max_weight) {
 			/* Clique too heavy. */
 			return min_weight-1;
-		} 
+		}
 	}
 	if (size <= 0) {
 		/* current_weight < min_weight, prune_low < min_weight,
@@ -918,7 +918,7 @@ static boolean store_clique(set_t clique, graph_t *g, clique_options *opts) {
 		/*
 		 * This has been a major source of bugs:
 		 * Has clique_list_count been set to 0 before calling
-		 * the recursions? 
+		 * the recursions?
 		 */
 		if (clique_list_count <= 0) {
 			fprintf(stderr,"CLIQUER INTERNAL ERROR: "
@@ -1170,7 +1170,7 @@ set_t clique_unweighted_find_single(graph_t *g,int min_size,int max_size,
 			}
 		}
 	}
-	
+
     cleanreturn:
 	s=current_clique;
 
@@ -1559,7 +1559,7 @@ int clique_find_all(graph_t *g, int min_weight, int max_weight,
 				return 0;
 			}
 		}
-		
+
 		weight_multiplier = g->weights[0];
 		entrance_level--;
 		i=clique_unweighted_find_all(g,min_weight,max_weight,maximal,
