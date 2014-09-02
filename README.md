@@ -58,7 +58,7 @@ filter_primers -i selected-mers -o filtered_primers
 fasta_flattener.sh fg-genome.fasta > fg-genome.fasta.flattened
 
 # find locations of filtered primers in foreground genome
-find_fg_locations -v -i filtered_primers --fg_genome fg-genome.fasta.flattened
+find_fg_locations -i filtered_primers --fg_genome fg-genome.fasta.flattened
 
 # remove heterodimers and output compatibility graph
 mk_primer_graph -i filtered_primers > primer_graph
