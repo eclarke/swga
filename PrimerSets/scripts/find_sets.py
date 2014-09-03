@@ -45,11 +45,10 @@ def main(argv, cfg_file):
     parser.add_argument('-q', '--quiet', action='store_true', help="""Suppress
     messages (default: %(default)s)""")
 
-    args = None
-    if argv:
-        args = parser.parse_args(argv)
-    else:
-        args = parser.parse_args()
+    args = parser.parse_args(argv)
+    if not args.set_finder:
+        sys.stderr.write("Error: set_finder location unspecified; cannot continue.\n")
+        exit(1)
     if not args.quiet and args.input == '-':
         sys.stderr.write("Receiving input from stdin...\n")
     find_sets(args)

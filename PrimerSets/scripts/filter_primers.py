@@ -8,7 +8,7 @@ def main(argv, cfg_file):
     defaults, _ = ps.parse_config(cfg_file, 'filter_primers')
 
     parser = argparse.ArgumentParser(description="""Filter primers according to
-    specified criteria.""")
+    specified criteria.""", prog='swga filter')
     parser.set_defaults(**defaults)
 
     parser.add_argument('-M', '--max_bg_binding', action='store', type=int,
@@ -32,7 +32,7 @@ def main(argv, cfg_file):
     parser.add_argument('-q', '--quiet', action='store_true',
     help="Suppress messages (default: %(default)s)")
 
-    args = parser.parse_args(argv) if argv else parser.parse_args()
+    args = parser.parse_args(argv)
     if not args.quiet and args.input.name == '<stdin>':
         sys.stderr.write("Receiving input from stdin...\n")
     primers = filter_primers(args)
@@ -52,5 +52,3 @@ def filter_primers(args):
     return primers[0:args.num_primers]
 
 
-if __name__ == '__main__':
-    main(None, None)
