@@ -5,14 +5,8 @@ import sys
 import PrimerSets as ps
 from functools import partial
 
-def main():
-    config = ConfigParser.SafeConfigParser()
-    cfg_file = os.environ.get('swga_params', ps.default_config_file)
-    defaults = {}
-    if os.path.isfile(cfg_file):
-        config.read([cfg_file])
-        defaults = dict(config.items('process_sets'))
-
+def main(argv, cfg_file):
+    defaults, _ = ps.parse_config(cfg_file, 'process_sets')
     parser = argparse.ArgumentParser(description="""Post-process and score sets
     outputted from find_sets.""")
     parser.set_defaults(**defaults)
@@ -23,7 +17,8 @@ def main():
     from spaces (output from find_sets command. (default: stdin)''')
 
     parser.add_argument('-o', '--output', default=sys.stdout,
-    type=argparse.FileType('w'), help='''Where to send output (default: stdout)''')
+                        type=argparse.FileType('w'), 
+                        help='''Where to send output (default: stdout)''')
 
     parser.add_argument('--max_sets', type=int, help='''How many sets pass
     filter before we exit. (default: %(default)s)''')
@@ -46,10 +41,9 @@ def main():
     metrics or output. For help, see README or docs. Incompatible with
     --score_expression argument. (default: %(default)s)""")
 
-    parser.add_argument('-q', '--quiet', action='store_true', help='''Suppress
-    progress output''')
+    parser.add_argument('-v', '--verbose', action='store_true', help='''Display progress''')
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     process_sets(args)
 
 
@@ -89,12 +83,12 @@ def process_sets(args):
             # Pass the set and attributes to the user-defined scoring function
             score_fun(primer_set=primer_set, primer_locs=primer_locs, max_dist=max_dist, bg_ratio=bg_ratio, output_handle=args.output)
 
-        if not args.quiet:
+        if args.verbose:
             sys.stderr.write("\rSets passing filter: \t{}/{}".format(passed, processed))
         if passed >= args.max_sets:
             sys.stderr.write("\nDone (scored %i sets). To quit, press Ctrl-C.")
             break
-    if not args.quiet:
+    if args.verbose:
         sys.stderr.write('\n')
     sys.exit()
 

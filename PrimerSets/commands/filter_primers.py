@@ -37,7 +37,7 @@ def main(argv, cfg_file):
         sys.stderr.write("Receiving input from stdin...\n")
     primers = filter_primers(args)
     for primer in primers:
-        args.output.write("{seq}\t{fg_freq}\t{bg_freq}\t{ratio}\n".format(**vars(primer)))
+        args.output.write("{seq}\t{fg_freq}\t{bg_freq}\t{ratio}\n".format(**primer._asdict()))
 
 
 def filter_primers(args):

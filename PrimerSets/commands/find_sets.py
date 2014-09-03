@@ -35,9 +35,6 @@ def main(argv, cfg_file):
     parser.add_argument('-l', '--bg_genome_len', type=int, help='''Length of
     background genome. (default: %(default)s)''')
 
-    # parser.add_argument('-s', '--set_finder', help='''Location of set_finder
-    # binary. (default: %(default)s)''')
-
     parser.add_argument('-v', '--verbose', action='store_true', help="""Display
     messages""")
 
