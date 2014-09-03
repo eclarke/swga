@@ -21,6 +21,14 @@ Primer = namedtuple('Primer', 'id, seq, bg_freq, fg_freq, ratio')
 default_config_file = 'parameters.cfg'
 
 # Functions
+def get_swgahome():
+    swgahome = os.environ.get('SWGAHOME')
+    if not swgahome:
+        raise ValueError("SWGAHOME not set, cannot find home directory for SWGA scripts.")
+    if not os.path.isabs(swgahome):
+        raise ValueError("SWGAHOME cannot be a relative path. Make SWGAHOME an absolute path and try again.")
+    return swgahome
+
 def mkdirp(path):
     '''Simulates 'mkdir -p': creates a directory unless it already exists'''
     try:
@@ -59,7 +67,7 @@ def parse_primer(string, line_no=1):
     return Primer(line_no, seq, int(bg_freq), int(fg_freq), float(ratio))
 
 
-def read_primer_file(file_handle, echo_input=False, quiet=False):
+def read_primer_file(file_handle, echo_input=False, verbose=False):
     '''
     Calls parse_primer() on each line of the input file. If a malformed line is
     found, will skip parsing and (optionally) output a warning message.
@@ -78,7 +86,7 @@ def read_primer_file(file_handle, echo_input=False, quiet=False):
             if echo_input:
                 sys.stdout.write(line)
         except ValueError as e:
-            if not quiet:
+            if verbose:
                 sys.stderr.write("Cannot parse line %i (reason: %s), "\
                 "skipping...\n" % (i, e.message))
             continue

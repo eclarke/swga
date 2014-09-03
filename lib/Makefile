@@ -38,9 +38,15 @@ testcases: testcases.o cliquer.o graph.o reorder.o
 cl: cl.o cliquer.o graph.o reorder.o
 	$(CC) $(LDFLAGS) -o $@ cl.o cliquer.o graph.o reorder.o
 
+set_finder: set_finder.o cliquer.o graph.o reorder.o
+	$(CC) $(LDFLAGS) -o $@ set_finder.o cliquer.o graph.o reorder.o
+
 cl.o testcases.o cliquer.o graph.o reorder.o: cliquer.h set.h graph.h misc.h reorder.h Makefile cliquerconf.h
 
 cl.o: cl.c
+	$(CC) $(CFLAGS) $(LONGOPTS) -o $@ -c $<
+
+set_finder.o: set_finder.c
 	$(CC) $(CFLAGS) $(LONGOPTS) -o $@ -c $<
 
 clean:
@@ -53,5 +59,3 @@ backup:
 test: testcases
 	./testcases
 
-set_finder: set_finder.o cliquer.o graph.o reorder.o
-	$(CC) $(LDFLAGS) -o $@ set_finder.o cliquer.o graph.o reorder.o

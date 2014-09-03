@@ -29,11 +29,11 @@ def main(argv, cfg_file):
     help="""Filename to store the filtered primers (tab-delimited).
     (default: stdout)""")
 
-    parser.add_argument('-q', '--quiet', action='store_true',
-    help="Suppress messages (default: %(default)s)")
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help="Display messages")
 
     args = parser.parse_args(argv)
-    if not args.quiet and args.input.name == '<stdin>':
+    if args.verbose and args.input.name == '<stdin>':
         sys.stderr.write("Receiving input from stdin...\n")
     primers = filter_primers(args)
     for primer in primers:
@@ -41,7 +41,7 @@ def main(argv, cfg_file):
 
 
 def filter_primers(args):
-    primers = ps.read_primer_file(args.input, False, args.quiet)
+    primers = ps.read_primer_file(args.input, False, args.verbose)
     # sort by bg binding count
     primers = sorted(primers, key=attrgetter("bg_freq"))
     # remove primers that bind too many times to bg

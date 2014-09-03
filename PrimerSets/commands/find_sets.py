@@ -7,16 +7,12 @@ import PrimerSets as ps
 
 
 def main(argv, cfg_file):
-    config = ConfigParser.SafeConfigParser()
-    if not cfg_file:
-        cfg_file = os.environ.get('swga_params', ps.default_config_file)
-    defaults = {}
-    if os.path.isfile(cfg_file):
-        config.read([cfg_file])
-        defaults = dict(config.items('find_sets'))
-
-    parser = argparse.ArgumentParser(description="""Wrapper around set_finder to
-    find sets of compatible primers.""", prog="swga sets")
+    defaults, _ = ps.parse_config(cfg_file, 'find_sets')
+    swgahome = ps.get_swgahome()
+    parser = argparse.ArgumentParser(
+        description="""Wrapper around set_finder to find sets of
+        compatible primers.""", 
+        prog="swga sets")   
     parser.set_defaults(**defaults)
 
     parser.add_argument('-i', '--input', default='-', help="""Heterodimer
@@ -39,18 +35,19 @@ def main(argv, cfg_file):
     parser.add_argument('-l', '--bg_genome_len', type=int, help='''Length of
     background genome. (default: %(default)s)''')
 
-    parser.add_argument('-s', '--set_finder', help='''Location of set_finder
-    binary. (default: %(default)s)''')
+    # parser.add_argument('-s', '--set_finder', help='''Location of set_finder
+    # binary. (default: %(default)s)''')
 
-    parser.add_argument('-q', '--quiet', action='store_true', help="""Suppress
-    messages (default: %(default)s)""")
+    parser.add_argument('-v', '--verbose', action='store_true', help="""Display
+    messages""")
 
     args = parser.parse_args(argv)
-    if not args.set_finder:
-        sys.stderr.write("Error: set_finder location unspecified; cannot continue.\n")
+    args.set_finder = os.path.join(swgahome, 'set_finder')
+    if not os.path.isfile(args.set_finder):
+        sys.stderr.write("Error: cannot find set_finder in %s.\n" % swgahome)
         exit(1)
-    if not args.quiet and args.input == '-':
-        sys.stderr.write("Receiving input from stdin...\n")
+    if args.verbose and args.input == '-':
+        sys.stderr.write("%s: Receiving input from stdin...\n" % parser.prog)
     find_sets(args)
 
 
@@ -70,5 +67,3 @@ def find_sets(args):
     find_set_cmd = [str(_) for _ in find_set_cmd]
     subprocess.check_call(" ".join(find_set_cmd), shell=True)
 
-if __name__ == '__main__':
-    main(None, None)
