@@ -1,3 +1,4 @@
+import os
 from setuptools import setup
 
 setup(
@@ -6,7 +7,7 @@ setup(
     author='Erik Clarke',
     author_email='ecl@mail.med.upenn.edu',
     packages=['PrimerSets'],
-    scripts=['lib/set_finder', 'utils/fasta_flattener.sh'],
+#    scripts=['lib/set_finder', 'utils/fasta_flattener.sh'],
     url='https://github.com/BrissonEEDS/PrimerSets',
     license='LICENSE.txt',
     description='Pipeline to select compatible primer sets for selective whole-genome amplification.',

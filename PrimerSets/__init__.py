@@ -1,11 +1,11 @@
 import re
 import os
 import sys
-
 import gzip
 import time
 import mmap
 import stats
+import errno
 import signal
 import cPickle
 import itertools
@@ -21,6 +21,14 @@ Primer = namedtuple('Primer', 'id, seq, bg_freq, fg_freq, ratio')
 default_config_file = 'parameters.cfg'
 
 # Functions
+def mkdirp(path):
+    '''Simulates 'mkdir -p': creates a directory unless it already exists'''
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
 def print_args(args):
     # argstr = json.dumps(args, sort_keys=True, indent=2, separators=(',', ': '))
     sys.stderr.write("Parameters: %s\n" % str(args))
