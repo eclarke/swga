@@ -44,3 +44,6 @@ swga/valid_sets
 build/*
 
 .DS_Store
+/PrimerSets.egg-info/
+/testing_dir/
+/PrimerSets/primersets.py
