@@ -97,12 +97,12 @@ def process_sets(args):
             # Pass the set and attributes to the user-defined scoring function
             score_fun(primer_set=primer_set, primer_locs=primer_locs, max_dist=max_dist, bg_ratio=bg_ratio, output_handle=args.output)
 
-        if args.verbose:
+        if not quiet:
             sys.stderr.write("\rSets passing filter: \t{}/{}".format(passed, processed))
         if passed >= args.max_sets:
             sys.stderr.write("\nDone (scored %i sets). To quit, press Ctrl-C.")
             break
-    if args.verbose:
+    if not quiet:
         sys.stderr.write('\n')
     sys.exit()
 
