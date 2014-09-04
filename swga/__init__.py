@@ -1,15 +1,20 @@
 import re
+import os
 import sys
 import gzip
 import time
 import mmap
 import math
 import stats
+import errno
 import signal
 import cPickle
+import argparse
 import itertools
 import importlib
+import ConfigParser
 import multiprocessing
+
 from collections import namedtuple
 from contextlib import closing
 
@@ -18,6 +23,52 @@ Primer = namedtuple('Primer', 'id, seq, bg_freq, fg_freq, ratio')
 default_config_file = 'parameters.cfg'
 
 # Functions
+def get_swgahome():
+    swgahome = os.environ.get('SWGAHOME')
+    if not swgahome:
+        raise ValueError("SWGAHOME not set, cannot find home directory for SWGA scripts.")
+    if not os.path.isabs(swgahome):
+        raise ValueError("SWGAHOME cannot be a relative path. Make SWGAHOME an absolute path and try again.")
+    return swgahome
+
+def mkdirp(path):
+    '''Simulates 'mkdir -p': creates a directory unless it already exists'''
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+def basic_cmd_parser(description, cmd_name, cfg_file):
+    defaults, _ = parse_config(cfg_file, cmd_name)
+    parser = argparse.ArgumentParser(description=description, prog='swga '+cmd_name)
+    parser.set_defaults(**defaults)
+    return parser
+
+def print_stdin_msg(prog_name):
+    sys.stderr.write("{}: receiving input from stdin...\n".format(prog_name))
+
+def print_args(prog_name, args):
+    # argstr = json.dumps(args, sort_keys=True, indent=2, separators=(',', ': '))
+    sys.stderr.write("{} parameters: {}\n".format(prog_name, str(vars(args))))
+
+def print_cfg_file(prog_name, cfg_file):
+    sys.stderr.write("{} config file: {}\n".format(prog_name, os.path.abspath(cfg_file)))
+
+def parse_config(cfg_file, section):
+    '''
+    Parses a config file and returns a dictionary of the values found
+    in the specified section, along with the ConfigParser itself
+    '''
+    config = ConfigParser.SafeConfigParser()
+    cfg_file = os.environ.get('swga_params', default_config_file)
+    defaults = {}
+    if os.path.isfile(cfg_file):
+        config.read([cfg_file])
+        defaults = dict(config.items(section))
+    return defaults, config
+
+
 def parse_primer(string, line_no=1):
     '''
     Takes a line from a tab- or space-delimited file where each row specifies
@@ -30,7 +81,7 @@ def parse_primer(string, line_no=1):
     return Primer(line_no, seq, int(bg_freq), int(fg_freq), float(ratio))
 
 
-def read_primer_file(file_handle, echo_input=False, quiet=False):
+def read_primer_file(file_handle, echo_input=False, verbose=False):
     '''
     Calls parse_primer() on each line of the input file. If a malformed line is
     found, will skip parsing and (optionally) output a warning message.
@@ -49,7 +100,7 @@ def read_primer_file(file_handle, echo_input=False, quiet=False):
             if echo_input:
                 sys.stdout.write(line)
         except ValueError as e:
-            if not quiet:
+            if verbose:
                 sys.stderr.write("Cannot parse line %i (reason: %s), "\
                 "skipping...\n" % (i, e.message))
             continue
@@ -326,29 +377,6 @@ def default_score_set(expression, primer_set, primer_locs, max_dist, bg_ratio,
         raise NameError(e.message + '. Permitted variables are %s. Refer to README or docs for help.' % permitted_var_str)
     del namespace['__builtins__']
     print_primer_set(primer_set, [score, namespace], output_handle)
-
-
-def score_set(primer_set, primer_locs, max_dist, bg_ratio, output_handle):
-    '''
-    This user-replaceable function calculates a series of metrics from the input
-    variables, including an overall 'score', and passes the primers and metrics
-    to a print function for output.
-
-    When writing a replacement for this function, ensure that it accepts the above
-    number of arguments (even if they're ignored; for instance, group unused
-    variables in *args like so: def my_function(primer_set, primer_locs, *args)).
-    '''
-    # Calculate various metrics
-    set_size = len(primer_set)
-    fg_mean_dist = float(sum(primer_locs))/len(primer_locs)
-    fg_std_dist = stats.stdev(primer_locs)
-    fg_gini_idx = stats.gini(primer_locs)
-
-    # Simple scoring formula from SWGA
-    score = set_size * (fg_mean_dist * fg_std_dist) / bg_ratio
-
-    # Write primers, then values
-    print_primer_set(primer_set, [score, fg_gini_idx, max_dist], output_handle)
 
 
 def print_primer_set(primers, other_vals, output_handle):
