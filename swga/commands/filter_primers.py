@@ -33,14 +33,14 @@ def main(argv, cfg_file, quiet):
     args = parser.parse_args(argv)
     if not quiet and args.input.name == '<stdin>':
         swga.print_stdin_msg(parser.prog)
-
-    primers = filter_primers(args)
+    
+    primers = filter_primers(args, quiet)
     for primer in primers:
         args.output.write("{seq}\t{fg_freq}\t{bg_freq}\t{ratio}\n".format(**primer._asdict()))
 
 
-def filter_primers(args):
-    primers = swga.read_primer_file(args.input, False, args.verbose)
+def filter_primers(args, quiet):
+    primers = swga.read_primer_file(args.input, False, not quiet)
     # sort by bg binding count
     primers = sorted(primers, key=attrgetter("bg_freq"))
     # remove primers that bind too many times to bg

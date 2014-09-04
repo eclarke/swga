@@ -22,7 +22,7 @@ class ReadPrimersTests(unittest.TestCase):
         infile = StringIO("""AAAA 1 2 3
 TTTT 1 2 3 4
 GGGG 1 2 3""")
-        primers = swga.read_primer_file(infile, False, True)
+        primers = swga.read_primer_file(infile, False, False)
         self.assertEqual([swga.Primer(1, "AAAA", 2, 1, 3.0),
         swga.Primer(3, "GGGG", 2, 1, 3.0)], primers)
 
@@ -33,7 +33,7 @@ class FilterPrimersTests(unittest.TestCase):
     '''
     def setUp(self):
         mockArgs = namedtuple("mockargs",
-        ["max_bg_binding", "num_primers", "input", "output", "quiet"])
+        ["max_bg_binding", "num_primers", "input", "output"])
         self.tmpin = StringIO("""Some header file here
 ATGC 50 99 0.5
 TCGA 100 200 0.4
@@ -42,13 +42,13 @@ GCCT;1;2;3
 CTTA 4 99 0.4
 """)
         self.tmpout = tempfile.TemporaryFile()
-        self.args = mockArgs(100, 2, self.tmpin, self.tmpout, True)
+        self.args = mockArgs(100, 2, self.tmpin, self.tmpout)
 
 
     def test_filter_primers(self):
         correct_result = [swga.Primer(4, "CGTA", 98, 100, 0.2),
         swga.Primer(6, "CTTA", 99, 4, 0.4)]
-        test_result = filter_primers(self.args)
+        test_result = filter_primers(self.args, True)
         self.assertEqual(correct_result, test_result)
 
 
