@@ -1,17 +1,15 @@
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
-    name='PrimerSets',
-    version='0.1.0',
+    name='swga',
+    version='0.2.0',
     author='Erik Clarke',
     author_email='ecl@mail.med.upenn.edu',
-    packages=['swga'],
-    package_dir={'swga': 'PrimerSets'},
+    packages=find_packages(exclude=['cliquer', 'docs', 'tests']),
     url='https://github.com/BrissonEEDS/PrimerSets',
     license='LICENSE.txt',
     description='Pipeline to select compatible primer sets for selective whole-genome amplification.',
     long_description=open('README.md').read(),
-    entry_points = {'console_scripts': ['swga = PrimerSets.swga:main']},
-    test_suite='PrimerSets.test'
+    entry_points = {'console_scripts': ['swga = swga.commands.swga:main']},
 )

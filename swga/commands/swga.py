@@ -1,8 +1,8 @@
 import os
 import sys
 import argparse
-import PrimerSets.commands as commands
-import PrimerSets as ps
+import swga.commands as commands
+import swga
 
 usage="""Usage: swga [-c --config CFG_FILE] <command> [options]
 
@@ -28,9 +28,9 @@ def main():
                     'sets':commands.find_sets.main,
                     'score':commands.process_sets.main,
                     'autopilot':autopilot}
-    swgahome = ps.get_swgahome()
-    if os.path.isfile(ps.default_config_file):
-        cfg_file = ps.default_config_file
+    swgahome = swga.get_swgahome()
+    if os.path.isfile(swga.default_config_file):
+        cfg_file = swga.default_config_file
     else:
         cfg_file = os.path.join(swgahome, 'parameters.cfg')
     parser = argparse.ArgumentParser(usage=usage % cfg_file,

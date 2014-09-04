@@ -8,6 +8,7 @@ import stats
 import errno
 import signal
 import cPickle
+import argparse
 import itertools
 import importlib
 import ConfigParser
@@ -36,6 +37,15 @@ def mkdirp(path):
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
+
+def basic_cmd_parser(description, cmd_name, cfg_file):
+    defaults, _ = parse_config(cfg_file, cmd_name)
+    parser = argparse.ArgumentParser(description=description, prog='swga '+cmd_name)
+    parser.set_defaults(**defaults)
+    return parser
+
+def print_stdin_msg(prog_name):
+    sys.stderr.write("swga {}: receiving input from stdin...\n".format(prog_name))
 
 def print_args(args):
     # argstr = json.dumps(args, sort_keys=True, indent=2, separators=(',', ': '))

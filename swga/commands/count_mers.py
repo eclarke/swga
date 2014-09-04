@@ -3,10 +3,10 @@ import errno
 import argparse
 import subprocess
 import multiprocessing
-import PrimerSets as ps
+import swga
 
 def main(argv, cfg_file):
-    defaults, _ = ps.parse_config(cfg_file, 'count_mers')
+    defaults, _ = swga.parse_config(cfg_file, 'count_mers')
 
     parser = argparse.ArgumentParser(description="""Count mers in a foreground
     genome, then count those mers in a (larger) background genome.""")
@@ -48,7 +48,7 @@ def main(argv, cfg_file):
     args = parser.parse_args(argv) if argv else parser.parse_args()
 
     if args.verbose:
-        ps.print_args(vars(args))
+        swga.print_args(vars(args))
 
     if args.fg_genome is None or not os.path.isfile(args.fg_genome):
         parser.print_usage()
