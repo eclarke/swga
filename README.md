@@ -23,12 +23,12 @@ git clone https://github.com/BrissonEEDS/PrimerSets
 cd PrimerSets
 # Compile the C extensions and move things into place
 bash swga_init.sh
-# Install pipeline (symlinks back to this repository), requires admin privileges
 ```
 
 ### Installing for all users
 
 ```sh
+# Install pipeline (symlinks back to this repository), requires admin privileges
 pip install --editable .
 ```
 
