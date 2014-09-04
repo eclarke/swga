@@ -48,7 +48,7 @@ def filter_primers(args, quiet):
     # keep only the top <num_primers>
     primers = primers[0:args.num_primers]
     # sort by fg/bg ratio
-    primers = sorted(primers, key=attrgetter("ratio"))
+    primers = sorted(primers, key=attrgetter("ratio"), reverse=True)
     return primers
     
 
