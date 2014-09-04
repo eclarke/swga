@@ -17,7 +17,7 @@ Commands:
 
 Options:
   --config FILE     path to config file (default %s)
-  -v, --verbose     display messages
+  -q, --quiet       suppress messages
 """
 
 def main():
@@ -40,12 +40,12 @@ def main():
     parser.add_argument('-c', '--config', metavar="CFG_FILE",
                         help='path to config file (default: %(default)s)',
                         default=cfg_file)
-    parser.add_argument('-v', '--verbose', action='store_true')                        
+    parser.add_argument('-q', '--quiet', action='store_true')                        
     args, remaining = parser.parse_known_args()
-    if args.verbose:
+    if not args.quiet:
         sys.stderr.write("swga %s: using config file at %s\n" %
                          (args.command, os.path.abspath(args.config)))
-    command_opts[args.command](remaining, args.config)
+    command_opts[args.command](remaining, args.config, args.quiet)
 
 
 def autopilot(args, cfg_file):

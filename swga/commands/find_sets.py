@@ -3,12 +3,11 @@ import ConfigParser
 import os
 import sys
 import subprocess
-import PrimerSets as ps
-
+import swga
 
 def main(argv, cfg_file):
-    defaults, _ = ps.parse_config(cfg_file, 'find_sets')
-    swgahome = ps.get_swgahome()
+    defaults, _ = swga.parse_config(cfg_file, 'find_sets')
+    swgahome = swga.get_swgahome()
     parser = argparse.ArgumentParser(
         description="""Wrapper around set_finder to find sets of
         compatible primers.""", 

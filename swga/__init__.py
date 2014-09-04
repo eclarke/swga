@@ -45,7 +45,7 @@ def basic_cmd_parser(description, cmd_name, cfg_file):
     return parser
 
 def print_stdin_msg(prog_name):
-    sys.stderr.write("swga {}: receiving input from stdin...\n".format(prog_name))
+    sys.stderr.write("{}: receiving input from stdin...\n".format(prog_name))
 
 def print_args(args):
     # argstr = json.dumps(args, sort_keys=True, indent=2, separators=(',', ': '))

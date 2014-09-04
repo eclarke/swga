@@ -11,5 +11,5 @@ setup(
     license='LICENSE.txt',
     description='Pipeline to select compatible primer sets for selective whole-genome amplification.',
     long_description=open('README.md').read(),
-    entry_points = {'console_scripts': ['swga = swga.commands.swga:main']},
+    entry_points = {'console_scripts': ['swga = swga.commands.swga_entry:main']},
 )
