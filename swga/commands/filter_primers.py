@@ -45,9 +45,11 @@ def filter_primers(args, quiet):
     primers = sorted(primers, key=attrgetter("bg_freq"))
     # remove primers that bind too many times to bg
     primers = [p for p in primers if p.bg_freq <= args.max_bg_binding]
+    # keep only the top <num_primers>
+    primers = primers[0:args.num_primers]
     # sort by fg/bg ratio
     primers = sorted(primers, key=attrgetter("ratio"))
-    # return only the top <n>
-    return primers[0:args.num_primers]
+    return primers
+    
 
 
