@@ -5,65 +5,57 @@ import subprocess
 import multiprocessing
 import swga
 
-def main(argv, cfg_file):
-    defaults, _ = swga.parse_config(cfg_file, 'count_mers')
+def main(argv, cfg_file, quiet):
+    """
+    Count k-mers in a foreground genome, then count those k-mers in
+    a larger background genome.
+    """
+    parser = swga.basic_cmd_parser(description=main.__doc__,
+                                   cmd_name='count',
+                                   cfg_file=cfg_file)
 
-    parser = argparse.ArgumentParser(description="""Count mers in a foreground
-    genome, then count those mers in a (larger) background genome.""")
+    parser.add_argument('-f', '--fg_genome', 
+                        metavar="FASTA",
+                        required=True,
+                        help='''FASTA file containing the foreground
+                        or target genome (default: %(default)s)''')
 
-    parser.set_defaults(**defaults)
+    parser.add_argument('-b', '--bg_genome', 
+                        metavar="FASTA",
+                        required=True,
+                        help='''FASTA file containing the background
+                        genome (default: %(default)s)''')
 
-    parser.add_argument('-f', '--fg_genome', metavar="FASTA",
-        help='''FASTA file containing the foreground or target genome
-            (default: %(default)s)''')
+    parser.add_argument('-m', '--min', 
+                        type=int, 
+                        help="""Min primer size (default:
+                        %(default)s)""")
 
-    parser.add_argument('-b', '--bg_genome', metavar="FASTA",
-        help='''FASTA file containing the background genome
-            (default: %(default)s)''')
+    parser.add_argument('-M', '--max', 
+                        type=int, 
+                        help="""Max primer size (default:
+                        %(default)s)""")
 
-    parser.add_argument('-m', '--min', type=int, help="""Min primer size
-        (default: %(default)s)""")
+    parser.add_argument('-o', '--output_dir', 
+                        help="""Directory to store kmer FASTA
+                        files.""")
 
-    parser.add_argument('-M', '--max', type=int, help="""Max primer size
-        (default: %(default)s)""")
+    args = parser.parse_args(argv)
 
-    parser.add_argument('-o', '--output_dir', help="""Directory to store
-        kmer FASTA files.""")
-
-    parser.add_argument('-n', '--nthreads', type=int,
-        default=multiprocessing.cpu_count(),
-        help="Number of threads to use for jellyfish (default: %(default)s)")
-
-    parser.add_argument('--bloom', action='store_true',
-        help="""Use bloom filter to exclude primers that appear 0/1 times before
-        searching (default: %(default)s)""")
-
-    parser.add_argument('-j', '--jellyfish', metavar="JFISH",
-        help="""Location of jellyfish kmer counting program
-            (default: %(default)s)""")
-
-    parser.add_argument('-v', '--verbose', action='store_true',
-        help="""Display messages (parameters, progress, etc)""")
-
-    args = parser.parse_args(argv) if argv else parser.parse_args()
-
-    if args.verbose:
-        swga.print_args(vars(args))
-
-    if args.fg_genome is None or not os.path.isfile(args.fg_genome):
+    if not os.path.isfile(args.fg_genome):
         parser.print_usage()
-        parser.exit(1, "Error: Foreground genome file unspecified or does not "
-            "exist.\n")
+        parser.exit(1, ("Error: specified foreground genome file %s "
+                        "does not exist" % args.fg_genome))
 
     if args.bg_genome is None or not os.path.isfile(args.bg_genome):
         parser.print_usage()
-        parser.exit(1, "Error: Background genome file unspecified or does not "
-            "exist.\n")
+        parser.exit(1, ("Error: specified background genome file %s "
+                        "does not exist" % args.bg_genome))
 
     if args.min > args.max:
         parser.print_usage()
-        parser.exit(1, "Error: Max primer size must be larger than min primer "
-            "size.\n")
+        parser.exit(1, ("Error: Max primer size must be larger than min primer "
+                        "size.\n"))
 
     count_mers(args)
 

@@ -7,41 +7,58 @@ Requirements
 -------------
 - Linux or Mac OS X
 - Python >= 2.7 (has not yet been tested on Python 3+)
+- pip >= 1.5.6
+- setuptools >= 5.7
 - C compiler such as `gcc`
 
 
 Installation
 -----------
 
-Download the most recent copy of the source [here](https://github.com/BrissonEEDS/PrimerSets/archive/master.zip). From a terminal:
+The easiest way to download and keep the pipeline up-to-date is to install
+an editable copy of it from the repository. Navigate to a place where you can
+download files, and follow these commands:
 ```sh
-unzip PrimerSets-master.zip
-# Compiling the C extensions
-cd PrimerSets-master/PrimerSets/lib
-make
-cd ..
-# To install for all users:
-sudo python setup.py install
-# Alternatively, install for one user:
-python setup.py install --user
+git clone https://github.com/BrissonEEDS/PrimerSets
+cd PrimerSets
+# Compile the C extensions and move things into place
+bash swga_init.sh
+# Install pipeline (symlinks back to this repository), requires admin privileges
 ```
 
-To ensure everything worked correctly, you can run tests:
+### Installing for all users
+
 ```sh
-# from the downloaded PrimerSets-master/PrimerSets directory
-python test/tests.py
+pip install --editable .
 ```
 
-After installation completes successfully, you should be able to call the various pipeline commands from any directory.
+### Installing for a single user
+The benefits to this method are that it doesn't require admin privileges.
+```sh
+# Alternatively, install pipeline for one user (no admin privileges):
+pip install --user --editable .
+# For a single-user install, observe where pip says it installed the `swga` script:
+# it should be a path that contains your home directory and ends in bin/.
+# Copy that directory path and add it to your PATH variable by including that
+# line in your .bashrc or .profile.
+# On Linux, the line to add may look like this:
+export PATH=$PATH:$HOME/.local/bin
+# On Mac OS X, the line may look like this:
+export PATH=$PATH:$HOME/Library/Python/2.7/bin
+
+# Finally, set this directory as your SWGAHOME. This allows the pipeline to find
+# some shared resources. Execute this line to copy your .bashrc or .profile:
+echo "export SWGAHOME=$(pwd)" >> ~/.bashrc
+# Ensure everything worked correctly:
+python PrimerSets/test/test.py
+```
+If any of the tests fail, see [Troubleshooting](#Troubleshooting) below.
+
+After installation completes successfully, you should be able to call the command `swga` from any directory.
 
 Configuration
 -------------
-All the options for the pipeline can be specified in a configuration file. An example config file is included in at `PrimerSets/parameters.cfg`- it is recommended to copy this file to your project's working directory and modify the values as needed.
-
-By default, the script looks for this config file in the current working directory. However, if you want a global configuration file, you can set the `$swga_params` environmental variable and the scripts will find it. To keep this value persistent across sessions, add this to your .bashrc file or equivalent:
-```sh
-export swga_params=$HOME/path_to_cfg_file/parameters.cfg
-```
+All the options for the pipeline can be specified in a configuration file. The pipeline first looks for a config file specified by the `--config` flag on the command line. If unspecified, it looks for a file called `parameters.cfg` in the local directory. If this also doesn't exist, it references the default `parameters.cfg` file located in `$SWGAHOME`. Best practice would be to copy the default config file from `$SWGAHOME` into your working directory and alter the parameters as needed.
 
 Each option in the config file can be overridden on the command line.
 
@@ -52,40 +69,42 @@ Assuming you have a list of primers together with foreground and background bind
 
 ```sh
 # select at most 200 primers with fewer than 12000 bg binding sites
-filter_primers -i selected-mers -o filtered_primers
+swga filter --input selected-mers --output filtered_primers
 
 # flatten the foreground genome for easier searching
-fasta_flattener.sh fg-genome.fasta > fg-genome.fasta.flattened
+swga flatten --input fg-genome.fasta --output fg-genome.fasta.flattened
 
 # find locations of filtered primers in foreground genome
-find_fg_locations -v -i filtered_primers --fg_genome fg-genome.fasta.flattened
+swga locate --input filtered_primers --genome fg-genome.fasta.flattened
 
 # remove heterodimers and output compatibility graph
-mk_primer_graph -i filtered_primers > primer_graph
+swga mkgraph --input filtered_primers --output primer_graph.gr
 
 # use compatibility graph to find sets btwn 2 and 7 primers,
 # then filter for sets with less than 36000 bp btwn foreground binding sites
-find_sets -i primer_graph | process_sets -o valid_sets.txt
+swga sets --input primer_graph.gr | swga score --output valid_sets.txt
 ```
-Right now the `valid_sets` file is in a space-delimited format where the first col is set standard deviation, second is the max foreground genome binding distance, and remaining numbers are the indexes of the primers in `filtered_primers`.
+Right now the `valid_sets` file is in a tab- or space-delimited format where the first col is set standard deviation, second is the max foreground genome binding distance, and remaining numbers are the indexes of the primers in `filtered_primers`.
 
 If you wanted to be really cool, you can do all of this in only two lines:
 ```sh
-fasta_flattener fg-genome.fasta > fg-genome.fasta.flattened
-filter_primers -i selected-mers | find_fg_locations -p | mk_primer_graph | find_sets | \
-    process_sets -o valid_sets.txt
+swga flatten --input fg-genome.fasta --output fg-genome.fasta.flattened
+swga filter -i selected-mers | swga locate -p | swga mkgraph | swga sets | \
+    swga score -o valid_sets.txt
 ```
 since most of these commands will default to stdin/stdout if input and output are not specified.
 
 # Usage
-`PrimerSets` has 5 pipeline scripts. In order of usage:
-- `filter_primers`: filters primers from input that match criteria
-- `find_fg_locations`: finds locations of primers on the foreground genome and stores results
-- `mk_primer_graph`: creates the primer compatibility graph before finding sets (see [theory](#Theory))
-- `find_sets`: finds initial sets of compatible primers using branch-and-bound algorithm
-- `process_sets`: filters sets that match criteria
+The commands for SWGA are as follows:
+- `count`: not yet implemented
+- `flatten`: not yet implemented
+- `filter`: filters primers from input that match criteria
+- `locate`: (not yet implemented) finds locations of primers on the input genome and stores results
+- `mkgraph`: creates the primer compatibility graph before finding sets (see [theory](#Theory))
+- `sets`: finds initial sets of compatible primers using branch-and-bound algorithm
+- `score`: filters and scores sets that match criteria
 
-Default options for these commands are specified in `parameters.cfg`. All options can be overridden on the command line; type `<script> -h` for options. Since most scripts accept input from stdin if not otherwise specified, running them without arguments will not show a help message.
+Default options for these commands are specified in `parameters.cfg`. All options can be overridden on the command line; type `swga <command> -h` for options. Since most scripts accept input from stdin if not otherwise specified, running them without arguments will not show a help message.
 
 To begin, use [SelectiveWholeGenomeAmplification](https://github.com/mutantturkey/SelectiveWholeGenomeAmplification) to find a list of starting primers. This list should have one primer per line, with foreground binding numbers, background binding numbers, and weight ratio following, separated by spaces or tabs. For instance:
 ```
@@ -162,5 +181,5 @@ Unfortunately, this is a known NP-complete problem, so no known efficient soluti
 # Contributors and Acknowledgements
 
 ## Coding:
-  - [Erik Clarke](https://github.com/eclarke) -- main implementation
-  - [Calvin Morrison](https://github.com/mutantturkey) -- heterodimer comparison
+  - [Erik Clarke](https://github.com/eclarke) -- pipeline, filtering, set finding
+  - [Calvin Morrison](https://github.com/mutantturkey) -- heterodimer comparison, primer counting
