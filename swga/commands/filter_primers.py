@@ -12,11 +12,11 @@ def main(argv, cfg_file, quiet):
 
     parser.add_argument('-M', '--max_bg_binding', action='store', type=int,
                         help="""Max times a primer can bind to bg
-                        genome. (default: %(default)s)""") 
+                        genome. (default: %(default)s)""")
 
     parser.add_argument('-n', '--num_primers', action='store', type=int,
                         help="""Max number of primers to use after
-                        filtering. (default: %(default)s)""") 
+                        filtering. (default: %(default)s)""")
 
     parser.add_argument('-i', '--input', action='store',
                         default=sys.stdin, type=argparse.FileType('r'),
@@ -26,20 +26,22 @@ def main(argv, cfg_file, quiet):
                         whitespace. (default: stdin)""")
 
     parser.add_argument('-o', '--output', action='store',
-                        type=argparse.FileType('w',0), default=sys.stdout,
+                        type=argparse.FileType('w', 0), default=sys.stdout,
                         help="""Filename to store the filtered primers
-                        (tab-delimited). (default: stdout)""") 
+                        (tab-delimited). (default: stdout)""")
 
     args = parser.parse_args(argv)
     if not quiet and args.input.name == '<stdin>':
         swga.print_stdin_msg(parser.prog)
-    
+
     primers = filter_primers(args, quiet)
     for primer in primers:
-        args.output.write("{seq}\t{fg_freq}\t{bg_freq}\t{ratio}\n".format(**primer._asdict()))
+        args.output.write("{seq}\t{fg_freq}\t{bg_freq}\t{ratio}\n".format(
+            **primer._asdict()))
 
 
 def filter_primers(args, quiet):
+    '''Filter primers according to specified criteria.'''
     primers = swga.read_primer_file(args.input, False, not quiet)
     # sort by bg binding count
     primers = sorted(primers, key=attrgetter("bg_freq"))
@@ -50,6 +52,5 @@ def filter_primers(args, quiet):
     # sort by fg/bg ratio
     primers = sorted(primers, key=attrgetter("ratio"), reverse=True)
     return primers
-    
 
 
