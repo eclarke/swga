@@ -2,9 +2,10 @@ import tempfile
 import unittest
 from collections import namedtuple, OrderedDict
 from StringIO import StringIO
-import PrimerSets as ps
-from PrimerSets.scripts.filter_primers import filter_primers
-from PrimerSets.scripts.find_sets import find_sets
+import os
+import swga
+from swga.commands.filter_primers import filter_primers
+from swga.commands.find_sets import find_sets
 
 class ReadPrimersTests(unittest.TestCase):
     '''
@@ -14,16 +15,16 @@ class ReadPrimersTests(unittest.TestCase):
         pass
 
     def test_primer_parsing(self):
-        primer = ps.parse_primer("""ATGC 100 200 0.5""")
-        self.assertEqual(primer, ps.Primer(1, "ATGC", 200, 100, 0.5))
+        primer = swga.parse_primer("""ATGC 100 200 0.5""")
+        self.assertEqual(primer, swga.Primer(1, "ATGC", 200, 100, 0.5))
 
     def test_read_primer_file(self):
         infile = StringIO("""AAAA 1 2 3
 TTTT 1 2 3 4
 GGGG 1 2 3""")
-        primers = ps.read_primer_file(infile, False, True)
-        self.assertEqual([ps.Primer(1, "AAAA", 2, 1, 3.0),
-        ps.Primer(3, "GGGG", 2, 1, 3.0)], primers)
+        primers = swga.read_primer_file(infile, False, True)
+        self.assertEqual([swga.Primer(1, "AAAA", 2, 1, 3.0),
+        swga.Primer(3, "GGGG", 2, 1, 3.0)], primers)
 
 
 class FilterPrimersTests(unittest.TestCase):
@@ -45,8 +46,8 @@ CTTA 4 99 0.4
 
 
     def test_filter_primers(self):
-        correct_result = [ps.Primer(4, "CGTA", 98, 100, 0.2),
-        ps.Primer(6, "CTTA", 99, 4, 0.4)]
+        correct_result = [swga.Primer(4, "CGTA", 98, 100, 0.2),
+        swga.Primer(6, "CTTA", 99, 4, 0.4)]
         test_result = filter_primers(self.args)
         self.assertEqual(correct_result, test_result)
 
@@ -60,9 +61,9 @@ class GraphTests(unittest.TestCase):
     Testing mk_primer_graph and find_sets behavior
     '''
     def setUp(self):
-        self.good_set = [ps.Primer(1, "ATGC", 1400, 15, 0),
-                         ps.Primer(2, "GGCC", 1500, 10, 0),
-                         ps.Primer(3, "CCTA", 2, 4, 0)]
+        self.good_set = [swga.Primer(1, "ATGC", 1400, 15, 0),
+                         swga.Primer(2, "GGCC", 1500, 10, 0),
+                         swga.Primer(3, "CCTA", 2, 4, 0)]
         self.good_edges = [[1, 2], [1, 3]]
         self.good_result = '''p sp 3 2
 n 1 1400
@@ -79,24 +80,24 @@ e 1 3
 
     def test_correct_write(self):
         with tempfile.TemporaryFile() as tmp:
-            ps.write_graph(self.good_set, self.good_edges, tmp)
+            swga.write_graph(self.good_set, self.good_edges, tmp)
             tmp.flush()
             tmp.seek(0)
             result = tmp.read()
             assert result == self.good_result
 
     def test_bad_handle(self):
-        self.failUnlessRaises(ValueError, ps.write_graph, self.good_set,
+        self.failUnlessRaises(ValueError, swga.write_graph, self.good_set,
         self.good_edges, self.bad_handle)
 
     def test_bad_primers(self):
         with tempfile.TemporaryFile() as tmp:
-            self.failUnlessRaises(ValueError, ps.write_graph, self.bad_set,
+            self.failUnlessRaises(ValueError, swga.write_graph, self.bad_set,
             self.good_edges, tmp)
 
     def test_bad_edges(self):
         with tempfile.TemporaryFile() as tmp:
-            self.failUnlessRaises(ValueError, ps.write_graph, self.good_set,
+            self.failUnlessRaises(ValueError, swga.write_graph, self.good_set,
             self.bad_edges, tmp)
 
     def test_set_finder(self):
@@ -126,13 +127,15 @@ e 5 6
         self.tmp_infile.write(test_graph)
         self.tmp_infile.flush()
         self.tmp_outfile = tempfile.NamedTemporaryFile()
-        argvals = OrderedDict({'set_finder': 'set_finder',
-            'min_bg_bind_dist': 2,
-            'bg_genome_len': 10,
-            'min_size': 3,
-            'max_size': 3,
-            'input': self.tmp_infile.name,
-            'output': self.tmp_outfile.name})
+        self.swgahome = swga.get_swgahome()
+        set_finder = os.path.join(self.swgahome, 'set_finder')
+        argvals = OrderedDict({'set_finder': set_finder,
+                               'min_bg_bind_dist': 2,
+                               'bg_genome_len': 10,
+                               'min_size': 3,
+                               'max_size': 3,
+                               'input': self.tmp_infile.name,
+                               'output': self.tmp_outfile.name})
         args = namedtuple('args', argvals.keys())
         argvals = args(**argvals)
         find_sets(argvals)
@@ -150,21 +153,21 @@ class HeterodimerTests(unittest.TestCase):
     '''
     def setUp(self):
         self.primers = []
-        self.primers.append(ps.Primer(1, "ATGCTC", 0, 0, 0))
+        self.primers.append(swga.Primer(1, "ATGCTC", 0, 0, 0))
         # 4 contiguous
-        self.primers.append(ps.Primer(2, "CAGCAT", 0, 0, 0))
+        self.primers.append(swga.Primer(2, "CAGCAT", 0, 0, 0))
         # 3 contiguous, alt
-        self.primers.append(ps.Primer(3, "GAGGTA", 0, 0, 0))
+        self.primers.append(swga.Primer(3, "GAGGTA", 0, 0, 0))
         # 3 contiguous, alt 2
-        self.primers.append(ps.Primer(4, "ATCGAC", 0, 0, 0))
+        self.primers.append(swga.Primer(4, "ATCGAC", 0, 0, 0))
         # valid
-        self.primers.append(ps.Primer(5, "TTCCAC", 0, 0, 0))
+        self.primers.append(swga.Primer(5, "TTCCAC", 0, 0, 0))
 
 
     def test_compatible_primers(self):
-        edges = ps.test_pairs(self.primers[0:2], 3)
+        edges = swga.test_pairs(self.primers[0:2], 3)
         self.assertEqual(edges, [])
-        edges = ps.test_pairs([self.primers[0], self.primers[4]], 3)
+        edges = swga.test_pairs([self.primers[0], self.primers[4]], 3)
         self.assertEqual(edges, [[1, 5]])
 
 
@@ -178,7 +181,7 @@ class PrimerBindingLocationTests(unittest.TestCase):
     def test_find_locations(self):
         test_str = "TATATATAT"
         substr = "TAT"
-        locs = ps.find_locations(substr, test_str)
+        locs = swga.find_locations(substr, test_str)
         self.assertEqual(locs, [0, 2, 4, 6])
 
     def test_find_primer_locations(self):
@@ -187,8 +190,8 @@ class PrimerBindingLocationTests(unittest.TestCase):
             tmp.write(test_str)
             tmp.flush()
             filename = tmp.name
-            primer = ps.Primer(1, "TATA", 0, 0, 0)
-            _, test_locs = ps.find_primer_locations(primer, filename)
+            primer = swga.Primer(1, "TATA", 0, 0, 0)
+            _, test_locs = swga.find_primer_locations(primer, filename)
         locs = sorted([0, 10, 1, 3, 5, 11, 2, 4, 6])
         self.assertEqual(test_locs, locs)
 
@@ -206,7 +209,7 @@ class PrimerBindingLocationTests(unittest.TestCase):
 #
 #
 #     def test_fg_bind_dist(self):
-#         primer_set, primers, max_dist, stdev = ps.fg_bind_distances(self.line, self.locations, ps.stdev)
+#         primer_set, primers, max_dist, stdev = swga.fg_bind_distances(self.line, self.locations, swga.stdev)
 #         self.assertEqual(max_dist, 2)
 #         self.assertEqual(round(stdev, 4), 2.9345)
 #         self.assertEqual(primer_set, [1, 2, 3])

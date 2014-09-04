@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e -x # halt on error, echo commands
 
-cd lib
+cd src/cliquer
 make
-cd ..
-cp lib/set_finder .
-cp PrimerSets/parameters.cfg ..
+cd ../..
+cp src/cliquer/set_finder .
+cp swga/parameters.cfg .
 
 
 

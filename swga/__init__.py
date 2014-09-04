@@ -47,9 +47,12 @@ def basic_cmd_parser(description, cmd_name, cfg_file):
 def print_stdin_msg(prog_name):
     sys.stderr.write("{}: receiving input from stdin...\n".format(prog_name))
 
-def print_args(args):
+def print_args(prog_name, args):
     # argstr = json.dumps(args, sort_keys=True, indent=2, separators=(',', ': '))
-    sys.stderr.write("Parameters: %s\n" % str(args))
+    sys.stderr.write("{} parameters: {}\n".format(prog_name, str(vars(args))))
+
+def print_cfg_file(prog_name, cfg_file):
+    sys.stderr.write("{} config file: {}\n".format(prog_name, os.path.abspath(cfg_file)))
 
 def parse_config(cfg_file, section):
     '''

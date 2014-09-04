@@ -9,6 +9,7 @@ usage="""Usage: swga [-c --config CFG_FILE] <command> [options]
 Commands:
   count:            find kmer counts in foreground and background genomes
   filter:           filter kmers according to various criteria
+  locate:           locate primers in a genome and store locations in file
   flatten:          flatten a genome file for easy searching
   mkgraph:          create heterodimer compatibility graph
   sets:             find compatible sets of primers in graph
@@ -22,8 +23,9 @@ Options:
 
 def main():
     command_opts = {'count':commands.count_mers.main,
-                    'filter':commands.filter_primers.main,
                     'flatten':commands.flatten.main,
+                    'filter':commands.filter_primers.main,
+                    'locate':commands.locate.main,
                     'mkgraph':commands.make_graph.main,
                     'sets':commands.find_sets.main,
                     'score':commands.process_sets.main,
@@ -42,9 +44,6 @@ def main():
                         default=cfg_file)
     parser.add_argument('-q', '--quiet', action='store_true')                        
     args, remaining = parser.parse_known_args()
-    if not args.quiet:
-        sys.stderr.write("swga %s: using config file at %s\n" %
-                         (args.command, os.path.abspath(args.config)))
     command_opts[args.command](remaining, args.config, args.quiet)
 
 
