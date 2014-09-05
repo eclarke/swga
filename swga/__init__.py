@@ -4,7 +4,6 @@ import sys
 import gzip
 import time
 import mmap
-import math
 import stats
 import errno
 import signal

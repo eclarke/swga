@@ -50,7 +50,7 @@ set_finder.o: set_finder.c
 	$(CC) $(CFLAGS) $(LONGOPTS) -o $@ -c $<
 
 clean:
-	rm -f *.o *~ cl testcases
+	rm -f *.o *~ cl testcases set_finder
 
 backup:
 	mkdir "`date "+backup-%Y-%m-%d-%H-%M"`" 2>/dev/null || true
@@ -58,4 +58,3 @@ backup:
 
 test: testcases
 	./testcases
-

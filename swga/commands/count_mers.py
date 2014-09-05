@@ -1,9 +1,8 @@
 import os
 import errno
-import argparse
 import subprocess
-import multiprocessing
 import swga
+
 
 def main(argv, cfg_file, quiet):
     """
