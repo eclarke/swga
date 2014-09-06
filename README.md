@@ -21,6 +21,9 @@ download files, and follow these commands:
 ```sh
 git clone https://github.com/BrissonEEDS/PrimerSets
 cd PrimerSets
+# Options:
+#   SWGAHOME: the directory the pipeline will look in for binaries
+#       e.g: make SWGAHOME=my_swga_dir
 make
 ```
 
