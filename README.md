@@ -21,38 +21,8 @@ download files, and follow these commands:
 ```sh
 git clone https://github.com/BrissonEEDS/PrimerSets
 cd PrimerSets
-# Compile the C extensions and move things into place
-bash swga_init.sh
+make
 ```
-
-### Installing for all users
-
-```sh
-# Install pipeline (symlinks back to this repository), requires admin privileges
-pip install --editable .
-```
-
-### Installing for a single user
-The benefits to this method are that it doesn't require admin privileges.
-```sh
-# Alternatively, install pipeline for one user (no admin privileges):
-pip install --user --editable .
-# For a single-user install, observe where pip says it installed the `swga` script:
-# it should be a path that contains your home directory and ends in bin/.
-# Copy that directory path and add it to your PATH variable by including that
-# line in your .bashrc or .profile.
-# On Linux, the line to add may look like this:
-export PATH=$PATH:$HOME/.local/bin
-# On Mac OS X, the line may look like this:
-export PATH=$PATH:$HOME/Library/Python/2.7/bin
-
-# Finally, set this directory as your SWGAHOME. This allows the pipeline to find
-# some shared resources. Execute this line to copy your .bashrc or .profile:
-echo "export SWGAHOME=$(pwd)" >> ~/.bashrc
-# Ensure everything worked correctly:
-python PrimerSets/test/test.py
-```
-If any of the tests fail, see [Troubleshooting](#Troubleshooting) below.
 
 After installation completes successfully, you should be able to call the command `swga` from any directory.
 
