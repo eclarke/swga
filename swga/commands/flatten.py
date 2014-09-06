@@ -18,7 +18,6 @@ def main(argv, cfg_file, quiet):
                         help="Input FASTA file")
 
     parser.add_argument('-o', '--output', metavar="FILE",
-                        type=argparse.FileType('w', 0),
                         help="Output filename (default: \
                         input_name.flattened)")
 

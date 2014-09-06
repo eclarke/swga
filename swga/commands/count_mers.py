@@ -56,44 +56,47 @@ def main(argv, cfg_file, quiet):
         parser.exit(1, ("Error: Max primer size must be larger than min primer "
                         "size.\n"))
 
+    swgahome = swga.get_swgahome()
+    args.kmer_counter = os.path.join(swgahome, 'bin', 'kmer_locations')
+    if not quiet:
+        swga.print_cfg_file(parser.prog, cfg_file)
+        swga.print_args(parser.prog, args)
     count_mers(args)
 
 
 def count_mers(args):
     fg_genome_name = args.fg_genome.split(os.sep).pop()
     bg_genome_name = args.bg_genome.split(os.sep).pop()
-    fg_kmer_dir = os.path.join(args.output_dir, fg_genome_name+'.kmers')
-    bg_kmer_dir = os.path.join(args.output_dir, bg_genome_name+'.kmers')
-    # Try to create the directory, unless it already exists
+    fg_kmer_dir = os.path.join(args.output_dir, fg_genome_name+'.fgkmers')
+    bg_kmer_dir = os.path.join(args.output_dir, bg_genome_name+'.bgkmers')
+
+    # Create the directories if they don't exist already
     for d in (args.output_dir, fg_kmer_dir, bg_kmer_dir):
-        try:
-            os.makedirs(d)
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
+        swga.mkdirp(d)
 
     for i in xrange(args.min, args.max+1):
         fg_output_name = os.path.join(fg_kmer_dir, '%i-mers.fa' % i)
         bg_output_name = os.path.join(bg_kmer_dir, '%i-mers.fa' % i)
-        fg_cmd_str = ("{jellyfish} --mer-len={i} --size=100M --output={output} "
-            "--threads={threads} {genome}").format(
-                jellyfish=args.jellyfish,
-                i=i,
-                threads=args.nthreads,
-                output=fg_output_name,
-                genome=args.fg_genome)
-        bg_cmd_str = ("{jellyfish} --mer-len={i} --size=100M --output={output} "
-            "--threads={threads} --if={fgp} {genome}").format(
-                jellyfish=args.jellyfish,
-                i=i,
-                threads=args.nthreads,
-                fgp=fg_output_name,
-                output=bg_output_name,
-                genome=args.bg_genome)
+        fg_cmd_str = "{kmer_counter} --kmer {i} --input {genome} --label > {output}".format(
+            kmer_counter=args.kmer_counter,
+            i=i,
+            genome=args.fg_genome,
+            output=fg_output_name)
+        fg_mers_only = fg_output_name+".mersonly"
+        bg_cmd_str = ("{kmer_counter} --kmer {i} --input {genome} --mer-file {fgmers} "
+                      "--label > {output}").format(
+                          kmer_counter=args.kmer_counter,
+                          i=i,
+                          genome=args.bg_genome,
+                          fgmers=fg_mers_only,
+                          output=bg_output_name)
         print fg_cmd_str
         subprocess.check_call(fg_cmd_str, shell=True)
+        # copy all the mer seqs to a temporary file (since kmer_counter expects only seqs, not also counts)
+        subprocess.check_call("awk '{print $1}' < %s > %s" % (fg_output_name, fg_mers_only), shell=True)
         print bg_cmd_str
         subprocess.check_call(bg_cmd_str, shell=True)
+        os.remove(fg_mers_only)
 
 
 

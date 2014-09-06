@@ -40,6 +40,7 @@ def mkdirp(path):
 
 def basic_cmd_parser(description, cmd_name, cfg_file):
     defaults, _ = parse_config(cfg_file, cmd_name)
+    print defaults, _
     parser = argparse.ArgumentParser(description=description, prog='swga '+cmd_name)
     parser.set_defaults(**defaults)
     return parser
@@ -60,7 +61,6 @@ def parse_config(cfg_file, section):
     in the specified section, along with the ConfigParser itself
     '''
     config = ConfigParser.SafeConfigParser()
-    cfg_file = os.environ.get('swga_params', default_config_file)
     defaults = {}
     if os.path.isfile(cfg_file):
         config.read([cfg_file])
