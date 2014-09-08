@@ -1,4 +1,4 @@
-import count_mers
+import mer_count
 import flatten
 import locate
 import filter_primers

@@ -16,21 +16,34 @@ Installation
 -----------
 
 The easiest way to download and keep the pipeline up-to-date is to install
-an editable copy of it from the repository. Navigate to a place where you can
-download files, and follow these commands:
+an editable copy of it from the repository. Just clone a copy and run `make`:
 ```sh
 git clone https://github.com/BrissonEEDS/PrimerSets
 cd PrimerSets
-# Options:
-#   SWGAHOME: the directory the pipeline will look in for binaries
-#       e.g: make SWGAHOME=my_swga_dir
 make
+```
+
+Installation variables:
+- `SWGAHOME`: the directory where the Makefile installs some needed binaries and global  config files. By default, set to ~/.swga
+- `USER_INSTALL`: by setting this to a blank string (""), bypass single-user install and install as a system-wide Python package (like most Python package installs). Requires admin privileges.
+- `EDITABLE_INSTALL`: by setting this to a blank string, can install as a _non_-editable module (prevents updates using `git pull`)
+
+For instance, here is how to bypass the single-user install:
+```sh
+git clone https://github.com/BrissonEEDS/PrimerSets
+cd PrimerSets
+make USER_INSTALL=""
 ```
 
 After installation completes successfully, you should be able to call the command `swga` from any directory.
 
 Configuration
 -------------
+### Setting Up
+Make sure the directory the `swga` command was installed to exists on your path and that the environment variable `SWGAHOME` points to the directory specified during installation. A message specifying the values of these variables will be displayed after successful installation.
+
+### Pipeline configuration
+
 All the options for the pipeline can be specified in a configuration file. The pipeline first looks for a config file specified by the `--config` flag on the command line. If unspecified, it looks for a file called `parameters.cfg` in the local directory. If this also doesn't exist, it references the default `parameters.cfg` file located in `$SWGAHOME`. Best practice would be to copy the default config file from `$SWGAHOME` into your working directory and alter the parameters as needed.
 
 Each option in the config file can be overridden on the command line.

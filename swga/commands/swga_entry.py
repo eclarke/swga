@@ -22,7 +22,7 @@ Options:
 """
 
 def main():
-    command_opts = {'count':commands.count_mers.main,
+    command_opts = {'count':commands.mer_count.main,
                     'flatten':commands.flatten.main,
                     'filter':commands.filter_primers.main,
                     'locate':commands.locate.main,
