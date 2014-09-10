@@ -32,7 +32,7 @@ def main(argv, cfg_file, quiet):
 
     args = parser.parse_args(argv)
 
-    for key, value in vars(args):
+    for key, value in vars(args).iteritems():
         if not value:
             sys.stderr.write(("Error: no value specified for parameter "
                               "{0}. Specify a value on the command line "
