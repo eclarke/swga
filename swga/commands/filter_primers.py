@@ -31,6 +31,13 @@ def main(argv, cfg_file, quiet):
                         (tab-delimited). (default: stdout)""")
 
     args = parser.parse_args(argv)
+
+    for key, value in vars(args):
+        if not value:
+            sys.stderr.write(("Error: no value specified for parameter "
+                              "{0}. Specify a value on the command line "
+                              "with --{0} or in the config file.").format(key))
+
     if not quiet and args.input.name == '<stdin>':
         swga.print_stdin_msg(parser.prog)
 

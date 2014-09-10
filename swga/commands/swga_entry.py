@@ -31,10 +31,11 @@ def main():
                     'score':commands.process_sets.main,
                     'autopilot':autopilot}
     swgahome = swga.get_swgahome()
-    if os.path.isfile(swga.default_config_file):
-        cfg_file = swga.default_config_file
-    else:
-        cfg_file = os.path.join(swgahome, 'parameters.cfg')
+    cfg_file = swga.default_config_file
+#    if os.path.isfile(swga.default_config_file):
+#        cfg_file = swga.default_config_file
+#    else:
+#        cfg_file = os.path.join(swgahome, 'parameters.cfg')
     parser = argparse.ArgumentParser(usage=usage % cfg_file,
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
                                      add_help=False)

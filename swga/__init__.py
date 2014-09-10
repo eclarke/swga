@@ -39,8 +39,15 @@ def mkdirp(path):
             raise
 
 def basic_cmd_parser(description, cmd_name, cfg_file):
-    defaults, _ = parse_config(cfg_file, cmd_name)
-    print defaults, _
+    try:
+        defaults, _ = parse_config(cfg_file, cmd_name)
+    except IOError:
+        sys.stderr.write("Error: Could not find config file. Ensure "
+                         "`parameters.cfg` exists in your working "
+                         "directory.\n")
+        sys.exit(1)
+
+    print defaults, cfg_file
     parser = argparse.ArgumentParser(description=description, prog='swga '+cmd_name)
     parser.set_defaults(**defaults)
     return parser
@@ -58,14 +65,23 @@ def print_cfg_file(prog_name, cfg_file):
 def parse_config(cfg_file, section):
     '''
     Parses a config file and returns a dictionary of the values found
-    in the specified section, along with the ConfigParser itself
+    in the specified section, along with the ConfigParser itself.
+    The config file must exist and all parameter values must not be
+    empty.
     '''
     config = ConfigParser.SafeConfigParser()
     defaults = {}
-    if os.path.isfile(cfg_file):
-        config.read([cfg_file])
+    with open(cfg_file) as cfg_file_fp:
+        config.readfp(cfg_file_fp)
         defaults = dict(config.items(section))
-    return defaults, config
+        if not all(defaults.values()):
+            for key, value in defaults.iteritems():
+                if not value:
+                    sys.stderr.write(("Warning: value for `{0}` "
+                                      "unspecified. Specify a value "
+                                      "using --{0} on the command "
+                                      "line.\n").format(key))
+        return defaults, config
 
 
 def parse_primer(string, line_no=1):

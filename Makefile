@@ -37,7 +37,7 @@ all : cl set_finder
 	pip install $(INSTALL_FLAGS) .
 	mkdir -p $(SWGABIN)
 	cp set_finder $(SWGABIN)
-	cp swga/default_parameters.cfg $(SWGAHOME)/parameters.cfg
+#	cp swga/default_parameters.cfg $(SWGAHOME)/parameters.cfg
 	@echo "------------------------------------"
 	@echo " $(USERINST_MESSAGE)"
 	@echo " $(SWGAHOME_MESSAGE)"
