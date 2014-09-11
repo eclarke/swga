@@ -1,16 +1,6 @@
 VPATH = src/cliquer:swga
 include src/cliquer/Makefile
 
-define HELP
-Installation makefile for SWGA. 
-Run 'make all' to compile libraries and install swga, or 'make clean' to remove any compiler intermediates.
-Options:
-  SWGAHOME=/some/path:       set home directory for SWGA to /some/path (default: $(SWGAHOME))
-  user_install=(yes/no):     install SWGA for a single user (default: yes)
-  editable_install=(yes/no): symlink repository instead of moving files (allows 'git pull' updates)
-endef
-export HELP
-
 SWGAHOME?=$(HOME)/.swga
 SWGABIN=$(SWGAHOME)/bin
 USERBASE=$(shell python -m site --user-base)
@@ -21,9 +11,6 @@ SWGAHOME_MESSAGE="export SWGAHOME=$(SWGAHOME)"
 ifeq ($(findstr $(USERBASE)/bin, $(PATH)),)
 	USERINST_MESSAGE='export PATH=$$PATH:$(USERBASE)/bin'
 endif
-
-help:
-	@echo "$$HELP"
 
 all : cl set_finder
 	pip install --user --editable .
