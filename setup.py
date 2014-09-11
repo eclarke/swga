@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='swga',
-    version='0.2.0',
+    version='0.2.1',
     author='Erik Clarke',
     author_email='ecl@mail.med.upenn.edu',
     packages=find_packages(exclude=['cliquer', 'docs', 'tests']),
