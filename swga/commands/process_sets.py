@@ -1,6 +1,8 @@
 import argparse
 import sys
 import swga
+import swga.genome
+import swga.score
 from functools import partial
 
 
@@ -11,6 +13,7 @@ def main(argv, cfg_file, quiet):
                                    cfg_file=cfg_file)
 
     parser.add_argument('-i', '--input', default=sys.stdin,
+                        type=argparse.FileType('r'),
                         help='''Compatible sets of primers. One set
                         per row, first number is the size of the set,
                         following numbers are primer ids in that set,
@@ -31,11 +34,11 @@ def main(argv, cfg_file, quiet):
                         set on the foreground genome. (default:
                         %(default)s)''')
 
-    parser.add_argument('--fg_bind_locations',
+    parser.add_argument('-l', '--fg_bind_locations',
+                        required=True,
                         help='''Location of the output file that
                         contains binding locations for each primer
-                        (from the `swga locate` command). (default:
-                        %(default)s)''')
+                        (from the `swga locate` command).''')
 
     score_funs = parser.add_mutually_exclusive_group()
     score_funs.add_argument('-s', '--score_expression',
@@ -72,7 +75,7 @@ def process_sets(args, quiet):
 
     After a specified number of sets pass the filter, it exits the process.
     '''
-    primer_store = swga.load_locations(args.fg_bind_locations)
+    primer_store = swga.genome.load_locations(args.fg_bind_locations)
     # Find the user-defined scoring function
     score_fun = None
     if args.score_expression and args.plugin_score_fun:
@@ -82,16 +85,16 @@ def process_sets(args, quiet):
                          "given by %s." % args.plugin_score_fun)
         score_fun = swga.get_user_fun(args.score_fun)
     elif args.score_expression:
-        score_fun = partial(swga.default_score_set,
+        score_fun = partial(swga.score.default_score_set,
                             expression=args.score_expression)
 
     passed = processed = 0
     for line in args.input:
         # Parse output from find_sets
-        primer_ids, bg_ratio = swga.read_set_finder_line(line)
-        primer_set = swga.get_primers_from_ids(primer_ids, primer_store)
-        primer_locs = swga.get_primer_locations(primer_ids, primer_store)
-        max_dist = max(swga.seq_diff(primer_locs))
+        primer_ids, bg_ratio = swga.score.read_set_finder_line(line)
+        primer_set = swga.score.get_primers_from_ids(primer_ids, primer_store)
+        primer_locs = swga.score.get_primer_locations(primer_ids, primer_store)
+        max_dist = max(swga.score.seq_diff(primer_locs))
         processed += 1
         if max_dist <= args.max_fg_bind_dist:
             passed += 1

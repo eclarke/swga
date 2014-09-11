@@ -3,7 +3,8 @@ import ConfigParser
 import os
 import sys
 import swga
-
+import swga.primers
+import swga.heterodimer_graph as graph
 
 def main(argv, cfg_file, quiet):
     '''Create a heterodimer compatibility graph from a list of primers.'''
@@ -20,12 +21,12 @@ def main(argv, cfg_file, quiet):
     default=sys.stdout, help="""Filename to store output graph (in DIMACS
     format). (default: stdout)""")
 
-    parser.add_argument('-m', '--max_complement', type=int, help="""Max number
+    parser.add_argument('-m', '--max_hetdimer_bind', type=int, help="""Max number
     of consecutive complimentary bases between two primers.""")
 
     args = parser.parse_args(argv)
-    if not quiet and args.input.name == '<stdin>':
-        swga.print_stdin_msg(parser.prog)
+    swga.print_status(parser.prog, args, cfg_file, 
+                      args.input.name=='<stdin>')
 
     make_graph(args)
 
@@ -36,6 +37,6 @@ def make_graph(args):
 
     args: Namespace object from the argument parser
     '''
-    primers = swga.read_primer_file(args.input)
-    arcs = swga.test_pairs(primers, args.max_hetdimer_bind)
-    swga.write_graph(primers, arcs, args.output)
+    primers = swga.primers.read_primer_file(args.input)
+    arcs = graph.test_pairs(primers, args.max_hetdimer_bind)
+    graph.write_graph(primers, arcs, args.output)

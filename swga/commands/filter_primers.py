@@ -2,7 +2,7 @@ import argparse
 import sys
 from operator import attrgetter
 import swga
-
+import swga.primers
 
 def main(argv, cfg_file, quiet):
     '''Filter primers according to specified criteria.'''
@@ -31,15 +31,18 @@ def main(argv, cfg_file, quiet):
                         (tab-delimited). (default: stdout)""")
 
     args = parser.parse_args(argv)
+    swga.print_status(parser.prog, args, cfg_file, 
+                      args.input.name=='<stdin>')
+    
 
-    for key, value in vars(args).iteritems():
-        if not value:
-            sys.stderr.write(("Error: no value specified for parameter "
-                              "{0}. Specify a value on the command line "
-                              "with --{0} or in the config file.").format(key))
+    # for key, value in vars(args).iteritems():
+    #     if not value:
+    #         sys.stderr.write(("Error: no value specified for parameter "
+    #                           "{0}. Specify a value on the command line "
+    #                           "with --{0} or in the config file.").format(key))
 
-    if not quiet and args.input.name == '<stdin>':
-        swga.print_stdin_msg(parser.prog)
+    # if not quiet and args.input.name == '<stdin>':
+    #     swga.print_stdin_msg(parser.prog)
 
     primers = filter_primers(args, quiet)
     for primer in primers:
@@ -49,7 +52,7 @@ def main(argv, cfg_file, quiet):
 
 def filter_primers(args, quiet):
     '''Filter primers according to specified criteria.'''
-    primers = swga.read_primer_file(args.input, False, not quiet)
+    primers = swga.primers.read_primer_file(args.input, False, not quiet)
     # sort by bg binding count
     primers = sorted(primers, key=attrgetter("bg_freq"))
     # remove primers that bind too many times to bg

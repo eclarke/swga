@@ -1,12 +1,10 @@
 import argparse
-import ConfigParser
 import os
 import sys
 import multiprocessing
-import cPickle
-import gzip
 import swga
-
+import swga.primers
+import swga.genome
 
 def main(argv, cfg_file, quiet):
     '''
@@ -32,7 +30,7 @@ def main(argv, cfg_file, quiet):
 
     parser.add_argument('-l', '--locations_store', metavar='FILE',
                         help="""Where to store the primer binding
-                        locations. (default: %(default)s)""") 
+                        locations. (default: %(default)s)""", required=True) 
 
     parser.add_argument('-n', '--ncores', type=int, metavar="N",
                         default=multiprocessing.cpu_count(), 
@@ -47,30 +45,24 @@ def main(argv, cfg_file, quiet):
 
     # Check to make sure genome file is valid
     if not os.path.isfile(args.genome):
-        sys.stderr.write('Error: Genome specified by %s does not exist.\n' %
+        swga.swga_error('Error: Genome specified by %s does not exist.' %
                          args.genome)
-        exit(1)
-    if not swga.check_if_flattened(args.genome):
-        sys.stderr.write('Error: Genome does not appear to be flattened: use '
-                         '`swga flatten` first.\n')
-        exit(1)
+    if not swga.genome.check_if_flattened(args.genome):
+        swga.swga_error('Error: Genome does not appear to be flattened: use '
+                         '`swga flatten` first.')
 
-    if not quiet and args.input.name == '<stdin>':
-        swga.print_stdin_msg(parser.prog)
+    swga.print_status(parser.prog, args, cfg_file, args.input.name=='<stdin>')
 
-    if not quiet:
-        swga.print_cfg_file(parser.prog, cfg_file)
-        swga.print_args(parser.prog, args)
-
-    primers = swga.read_primer_file(args.input, args.passthrough,
+    primers = swga.primers.read_primer_file(args.input, args.passthrough,
                                     not quiet)
 
     # Find locations using multiple processes
-    locations = swga.mp_find_primer_locations(primers, args.genome,
+    locations = swga.genome.mp_find_primer_locations(primers, args.genome,
                                               args.ncores, not quiet)
 
     # Save to gzipped pickled file (optimized for large numbers of sites)
-    swga.save_locations(locations, args.locations_store, not quiet)
+    sys.stderr.write("Saving primer locations...\n")
+    swga.genome.save_locations(locations, args.locations_store, not quiet)
 
 
 if __name__ == '__main__':

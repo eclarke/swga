@@ -34,13 +34,9 @@ def main(argv, cfg_file, quiet):
     args.set_finder = os.path.join(swgahome, 'bin/set_finder')
 
     if not os.path.isfile(args.set_finder):
-        sys.stderr.write("Error: cannot find set_finder in %s.\n" % swgahome)
-        exit(1)
-    if not quiet:
-        swga.print_cfg_file(parser.prog, cfg_file)
-        swga.print_args(parser.prog, args)
-    if not quiet and args.input == '-':
-        swga.print_stdin_msg(parser.prog)
+        swga.swga_error("Error: cannot find set_finder at %s.\n" % args.set_finder)
+
+    swga.print_status(parser.prog, args, cfg_file, args.input=='-')
 
     find_sets(args)
 

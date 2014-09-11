@@ -22,29 +22,46 @@ git clone https://github.com/BrissonEEDS/PrimerSets
 cd PrimerSets
 make
 ```
-
-Installation variables:
-- `SWGAHOME`: the directory where the Makefile installs some needed binaries and global  config files. By default, set to ~/.swga
-- `USER_INSTALL`: by setting this to a blank string (""), bypass single-user install and install as a system-wide Python package (like most Python package installs). Requires admin privileges.
-- `EDITABLE_INSTALL`: by setting this to a blank string, can install as a _non_-editable module (prevents updates using `git pull`)
-
-For instance, here is how to bypass the single-user install:
+By default, the installation uses `~/.swga` as the location of `SWGAHOME`, which is where it keeps needed resources. To use a different directory for `SWGAHOME`, alter the above instructions so that the make command looks like this:
 ```sh
-git clone https://github.com/BrissonEEDS/PrimerSets
-cd PrimerSets
-make USER_INSTALL=""
+make SWGAHOME=/my/other/directory
 ```
 
-After installation completes successfully, you should be able to call the command `swga` from any directory.
+After installation, if everything worked, you should see a message that looks something like this (from my Mac- your message may look different):
+
+```
+------------------------------------
+Install succeeded!
+Before using SWGA, run the following commands or put them in your
+shell config file (such as .bashrc, .profile, or .bash_profile).
+If not placed in your shell config file, these commands must be run each
+time before using SWGA:
+
+export SWGAHOME=/Users/erik/.swga
+export PATH=$PATH:/Users/erik/Library/Python/2.7/bin
+------------------------------------
+```
+
+The two statements starting with `export` should be added to your shell config file. On Linux systems, this may be ~/.profile or ~/.bashrc. On a Mac, this may be ~/.bash_profile. To add these statements, open the correct file for your system using an editor such as `nano` and paste the two statements at the bottom of that file, then save and quit.
+
+Now, open a new terminal window and verify that everything worked:
+```sh
+# This should have the new directory at the end
+echo $PATH
+# This should return the directory given in the second message for SWGAHOME
+echo $SWGAHOME
+# Try running swga!
+swga
+```
+
+If everything worked, congrats! Time to set up your configuration file.
 
 Configuration
 -------------
-### Setting Up
-Make sure the directory the `swga` command was installed to exists on your path and that the environment variable `SWGAHOME` points to the directory specified during installation. A message specifying the values of these variables will be displayed after successful installation.
 
-### Pipeline configuration
+All the options for the pipeline can be specified in a configuration file. The pipeline first looks for a config file specified by the `--config` flag on the command line. If unspecified, it looks for a file called `parameters.cfg` in the local directory.
 
-All the options for the pipeline can be specified in a configuration file. The pipeline first looks for a config file specified by the `--config` flag on the command line. If unspecified, it looks for a file called `parameters.cfg` in the local directory. If this also doesn't exist, it references the default `parameters.cfg` file located in `$SWGAHOME`. Best practice would be to copy the default config file from `$SWGAHOME` into your working directory and alter the parameters as needed.
+*Note*: Because there are many options for the pipeline, it is best practice (and now required) to specify a config file (either the default in the working directory, or by using `--config`).
 
 Each option in the config file can be overridden on the command line.
 

@@ -14,33 +14,31 @@ export HELP
 SWGAHOME?=$(HOME)/.swga
 SWGABIN=$(SWGAHOME)/bin
 USERBASE=$(shell python -m site --user-base)
-user_install?=yes
-editable_install?=yes
-ifeq ($(user_install),yes)
-	USER_INSTALL=--user
-endif
-ifeq ($(editable_install),yes)
-	EDITABLE_INSTALL=--editable
-endif
 
-INSTALL_FLAGS?=$(USER_INSTALL) $(EDITABLE_INSTALL)
-USERINST_MESSAGE="swga installed to $(USERBASE). Ensure $(USERBASE)/bin is in your path."
-SWGAHOME_MESSAGE="Ensure \'export SWGAHOME=$(SWGAHOME)\' is in your .bashrc or .profile before running swga."
-ifneq ($(USER_INSTALL),--user)
-	USERINST_MESSAGE="swga installed globally"
+USERINST_MESSAGE=""
+SWGAHOME_MESSAGE="export SWGAHOME=$(SWGAHOME)"
+
+ifeq ($(findstr $(USERBASE)/bin, $(PATH)),)
+	USERINST_MESSAGE='export PATH=$$PATH:$(USERBASE)/bin'
 endif
 
 help:
 	@echo "$$HELP"
 
 all : cl set_finder
-	pip install $(INSTALL_FLAGS) .
+	pip install --user --editable .
 	mkdir -p $(SWGABIN)
 	cp set_finder $(SWGABIN)
-#	cp swga/default_parameters.cfg $(SWGAHOME)/parameters.cfg
+	cp swga/default_parameters.cfg $(SWGAHOME)/default_parameters.cfg
 	@echo "------------------------------------"
-	@echo " $(USERINST_MESSAGE)"
-	@echo " $(SWGAHOME_MESSAGE)"
+	@echo "Install succeeded! "
+	@echo "Before using SWGA, run the following commands or put them in your \n\
+	shell config file (such as .bashrc, .profile, or .bash_profile). \n\
+	If not placed in your shell config file, these commands must be run each \n\
+	time before using SWGA:"
+	@echo
+	@echo   $(SWGAHOME_MESSAGE)
+	@echo   $(USERINST_MESSAGE)
 	@echo "------------------------------------"
 
 
