@@ -58,8 +58,8 @@ def main(argv, cfg_file, quiet):
                             argument. (default: %(default)s)""")
 
     args = parser.parse_args(argv)
-    if not quiet and args.input.name == '<stdin>':
-        swga.print_stdin_msg(parser.prog)
+    swga.print_status(parser.prog, args, cfg_file,
+                      args.input.name=="<stdin>")
 
     process_sets(args, quiet)
 
