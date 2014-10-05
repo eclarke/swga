@@ -14,6 +14,7 @@ Commands:
   mkgraph:          create heterodimer compatibility graph
   sets:             find compatible sets of primers in graph
   score:            score sets of primers
+  locate-sets:      return locations of a set of primers in a genome
   autopilot:        run pipeline according to parameters given in config file
 
 Options:
@@ -29,6 +30,7 @@ def main():
                     'mkgraph':commands.make_graph.main,
                     'sets':commands.find_sets.main,
                     'score':commands.process_sets.main,
+                    'locate-sets':commands.locate_sets.main,
                     'autopilot':autopilot}
     cfg_file = default_config_file
     parser = argparse.ArgumentParser(usage=usage % cfg_file,
