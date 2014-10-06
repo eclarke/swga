@@ -35,14 +35,16 @@ def main(argv, cfg_file, quiet):
     if not os.path.isdir(args.output_folder):
         os.makedirs(args.output_folder)
     for primer in primers:
-        with open(os.path.join(args.output_folder, primer+'.bed'), 'w') as bedfile:
-            bedfile.write("track name={}\n".format(primer))
-            for record in fasta:
-                seq = fasta[record][::]
-                record_name = record.split('|')[0].strip()
-                for location in genome.find_locations(primer, seq):
-                    bedfile.write("{rec} {start} {end}\n".format(rec=record_name, 
-                                                               start=location,
-                                                               end=location+len(primer)))
-                    
-                
+        with open(os.path.join(args.output_folder, 'whole_set.bed'), 'w') as whole_set_file:
+            whole_set_file.write("track name=whole_set\n")
+            with open(os.path.join(args.output_folder, primer+'.bed'), 'w') as bedfile:
+                bedfile.write("track name={}\n".format(primer))
+                for record in fasta:
+                    seq = fasta[record][::]
+                    record_name = record.split('|')[0].strip()
+                    for location in genome.find_locations(primer, seq):
+                        record_string = "{} {} {}\n".format(record_name, 
+                                                            location,
+                                                            location+len(primer))
+                        bedfile.write(record_string)
+                        whole_set_file.write(record_string)
