@@ -32,12 +32,15 @@ def main(argv, cfg_file, quiet):
     primers = [_.strip('\n') for _ in args.input.readlines()]
     
     fasta = Fasta(args.fasta)
+    # removes the file extension
+    fasta_name = '.'.join(args.fasta.split('.')[:-1])
     if not os.path.isdir(args.output_folder):
         os.makedirs(args.output_folder)
     with open(os.path.join(args.output_folder, 'whole_set.bed'), 'w') as whole_set_file:
-        whole_set_file.write("track name=whole_set\n")
+        whole_set_file.write("track name={}-whole-set\n".format(args.output_folder))
         for primer in primers:
-            with open(os.path.join(args.output_folder, primer+'.bed'), 'w') as bedfile:
+            fname = os.path.join(args.output_folder, "{}-{}.bed".format(fasta_name, primer))
+            with open(fname, 'w') as bedfile:
                 bedfile.write("track name={}\n".format(primer))
                 for record in fasta:
                     seq = fasta[record][::]
