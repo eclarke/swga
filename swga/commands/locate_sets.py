@@ -34,9 +34,9 @@ def main(argv, cfg_file, quiet):
     fasta = Fasta(args.fasta)
     if not os.path.isdir(args.output_folder):
         os.makedirs(args.output_folder)
-    for primer in primers:
-        with open(os.path.join(args.output_folder, 'whole_set.bed'), 'w') as whole_set_file:
-            whole_set_file.write("track name=whole_set\n")
+    with open(os.path.join(args.output_folder, 'whole_set.bed'), 'w') as whole_set_file:
+        whole_set_file.write("track name=whole_set\n")
+        for primer in primers:
             with open(os.path.join(args.output_folder, primer+'.bed'), 'w') as bedfile:
                 bedfile.write("track name={}\n".format(primer))
                 for record in fasta:

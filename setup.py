@@ -7,6 +7,7 @@ setup(
     author='Erik Clarke',
     author_email='ecl@mail.med.upenn.edu',
     packages=find_packages(exclude=['cliquer', 'docs', 'tests']),
+    install_requires=['pyfasta'],
     url='https://github.com/BrissonEEDS/PrimerSets',
     license='LICENSE.txt',
     description='Pipeline to select compatible primer sets for selective whole-genome amplification.',
