@@ -29,16 +29,23 @@ def main(argv, cfg_file, quiet):
     parser.add_argument('-o', '--output_folder',
                         required=True,
                         help="Path to folder to store output files")
-    parser.add_argument('--bedgraph_opts',
-                        help="""Additional parameters for BedGraph file format, 
-                        in quotes, that will be inserted after `track 
-                        type=bedGraph` in the output file.""")
-
+    parser.add_argument('-b', '--opts_str',
+                        metavar="OPTS",
+                        help="""(for bedgraph) Additional parameters for 
+                        BedGraph file format, in quotes, that will be inserted 
+                        after `track type=bedGraph` in the output file.""")
     parser.add_argument('-s', '--sliding_window_size',
+                        metavar="SIZE",
                         type=int,
                         default=10000,
-                        help="""The size of the sliding window used to calculate
-                        average primer binding coverage (default: %(default)s)""")
+                        help="""(for bedgraph) The size of the sliding window 
+                        used to calculate average primer binding coverage 
+                        (default: %(default)s)""")
+    parser.add_argument('-w', '--sliding_window_move',
+                        metavar="BASES",
+                        type=int,
+                        help="""(for bedgraph) The number of bases by which the 
+                        sliding window moves each time. (default: window_size/5)""")
     
     args = parser.parse_args(argv)
     primers = [_.strip('\n') for _ in args.input.readlines()]
@@ -72,8 +79,10 @@ def export_bedgraph(args, primers, target):
     if not os.path.isdir(args.output_folder):
         os.makedirs(args.output_folder)
     with open(os.path.join(args.output_folder, '{}.bedgraph'.format(target_name)), 'w') as outfile:
-        typestr = "track type=bedGraph {}\n".format(args.bedgraph_opts)
+        typestr = "track type=bedGraph {}\n".format(args.opts_str)
         outfile.write(typestr)
+        s = args.sliding_window_size
+        move = args.sliding_window_move if args.sliding_window_move else int(s/5)
         for record in target:
             seq = target[record][::]
             record_name = record.split('|')[0].strip()
@@ -84,9 +93,7 @@ def export_bedgraph(args, primers, target):
                     tmp_locs += Counter(xrange(l, l+len(primer)))                                        
             # Gives the number of times a primer binds to that site
             hits = [tmp_locs[i] for i in xrange(0, len(seq))]
-            s = args.sliding_window_size
-            # Writes the corresponding line
-            for start in xrange(0, len(seq)-s, int(s/5)):
+            for start in xrange(0, len(seq)-s, move):
                 end = start+s
                 avg_binding = stats.mean(hits[start:end])
                 linestr = "{} {} {} {}\n".format(record_name, start, end, avg_binding)

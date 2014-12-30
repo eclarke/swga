@@ -1,4 +1,3 @@
-import argparse
 import subprocess
 import swga
 import sys
