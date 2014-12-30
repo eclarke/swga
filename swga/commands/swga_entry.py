@@ -14,8 +14,7 @@ Commands:
   mkgraph:          create heterodimer compatibility graph
   sets:             find compatible sets of primers in graph
   score:            score sets of primers
-  locate-sets:      return locations of a set of primers in a genome
-  autopilot:        run pipeline according to parameters given in config file
+  export:           export information about primer sets in various formats
 
 Options:
   --config FILE     path to config file (default %s)
@@ -30,8 +29,7 @@ def main():
                     'mkgraph':commands.make_graph.main,
                     'sets':commands.find_sets.main,
                     'score':commands.process_sets.main,
-                    'locate-sets':commands.locate_sets.main,
-                    'autopilot':autopilot}
+                    'export':commands.export.main}
     cfg_file = default_config_file
     parser = argparse.ArgumentParser(usage=usage % cfg_file,
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -45,12 +43,12 @@ def main():
     command_opts[args.command](remaining, args.config, args.quiet)
 
 
-def autopilot(args, cfg_file):
-    if not os.path.isfile(cfg_file):
-        sys.stderr.write("Abort: no config file specified or the "
-                         "specified file does not exist. Specify a "
-                         "valid config file with --config")
-        exit(1)
+# def autopilot(args, cfg_file):
+#     if not os.path.isfile(cfg_file):
+#         sys.stderr.write("Abort: no config file specified or the "
+#                          "specified file does not exist. Specify a "
+#                          "valid config file with --config")
+#         exit(1)
 
 
 if __name__ == '__main__':
