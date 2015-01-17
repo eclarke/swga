@@ -25,6 +25,8 @@ def find_locations(substring, string):
     '''
     locations = []
     start = 0
+    # Assumes string is all upper-case
+    substring = substring.upper()
     while True:
         start = string.find(substring, start) + 1
         if start > 0:

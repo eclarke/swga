@@ -39,7 +39,7 @@ def main(argv, cfg_file, quiet):
             sys.stderr.write("Error: output file exists.\n")
             exit(1)
 
-    cmdstr = "sed 's/>.*/>/' {input} | tr -d '\\n' > {output}"
+    cmdstr = "sed 's/>.*/>/' {input} | tr -d '\\n' | tr '[:lower:]' '[:upper:]' > {output}"
     cmdstr = cmdstr.format(**vars(args))
     subprocess.check_call(cmdstr.format(**vars(args)), shell=True)
     if not quiet:
