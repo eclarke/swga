@@ -36,6 +36,13 @@ def main(argv, cfg_file, quiet):
     fasta_name = '.'.join(args.fasta.split('.')[:-1])
     if not os.path.isdir(args.output_folder):
         os.makedirs(args.output_folder)
+    ## Notes: 
+    ## Opens a new (empty) file for the whole set and writes a header line.
+    ## For each primer, opens a new file and writes a header line.
+    ## For each record in the FASTA file, writes locations to both the whole_set and individual 
+    ## BED files.
+
+    
     with open(os.path.join(args.output_folder, 'whole_set.bed'), 'w') as whole_set_file:
         whole_set_file.write("track name={}-whole-set\n".format(args.output_folder))
         for primer in primers:
