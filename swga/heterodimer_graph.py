@@ -8,8 +8,9 @@ def test_pairs(starting_primers, max_binding):
     '''
     edges = []
     for p1, p2 in itertools.combinations(starting_primers, 2):
-        if max_consecutive_binding(p1.seq, p2.seq) <= max_binding:
-            edges.append([p1.id, p2.id])
+        if (p1.seq not in p2.seq) and (p2.seq not in p1.seq):
+            if max_consecutive_binding(p1.seq, p2.seq) <= max_binding:
+                edges.append([p1.id, p2.id])
     return edges
 
 

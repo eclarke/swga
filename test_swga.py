@@ -75,6 +75,9 @@ e 1 2
 e 1 3
 '''
         self.bad_set = [(1,2,3,4), (4,3,2,1)]
+        # This is a valid pair except that one is a substring of the other
+        self.overlapping_primers = [Primer(1, "AAATTTGGG", 1,1,1),
+                                    Primer(2, "TGGG", 1, 1, 1)]
         self.bad_edges = [[1], [1,2]]
         self.bad_handle = "tempfile!"
         self.tmp_infile = tempfile.NamedTemporaryFile()
@@ -91,17 +94,22 @@ e 1 3
 
     def test_bad_handle(self):
         self.failUnlessRaises(ValueError, write_graph, self.good_set,
-        self.good_edges, self.bad_handle)
+                              self.good_edges, self.bad_handle)
 
     def test_bad_primers(self):
         with tempfile.TemporaryFile() as tmp:
             self.failUnlessRaises(ValueError, write_graph, self.bad_set,
-            self.good_edges, tmp)
+                                  self.good_edges, tmp)
 
     def test_bad_edges(self):
         with tempfile.TemporaryFile() as tmp:
             self.failUnlessRaises(ValueError, write_graph, self.good_set,
-            self.bad_edges, tmp)
+                                  self.bad_edges, tmp)
+            
+    def test_overlapping(self):
+        """Primers cannot be overlapping."""
+        test_edges = test_pairs(self.overlapping_primers, 1)
+        assert test_edges == []
 
     def test_set_finder(self):
         '''
