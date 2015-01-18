@@ -13,7 +13,7 @@ ifeq ($(findstr $(USERBASE)/bin, $(PATH)),)
 endif
 
 all : cl set_finder
-	pip install --user --editable .
+	pip install --editable .
 	mkdir -p $(SWGABIN)
 	cp set_finder $(SWGABIN)
 	cp swga/default_parameters.cfg $(SWGAHOME)/default_parameters.cfg

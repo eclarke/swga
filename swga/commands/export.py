@@ -1,6 +1,6 @@
 import argparse
 import swga
-from pyfasta import Fasta
+from pyfaidx import Fasta
 from swga import genome
 import sys
 import os
