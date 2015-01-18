@@ -1,0 +1,54 @@
+ DSK  short manual
+
+Installation
+------------
+
+* type `make` then `./dsk` for usage.
+
+
+Compilation options
+-------------------
+
+* OSX users should compile using `make osx=1`.
+
+* To use large values of k, e.g. 150, type `make k=150`.
+
+* To enable multi-threading, type `make omp=1` (omp stands for OpenMP).
+
+* Compilation parameters can be stacked, i.e. `make omp=1 k=100 osx=1`
+
+
+Input
+---------------------
+
+* FASTA or FASTQ (gzipped or not), or a list of files
+
+* To create a list of files: `ls -1 *.gz > list_reads` then `./dsk list_reads [..]`
+
+* DSK is disk IO-intensive, for this reason:
+  - it is recommended to run only one instance of DSK per hard drive
+  - if running DSK on a cluster, make sure that the current directory is a local hard drive (e.g. /tmp), not a network drive
+
+
+Results visualisation
+---------------------
+
+* To see the results as a list of "[kmer] [count]\n", type `./parse_results [prefix].solid_kmers_binary`. 
+  We also provide a (slower) Python script that works even when DSK is currently compiled with a different 'k=XX' option.
+
+* To plot kmer coverage distribution, run dsk with the "-histo" flag then  type `./plot_distrib.R  [prefix].histo`
+
+
+Performance tips
+---------------------
+
+For best possible performance, use a >= 250 GB SSD, run DSK on a >= 8 cores computer. Use `make omp=1`. 
+Make sure the current working directory is on the SSD. It does not matter if the reads are on the SSD or not.
+
+You will notice that DSK is faster for values k <= 64 than for k > 64. This is because DSK stores 
+k-mers <= 64 in 128-bit (64-bit for k <= 32) integer types where fast arithmetic operations are supported.
+
+
+Contact
+-------
+to contact an author: rayan.chikhi@ens-cachan.org
