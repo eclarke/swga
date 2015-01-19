@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+"""core.py
+
+This module contains utility functions and constructors for other modules in
+SWGA code. In particular, it contains the default config parser and command-line
+argument parsers for the subcommands, as well as error and warning functions.
+
+"""
+
 import os
 import sys
 import json
@@ -10,33 +19,19 @@ from clint.textui import puts, colored, STDERR, indent
 
 default_config_file = 'parameters.cfg'
 
-def swga_error(msg, errcode=1):
-    '''Prints an error message to stderr and exits.'''
-    errprint('{}\n'.format(msg))
-    sys.exit(errcode)
 
 
-def swga_warn(msg):
-    with indent(2, quote=colored.red("!! ")):
-        puts(textwrap.fill(textwrap.dedent(msg)), stream=STDERR)
-
-
-def errprint(text):
-    puts(colored.red(textwrap.fill(textwrap.dedent(text)).strip()),
-         stream=STDERR)
-
-
-def get_swgahome():
-    '''
-    Gets the SWGAHOME environmental variable, catching common
-    errors while doing so.
-    '''
-    swgahome = os.environ.get('SWGAHOME')
-    if not swgahome:
-        swga_error("SWGAHOME environment variable not set.")
-    if not os.path.isabs(swgahome):
-        swga_error("SWGAHOME must be an absolute path.")
-    return swgahome
+# def get_swgahome():
+#     '''
+#     Gets the SWGAHOME environmental variable, catching common
+#     errors while doing so.
+#     '''
+#     swgahome = os.environ.get('SWGAHOME')
+#     if not swgahome:
+#         swga_error("SWGAHOME environment variable not set.")
+#     if not os.path.isabs(swgahome):
+#         swga_error("SWGAHOME must be an absolute path.")
+#     return swgahome
 
 
 def mkdirp(path):
@@ -52,8 +47,6 @@ def parse_config(cfg_file, section):
     '''
     Parses a config file and returns a dictionary of the values found
     in the specified section, along with the ConfigParser itself.
-    The config file must exist and all parameter values must not be
-    empty.
     '''
     config = ConfigParser.SafeConfigParser()
     defaults = {}
@@ -72,12 +65,27 @@ def basic_cmd_parser(description, cmd_name, cfg_file):
     try:
         defaults, _ = parse_config(cfg_file, cmd_name)
     except IOError:
-        swga_error("""
-        Error: Could not find config file. Ensure `parameters.cfg` exists in your working
-        directory.""")
+        defaults = dict()
     parser = argparse.ArgumentParser(description=description, prog='swga '+cmd_name)
     parser.set_defaults(**defaults)
     return parser
+
+def swga_error(msg, errcode=1):
+    '''Prints an error message to stderr and exits.'''
+    errprint('{}\n'.format(msg))
+    sys.exit(errcode)
+
+
+def swga_warn(msg):
+    '''Prints a warning message to stderr.'''
+    with indent(2, quote=colored.red("!! ")):
+        puts(textwrap.fill(textwrap.dedent(msg)), stream=STDERR)
+
+
+def errprint(text):
+    puts(colored.red(textwrap.fill(textwrap.dedent(text)).strip()),
+         stream=STDERR)
+
 
 def print_status(prog_name, args, cfg_file, from_stdin):
     

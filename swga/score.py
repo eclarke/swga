@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+"""score.py
+
+Functions for retrieving and scoring primer sets.
+
+"""
 import stats
 import importlib
 

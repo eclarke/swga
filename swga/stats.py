@@ -1,6 +1,8 @@
-'''
+"""stats.py
+
 Functions used to score primer sets.
-'''
+
+"""
 
 from math import sqrt
 

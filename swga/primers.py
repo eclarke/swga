@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+"""primers.py
+
+Functions for parsing primers from a file.
+
+"""
 import re
 import sys
 from collections import namedtuple

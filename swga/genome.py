@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+"""genome.py
+
+This module contains functions for finding primers in genomes (i.e. finding
+small substrings in larger strings) and helper functions for storing primer
+locations.
+
+"""
 import mmap
 import cPickle
 import gzip
