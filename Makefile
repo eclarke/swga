@@ -12,6 +12,10 @@ ifeq ($(in_venv), False)
 	endif
 endif
 
+opts?=
+pip_opts += $(opts)
+
+
 all: cl set_finder
 	pip install $(pip_opts) .
 	python swga/data/finished_message.py "$(cmd_prefix)"

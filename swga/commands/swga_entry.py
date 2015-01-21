@@ -7,6 +7,10 @@ from swga import default_config_file
 usage="""Usage: swga [-c --config CFG_FILE] <command> [options]
 
 Commands:
+  init:             initializes a directory with a pre-filled parameters file
+  autopilot:        runs a complete workflow based on parameters file
+
+Other commands:
   count:            find kmer counts in foreground and background genomes
   filter:           filter kmers according to various criteria
   locate:           locate primers in a genome and store locations in file
@@ -22,7 +26,9 @@ Options:
 """
 
 def main():
-    command_opts = {'count':commands.mer_count.main,
+    command_opts = {'init':commands.init.main,
+                    'autopilot':commands.autopilot.main,
+                    'count':commands.mer_count.main,
                     'flatten':commands.flatten.main,
                     'filter':commands.filter_primers.main,
                     'locate':commands.locate.main,
@@ -41,14 +47,6 @@ def main():
     parser.add_argument('-q', '--quiet', action='store_true')                        
     args, remaining = parser.parse_known_args()
     command_opts[args.command](remaining, args.config, args.quiet)
-
-
-# def autopilot(args, cfg_file):
-#     if not os.path.isfile(cfg_file):
-#         sys.stderr.write("Abort: no config file specified or the "
-#                          "specified file does not exist. Specify a "
-#                          "valid config file with --config")
-#         exit(1)
 
 
 if __name__ == '__main__':

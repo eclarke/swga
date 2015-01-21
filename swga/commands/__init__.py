@@ -7,3 +7,5 @@ import find_sets
 import process_sets
 import locate_sets
 import export
+import init
+import autopilot
