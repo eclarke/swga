@@ -1,11 +1,7 @@
 VPATH = src/cliquer:swga
 include src/cliquer/Makefile
-define USERINST_MESSAGE
-	Before using SWGA, you need to run the file activate_swga.sh. 
-	This file needs to be run every time you start a new session or terminal window before using SWGA.
-	Alternatively, you can copy its contents into your ~/.bashrc or ~/.profile.
-endef
 
+USERINST_MESSAGE=\nBefore using SWGA, you need to run the file activate_swga.sh. \nThis file needs to be run every time you start a new session or terminal window before using SWGA. \nAlternatively, you can copy its contents into your ~/.bashrc or ~/.profile.
 
 # Tests whether or not we're installing into a virtualenv- if so,
 # we omit the --user part of the pip install command (since they're incompatible)
@@ -28,15 +24,17 @@ endif
 
 all : cl set_finder
 	pip install $(PIP_OPTIONS) .
-	export $$USERINST_MESSAGE
 	echo $(USERINST_SCRIPT) > activate_swga.sh
+	chmod +x activate_swga.sh
 	@echo "------------------------------------"
+	@echo "------------------------------------"
+	@echo ""
 	@echo "Install succeeded! "
+	@echo "$(USERINST_MESSAGE)"
 	@echo ""
-	@echo "$$USERINST_MESSAGE"
+	@echo "In a different directory, run 'init_swga' to set up a new workspace and get started."
 	@echo ""
-	@echo "In a different directory, run 'init_swga' to set up a new "
-	@echo "workspace and get started."
+	@echo "------------------------------------"
 	@echo "------------------------------------"
 
 
