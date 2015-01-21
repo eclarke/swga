@@ -1,31 +1,42 @@
 VPATH = src/cliquer:swga
 include src/cliquer/Makefile
+define USERINST_MESSAGE
+	Before using SWGA, you need to run the file activate_swga.sh. 
+	This file needs to be run every time you start a new session or terminal window before using SWGA.
+	Alternatively, you can copy its contents into your ~/.bashrc or ~/.profile.
+endef
 
-SWGAHOME?=$(HOME)/.swga
-SWGABIN=$(SWGAHOME)/bin
-USERBASE=$(shell python -m site --user-base)
 
-USERINST_MESSAGE=""
-SWGAHOME_MESSAGE="export SWGAHOME=$(SWGAHOME)"
-
-ifeq ($(findstr $(USERBASE)/bin, $(PATH)),)
-	USERINST_MESSAGE='export PATH=$$PATH:$(USERBASE)/bin'
+# Tests whether or not we're installing into a virtualenv- if so,
+# we omit the --user part of the pip install command (since they're incompatible)
+PIP_VERSION=$(shell pip -V | cut -f2 -d" ")
+IN_VIRTUALENV=$(shell python -c "import sys; print(hasattr(sys, 'real_prefix'))")
+PIP_OPTIONS=--editable
+# If the user is root, then we do not install an editable copy (nor do we
+# install it to the user site-packages)
+ifeq ($(USER), root)
+	PIP_OPTIONS=
+else
+	ifeq ($(IN_VIRTUALENV), False)
+		PIP_OPTIONS=--user --editable
+		USERBASE=$(shell python -m site --user-base)
+		ifeq ($(findstr $(USERBASE)/bin, $(PATH)),)
+			USERINST_SCRIPT='export PATH=$$PATH:$(USERBASE)/bin'
+		endif
+	endif
 endif
 
 all : cl set_finder
-	pip install --editable .
-	mkdir -p $(SWGABIN)
-	cp set_finder $(SWGABIN)
-	cp swga/default_parameters.cfg $(SWGAHOME)/default_parameters.cfg
+	pip install $(PIP_OPTIONS) .
+	export $$USERINST_MESSAGE
+	echo $(USERINST_SCRIPT) > activate_swga.sh
 	@echo "------------------------------------"
 	@echo "Install succeeded! "
-	@echo "Before using SWGA, run the following commands or put them in your \n\
-	shell config file (such as .bashrc, .profile, or .bash_profile). \n\
-	If not placed in your shell config file, these commands must be run each \n\
-	time before using SWGA:"
-	@echo
-	@echo   $(SWGAHOME_MESSAGE)
-	@echo   $(USERINST_MESSAGE)
+	@echo ""
+	@echo "$$USERINST_MESSAGE"
+	@echo ""
+	@echo "In a different directory, run 'init_swga' to set up a new "
+	@echo "workspace and get started."
 	@echo "------------------------------------"
 
 

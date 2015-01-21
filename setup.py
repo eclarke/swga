@@ -7,9 +7,11 @@ setup(
     author_email='ecl@mail.med.upenn.edu',
     packages=find_packages(exclude=['cliquer', 'docs', 'tests']),
     install_requires=['pyfaidx'],
+    package_data={'swga': ['data/*']},
     url='https://github.com/BrissonEEDS/PrimerSets',
     license='LICENSE.txt',
     description='Pipeline to select compatible primer sets for selective whole-genome amplification.',
     long_description=open('README.md').read(),
-    entry_points = {'console_scripts': ['swga = swga.commands.swga_entry:main']},
+    entry_points = {'console_scripts': ['swga = swga.commands.swga_entry:main',
+                                        'init_swga = init_swga:main']},
 )

@@ -1,0 +1,82 @@
+import click
+import os, sys
+from pkg_resources import resource_string
+from pyfaidx import Fasta
+
+welcome_message = """
+## SWGA Initialization ---------------------------
+
+This will set up a workspace for SWGA in the current directory ({cwd}).
+
+As part of this process, a default parameters file will be created that contains
+some reasonable options for each part of the pipeline. This will be
+named "{default_parameters_name}" and should be modified as appropriate for your
+particular project. Please note that you should only with edit this file with a
+plain-text editor like Notepad, TextEdit, or gedit; or with command-line tools
+such as nano, vim, or emacs. 
+
+The values specified in {default_parameters_name} will be used if the
+corresponding values are not specified on the command line, or if the
+"swga autopilot" command is used.
+"""
+
+setup_message = """
+Foreground genome: {fg_genome}
+  Length:  {fg_length}
+  Records: {fg_nrecords}
+
+Background genome: {bg_genome}
+  Length:  {bg_length}
+  Records: {bg_nrecords}
+"""
+
+finish_message = """Done. Type `swga' to begin your analysis.
+"""
+
+
+
+@click.command()
+@click.option("-f", "--fg_genome",
+              type=click.Path(exists=True, resolve_path=True))
+@click.option("-b", "--bg_genome",
+              type=click.Path(exists=True, resolve_path=True))
+def main(fg_genome, bg_genome):
+
+    default_parameters_name = "default_parameters.cfg"
+    cwd = os.getcwd()
+
+    click.echo(click.style(welcome_message.format(**locals()),
+                           fg = "blue"))
+                                       
+    if (not fg_genome):
+        fg_genome = click.prompt("Enter path to foreground genome file, in " +
+        "FASTA format", type=click.Path(exists=True, resolve_path=True))
+    fg_length, fg_nrecords = fasta_stats(fg_genome)
+    
+    if (not bg_genome):
+        bg_genome = click.prompt("Enter path to background genome file, in " +
+        "FASTA format", type=click.Path(exists=True, resolve_path=True))
+    bg_length, bg_nrecords = fasta_stats(bg_genome)
+
+    click.echo(click.style(setup_message.format(**locals()), fg = "green"))
+
+    default_parameters = resource_string("swga", "data/default_parameters.cfg")
+    with open(os.path.join(cwd, default_parameters_name), "wb") as cfg_file:
+        cfg_file.write(default_parameters.format(bg_genome_len = bg_length))
+    
+    click.echo(finish_message)
+              
+
+def fasta_stats(fasta_fp):
+    try:
+        fasta = Fasta(fasta_fp)
+        length = sum([len(r) for r in fasta])
+        nrecords = len(fasta.keys())
+        return length, nrecords
+    except:
+        click.echo(click.style("\nError reading %s: invalid FASTA format?" %
+                               fasta_fp, fg = "red"))
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
