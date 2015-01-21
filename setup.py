@@ -6,7 +6,7 @@ setup(
     author='Erik Clarke',
     author_email='ecl@mail.med.upenn.edu',
     packages=find_packages(exclude=['cliquer', 'docs', 'tests']),
-    install_requires=['pyfaidx'],
+    install_requires=['pyfaidx', 'click'],
     package_data={'swga': ['data/*']},
     url='https://github.com/BrissonEEDS/PrimerSets',
     license='LICENSE.txt',

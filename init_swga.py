@@ -1,5 +1,6 @@
 import click
-import os, sys
+from click._compat import filename_to_ui
+import os, sys, stat
 from pkg_resources import resource_string
 from pyfaidx import Fasta
 
@@ -32,8 +33,6 @@ Background genome: {bg_genome}
 
 finish_message = """Done. Type `swga' to begin your analysis.
 """
-
-
 
 @click.command()
 @click.option("-f", "--fg_genome",
@@ -77,6 +76,57 @@ def fasta_stats(fasta_fp):
         click.echo(click.style("\nError reading %s: invalid FASTA format?" %
                                fasta_fp, fg = "red"))
         sys.exit(1)
+
+
+def monkeypatch_method(cls):
+    def decorator(func):
+        setattr(cls, func.__name__, func)
+        return func
+    return decorator
+
+@monkeypatch_method(click.Path)
+def convert(self, value, param, ctx):
+    value = value.strip()
+    print value
+    rv = value
+    if self.resolve_path:
+        rv = os.path.realpath(rv)
+
+    try:
+        st = os.stat(rv)
+    except OSError:
+        if not self.exists:
+            return rv
+        self.fail('%s "%s" does not exist.' % (
+            self.path_type,
+            filename_to_ui(value)
+        ), param, ctx)
+
+    if not self.file_okay and stat.S_ISREG(st.st_mode):
+        self.fail('%s "%s" is a file.' % (
+            self.path_type,
+            filename_to_ui(value)
+        ), param, ctx)
+    if not self.dir_okay and stat.S_ISDIR(st.st_mode):
+        self.fail('%s "%s" is a directory.' % (
+            self.path_type,
+            filename_to_ui(value)
+        ), param, ctx)
+    if self.writable and not os.access(value, os.W_OK):
+        self.fail('%s "%s" is not writable.' % (
+            self.path_type,
+            filename_to_ui(value)
+        ), param, ctx)
+    if self.readable and not os.access(value, os.R_OK):
+        self.fail('%s "%s" is not readable.' % (
+            self.path_type,
+            filename_to_ui(value)
+        ), param, ctx)
+
+    return rv
+
+    
+
 
 if __name__ == "__main__":
     main()
