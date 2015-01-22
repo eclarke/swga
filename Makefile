@@ -17,6 +17,5 @@ pip_opts += $(opts)
 
 
 all: cl set_finder
-	@echo $(PATH)
 	pip install $(pip_opts) .
 	python swga/data/finished_message.py "$(cmd_prefix)"
