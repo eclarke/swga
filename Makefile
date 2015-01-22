@@ -4,18 +4,12 @@ include src/cliquer/Makefile
 in_venv = $(shell python -c "import sys; print(hasattr(sys, 'real_prefix'))")
 user_base = $(shell python -m site --user-base)
 cmd_prefix =
-
-ifeq ($(in_venv), False)
-	pip_opts = --user
+ifneq ($(findstring $(opts),--user),)
 	ifeq ($(findstring $(user_base)/bin,$(PATH)),)
 		cmd_prefix = $(user_base)/bin/
 	endif
 endif
 
-opts?=
-pip_opts += $(opts)
-
-
 all: cl set_finder
-	pip install $(pip_opts) .
+	pip install $(opts) .
 	python swga/data/finished_message.py "$(cmd_prefix)"
