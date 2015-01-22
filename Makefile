@@ -7,7 +7,7 @@ cmd_prefix =
 
 ifeq ($(in_venv), False)
 	pip_opts = --user
-	ifeq ($(findstr $(user_base)/bin, $(PATH)),)		
+	ifeq ($(findstring $(user_base)/bin,$(PATH)),)
 		cmd_prefix = $(user_base)/bin/
 	endif
 endif
@@ -17,5 +17,6 @@ pip_opts += $(opts)
 
 
 all: cl set_finder
+	@echo $(PATH)
 	pip install $(pip_opts) .
 	python swga/data/finished_message.py "$(cmd_prefix)"
