@@ -62,7 +62,9 @@ def main(fg_genome, bg_genome):
 
     default_parameters = resource_string("swga", "data/default_parameters.cfg")
     with open(os.path.join(cwd, default_parameters_name), "wb") as cfg_file:
-        cfg_file.write(default_parameters.format(bg_genome_len = bg_length))
+        cfg_file.write(default_parameters.format(fg_genome_fp = fg_genome,
+                                                 bg_genome_fp = bg_genome,
+                                                 bg_genome_len = bg_length))
     
     click.echo(finish_message)
               

@@ -23,7 +23,7 @@ def parse_primer(string, line_no=1):
     return Primer(line_no, seq, int(bg_freq), int(fg_freq), float(ratio))
 
 
-def read_primer_file(file_handle, echo_input=False, verbose=False):
+def read_primer_file(file_handle, echo_input=False):
     '''
     Calls parse_primer() on each line of the input file. If a malformed line is
     found, will skip parsing and (optionally) output a warning message.
