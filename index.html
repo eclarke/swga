@@ -1,73 +1,68 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
+
   <head>
-    <meta charset="utf-8">
+    <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>SWGA by eclarke</title>
+    <meta name="description" content="SWGA : Workflow to select primers for selective whole-genome amplification (SWGA)">
 
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>SWGA</title>
   </head>
+
   <body>
-    <div class="wrapper">
-      <header>
-        <h1>SWGA</h1>
-        <p>Workflow to select primers for selective whole-genome amplification (SWGA)</p>
 
-        <p class="view"><a href="https://github.com/eclarke/swga">View the Project on GitHub <small>eclarke/swga</small></a></p>
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/eclarke/swga">View on GitHub</a>
 
+          <h1 id="project_title">SWGA</h1>
+          <h2 id="project_tagline">Workflow to select primers for selective whole-genome amplification (SWGA)</h2>
 
-        <ul>
-          <li><a href="https://github.com/eclarke/swga/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/eclarke/swga/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/eclarke/swga">View On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
-      <section>
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/eclarke/swga/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/eclarke/swga/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
         <h3>
 <a id="welcome-to-swga" class="anchor" href="#welcome-to-swga" aria-hidden="true"><span class="octicon octicon-link"></span></a>Welcome to SWGA.</h3>
 
 <p>Selective whole-genome amplification (SWGA) is a way to specifically amplify a genome above a background. This code is a self-contained workflow for identifying primer sets for use in this process.</p>
 
-<p>Quick start:</p>
+<h3>
+<a id="quick-start" class="anchor" href="#quick-start" aria-hidden="true"><span class="octicon octicon-link"></span></a>Quick start:</h3>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
+<p>Follow the installation instructions <a href="https://github.com/eclarke/swga/wiki/Installation">here</a>, then simply follow these instructions in a directory of your choice:</p>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+<div class="highlight highlight-sh"><pre>./activate_swga
+swga init
+swga autopilot</pre></div>
+
+<p>All the parameters can be fine-tuned in a configuration file called <code>default_parameters.cfg</code> in the directory you ran <code>swga init</code>. For tips and tricks for optimizing these parameters, see the SWGA <a href="https://github.com/eclarke/swga/wiki/">wiki</a>.</p>
 
 <h3>
-<a id="designer-templates" class="anchor" href="#designer-templates" aria-hidden="true"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
+<a id="support" class="anchor" href="#support" aria-hidden="true"><span class="octicon octicon-link"></span></a>Support</h3>
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
-
-<h3>
-<a id="rather-drive-stick" class="anchor" href="#rather-drive-stick" aria-hidden="true"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
-
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
-
-<h3>
-<a id="authors-and-contributors" class="anchor" href="#authors-and-contributors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
-
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
-
-<h3>
-<a id="support-or-contact" class="anchor" href="#support-or-contact" aria-hidden="true"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
-
-<p>Having trouble with Pages? Check out the documentation at <a href="https://help.github.com/pages">https://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<p>Check out the wiki, mailing list, or contact me at <a href="https://github.com/eclarke" class="user-mention">@eclarke</a>.</p>
       </section>
-      <footer>
-        <p>This project is maintained by <a href="https://github.com/eclarke">eclarke</a></p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">SWGA maintained by <a href="https://github.com/eclarke">eclarke</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>
-    <script src="javascripts/scale.fix.js"></script>
+
     
+
   </body>
 </html>
