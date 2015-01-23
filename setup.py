@@ -1,4 +1,4 @@
-from setuptools import setup, Command
+from setuptools import setup, Command, find_packages
 from subprocess import call
 import sys
 
@@ -18,7 +18,7 @@ setup(
     version=swga.__version__,
     author='Erik Clarke',
     author_email='ecl@mail.med.upenn.edu',
-    packages=['swga'],
+    packages=find_packages(),
     install_requires=['pyfaidx',
                       'click'],
     classifiers = [
