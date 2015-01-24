@@ -1,26 +1,37 @@
+# This file is used to build the arguments to each subcommand, and to populate
+# the default_parameters.cfg file in `swga init`.
+#
+# Only the `desc` and `default` fields are used in the .cfg file; all other
+# fields are ignored. 
+#
 # Interpolation notes:
 #   "{...}" entries are filled in by `swga init` 
 #   "%(...)" entries are interpolated by the config parser
+#   &xyz is a label, *xyz is a reference to that label resolved by the YAML
+#   parser 
 ---
 DEFAULT:
-  fg_genome_fp: "{fg_genome_fp}"
-  bg_genome_fp: "{bg_genome_fp}"
+  fg_genome_fp: &fg "{fg_genome_fp}"
+  bg_genome_fp: &bg "{bg_genome_fp}"
 
 locate:
-  desc: Find primers locations in a genome
+  desc: Find primers locations in a genome.
   input:
-    default: stdin
+    default: sys.stdin
     desc: list of primers
   genome:
-    default: None
+    default: *fg
     desc: path to genome
     required: True
 
 filter: 
   desc: Filter primers from a list
   input:
-    default: stdin
+    default: sys.stdin
     desc: list of primers to filter
+  output:
+    default: sys.stdout
+    desc: output file
   max_bg_binding:
     default: 12000
     desc: max times a primer can bind to bg genome
@@ -31,7 +42,7 @@ filter:
 count:
   desc: Count primers in a genome
   genome:
-    default: "%(fg_genome)"
+    default: *fg
     desc: path to genome
     required: True
   min:

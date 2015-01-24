@@ -11,7 +11,10 @@ class Command:
 
         opts = load_swga_opts()
         add_args_from_opts(self.parser, name, opts)
-        defaults, _ = swga.parse_config(cfg_file, name)
+        if cfg_file:
+            defaults, _ = swga.parse_config(cfg_file, name)
+        else:
+            defaults = {}
         self.parser.set_defaults(**defaults)
 
         
