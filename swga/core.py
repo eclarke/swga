@@ -20,18 +20,32 @@ from clint.textui import puts, colored, STDERR, indent
 default_config_file = 'parameters.cfg'
 
 
+def parse_config(cfg_file, section):
+    '''
+    Parses a config file in the given section. Missing sections and values do
+    not raise an error (but missing values may give a warning).
 
-# def get_swgahome():
-#     '''
-#     Gets the SWGAHOME environmental variable, catching common
-#     errors while doing so.
-#     '''
-#     swgahome = os.environ.get('SWGAHOME')
-#     if not swgahome:
-#         swga_error("SWGAHOME environment variable not set.")
-#     if not os.path.isabs(swgahome):
-#         swga_error("SWGAHOME must be an absolute path.")
-#     return swgahome
+    Returns:
+    - defaults: a dict of values in the given section
+    - config: the config parser itself
+    Parses a config file and returns a dictionary of the values found
+    in the specified section, along with the ConfigParser itself.
+    '''
+    config = ConfigParser.SafeConfigParser()
+    defaults = {}
+    with open(cfg_file) as cfg_file_fp:
+        config.readfp(cfg_file_fp)
+        try:
+            defaults = dict(config.items(section))
+            if not all(defaults.values()):
+                for key, value in defaults.iteritems():
+                    if not value:
+                        swga_warn(("Value for {0}:{1} undefined in config "
+                                   "file ({2}).").format(section, key, cfg_file))
+
+        except ConfigParser.NoSectionError:
+            defaults = {}
+        return defaults, config
 
 
 def mkdirp(path):
@@ -43,24 +57,7 @@ def mkdirp(path):
             raise
 
 
-def parse_config(cfg_file, section):
-    '''
-    Parses a config file and returns a dictionary of the values found
-    in the specified section, along with the ConfigParser itself.
-    '''
-    config = ConfigParser.SafeConfigParser()
-    defaults = {}
-    with open(cfg_file) as cfg_file_fp:
-        config.readfp(cfg_file_fp)
-        defaults = dict(config.items(section))
-        if not all(defaults.values()):
-            for key, value in defaults.iteritems():
-                if not value:
-                    swga_warn("""
-                    Warning: value for `{0}` unspecified in config file.""".format(key))
-        return defaults, config
-
-
+@DeprecationWarning
 def basic_cmd_parser(description, cmd_name, cfg_file):
     try:
         defaults, _ = parse_config(cfg_file, cmd_name)
@@ -69,6 +66,7 @@ def basic_cmd_parser(description, cmd_name, cfg_file):
     parser = argparse.ArgumentParser(description=description, prog='swga '+cmd_name)
     parser.set_defaults(**defaults)
     return parser
+
 
 def swga_error(msg, errcode=1):
     '''Prints an error message to stderr and exits.'''
@@ -84,7 +82,7 @@ def swga_warn(msg):
 
 def errprint(text):
     puts(colored.red(textwrap.fill(textwrap.dedent(text)).strip()),
-         stream=STDERR)
+         stream=sys.stderr.write)
 
 
 def print_status(prog_name, args, cfg_file, from_stdin):
@@ -93,12 +91,10 @@ def print_status(prog_name, args, cfg_file, from_stdin):
     with indent(4, quote="# "):
         puts("Config file: {}".format(os.path.abspath(cfg_file)),
              stream=STDERR)
-        puts("Parameters: \n{}".format(json.dumps(vars(args), 
-                                                  sort_keys=True, 
-                                                  indent=2,
-                                                  separators=(',', ': '),
-                                                  default=lambda x: x.name)),
-                 stream=STDERR)
+        puts("Parameters: \n{}".format(
+            json.dumps(vars(args), sort_keys=True, indent=2,
+                       separators=(',', ': '),
+                       default=lambda x: x.name)), stream=STDERR)
         if from_stdin:
             puts("Receiving input from stdin...")
 

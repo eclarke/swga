@@ -1,5 +1,6 @@
 import yaml
 import sys
+import argparse
 from pkg_resources import resource_stream
 from collections import OrderedDict
 from swga.clint.textui import puts, max_width, indent
@@ -44,39 +45,46 @@ def cfg_from_opts(opts):
     return(out_str)
 
 
-def add_args_from_opts(parser, cmd_name, opts):
+def mk_argparser_from_opts(opts, cmd_name, description=None):
     '''
-    Uses a defined section (`cmd_name`) of the options to populate args in the
-    provided parser object.
+    Uses a defined section (`cmd_name`) of the options to create an
+    ArgumentParser object.
 
-    The passed parser is modified, and no value is returned.
+    Ignores the default value specified in opts (in preference to the defaults
+    given by the config file later).
+
+    Returns: the generated ArgumentParser
     '''
-    if cmd_name not in opts:
+
+    def make_parser(name, description=None):
+        description = description if description else ""
+        parser = argparse.ArgumentParser(
+            prog = 'swga ' + name,
+            description = description)
         return parser
-    
+
+    if cmd_name not in opts:
+        return make_parser(cmd_name, description)
+
     section = opts[cmd_name]
+
+    # Use passed description if provided, else use the one from the opts
+    description = description if description else section.get("desc")
+    parser = make_parser(cmd_name, description)
 
     for argname in section:
         if argname == "desc": continue
         argvals = section[argname]
-        default = argvals.get('default', None)
-        if default == 'stdin':
-            default = sys.stdin
-        elif default == 'stdout':
-            default = sys.stdout
-        _type = eval(argvals.get('type', 'None'))
-        if not _type and default:
-            _type = type(default)
+        _type = eval(argvals.get('type', 'str'))
 
         parser.add_argument(
             '--' + argname,
             action = argvals.get('action', 'store'),
-            default = default,
             type = _type,
             help = argvals.get('desc', ''),
             required = argvals.get('required', False))
 
-
+    return parser
 
 def format_comment(desc, width=72, quote='#'):
     '''
