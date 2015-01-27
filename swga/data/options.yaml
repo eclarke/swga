@@ -14,15 +14,102 @@ DEFAULT:
   fg_genome_fp: &fg "{fg_genome_fp}"
   bg_genome_fp: &bg "{bg_genome_fp}"
 
-locate:
-  desc: Find primers locations in a genome.
+
+count:
+  desc: >
+    Count kmers in a foreground genome, then count those kmers in a larger
+    background genome
+  output_dir:
+    default: kmers
+    desc: folder to store kmers
+  fg_genome: 
+    default: *fg
+    desc: path to foreground (aka target) genome
+  bg_genome:
+    default: *bg
+    desc: path to background genome
+  min_size:
+    default: 5
+    desc: minimum kmer size
+  max_size:
+    default: 12
+    desc: maximum kmer size
+  threshold:
+    default: 1
+    desc: kmer must appear this many times to be counted
+
+
+flatten:
+  desc: >
+    Flatten a FASTA genome file into one line, stripping out entry headers and
+    keeping only the > marks.
+  input:
+    default: *fg
+    desc: input FASTA file (usually the foreground genome)
+  output:
+    default: %(input).flattened
+    desc: filename of the flattened gnome
+  force:
+    default: True
+    desc: overwrite output file if it exists
+
+
+mkgraph:
+  desc: Create a primer compatibility graph from a list of primers
+  input:
+    default: stdin
+    desc: >
+      a file containing one primer per line, with associated info as output
+      by other swga commands (default %(default)s)
+  output:
+    default: stdout
+    desc: where to write resulting graph in DIMACS format (default %(default)s)
+  max_hetdimer_bind:
+    default: 3
+    desc: max number of consecutive complimentary bases between two primers
+
+
+sets:
+  desc: Find sets of compatible primers in a primer compatibility graph
+  input:
+    default: stdin
+    desc: primer compatibility graph, in DIMACS format (default stdin)
+  output:
+    default: stdout
+    desc: where to store results (default stdout)
+  min_size:
+    default: 2
+    desc: minimum size of primer sets
+  max_size:
+    default: 7
+    desc: max size of primer sets
+  min_bg_bind_dist:
+    default: 30000
+    desc: min avg distance between primers in the bg genome
+  bg_genome_len:
+    default: {bg_genome_len}
+    desc: length of background genome (autofilled by swga init)
+
+
+locate-mers:
+  desc: Find primer locations in a genome
   input:
     default: sys.stdin
     desc: list of primers
+  output:
+    default: %(genome).primerstore
+    desc: where to store the primer locations
   genome:
     default: *fg
     desc: path to genome
     required: True
+  ncores:
+    default: "multiprocessing.cpu_count()"
+    desc: Number of cores to use when searching (default %(default)s)
+  passthrough:
+    default: True
+    desc: Echo input to stdout (for argument chaining). (default %(default)s)
+  
 
 filter: 
   desc: Filter primers from a list
@@ -59,21 +146,30 @@ score:
     desc: >
       "Compatible sets of primers. One set per row; first number is the size of
       the set; following numbers are the primer IDs in that set, separated by spaces
-      (the output from the find_sets command). (default: stdin)
+      (the output from the find_sets command). (default: stdin)"
     type: File-r
   output:
     default: stdout
-    desc: Where to write output. (default: stdout)
+    desc: "Where to write output. (default: stdout)"
     type: File-w
   max_sets:
     default: 500
-    desc: Max number of sets to check (unused)
+    desc: Max number of sets to check
     type: int
   score_expression:
     default: "(fg_dist_mean*fg_dist_gini)/(bg_ratio)"
-    desc: |
-      Specify an expression to calculate the score. Available variables:
-      - set_size
-      - fg_dist_mean
-      -
+    desc: >
+      Specify an expression to calculate the set score. Code must only use the
+      following variables: set_size, fg_dist_mean, fg_dist_std, fg_dist_gini,
+      fg_dist_max, bg_ratio. Expression must have valid Python syntax.
+  plugin_score_fun:
+    default: None
+    desc: >
+      Specify a path to a scoring function to use instead of the normal
+      scoring function, to create custom metrics or output. For help, see
+      wiki. Incompatible with --score_expression argument.
+
+
+
+      
         

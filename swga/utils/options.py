@@ -1,5 +1,4 @@
 import yaml
-import sys
 import argparse
 from pkg_resources import resource_stream
 from collections import OrderedDict
@@ -45,7 +44,7 @@ def cfg_from_opts(opts):
     return(out_str)
 
 
-def mk_argparser_from_opts(opts, cmd_name, description=None):
+def argparser_from_opts(opts, cmd_name, description=None):
     '''
     Uses a defined section (`cmd_name`) of the options to create an
     ArgumentParser object.
@@ -85,6 +84,7 @@ def mk_argparser_from_opts(opts, cmd_name, description=None):
             required = argvals.get('required', False))
 
     return parser
+
 
 def format_comment(desc, width=72, quote='#'):
     '''
