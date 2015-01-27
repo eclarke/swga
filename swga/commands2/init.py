@@ -66,7 +66,7 @@ def main(fg_genome, bg_genome):
     with open(os.path.join(cwd, default_parameters_name), "wb") as cfg_file:
         cfg_file.write(default_parameters.format(fg_genome_fp = fg_genome,
                                                  bg_genome_fp = bg_genome,
-                                                 bg_genome_len = bg_length))
+                                                 bg_length = bg_length))
     
     click.echo(finish_message)
               

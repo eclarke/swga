@@ -1,49 +1,33 @@
 import subprocess
-import swga
 import sys
 import os
-
-def main(argv, cfg_file, quiet):
-    '''
-    Flatten a FASTA file into one line, stripping entry headers and
-    keeping only the > entry markers.
-    '''
-    parser = swga.basic_cmd_parser(description=main.__doc__,
-                                   cmd_name='flatten',
-                                   cfg_file=cfg_file)
+from swga.commands2 import Command
     
-    parser.add_argument('-i', '--input', metavar="FILE",
-                        required=True, 
-                        help="Input FASTA file")
+        
+def main(argv, cfg_file):
+    cmd = Command('flatten', cfg_file = cfg_file)
+    cmd.parse_args(argv)
+    flatten(**cmd.args)
 
-    parser.add_argument('-o', '--output', metavar="FILE",
-                        help="Output filename (default: \
-                        input_name.flattened)")
 
-    parser.add_argument('-f', '--force', action='store_true',
-                        help="Overwrite output file if it already exists") 
-    
-    args = parser.parse_args(argv)
-    if not os.path.isfile(args.input):
+def flatten(input, output, force):
+    if not os.path.isfile(input):
         sys.stderr.write("Error: input file specified does not "
                          "exist.\n")
         exit(1)
                          
-    if not args.output:
-        args.output = args.input+'.flattened'
+    if not output:
+        output = input+'.flattened'
 
-    if os.path.isfile(args.output):
-        if args.force:
-            os.remove(args.output)
+    if os.path.isfile(output):
+        if force:
+            os.remove(output)
         else:
             sys.stderr.write("Error: output file exists.\n")
             exit(1)
 
     cmdstr = "sed 's/>.*/>/' {input} | tr -d '\\n' | tr '[:lower:]' '[:upper:]' > {output}"
-    cmdstr = cmdstr.format(**vars(args))
-    subprocess.check_call(cmdstr.format(**vars(args)), shell=True)
-    if not quiet:
-        sys.stderr.write("{input} --> {output}\n".format(**vars(args)))
+    cmdstr = cmdstr.format(input=input, output=output)
+    subprocess.check_call(cmdstr, shell=True)
+    sys.stderr.write("{input} --> {output}\n".format(input=input, output=output))
     
-        
-

@@ -183,7 +183,7 @@ void sorting_count(Bank *Sequences, char *prefix, int max_memory, int max_disk_s
 
 
 #if OMP
-    printf("coucou coucou coucou \n \n \n");
+
     uint64_t  **  histo_count_omp = (uint64_t  **) calloc(nb_threads,sizeof(uint64_t *));
     for(int ii=0;ii<nb_threads;ii++)
     {

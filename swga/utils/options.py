@@ -1,13 +1,14 @@
 import yaml
 import argparse
-from pkg_resources import resource_stream
+from pkg_resources import resource_stream, resource_filename
 from collections import OrderedDict
 from swga.clint.textui import puts, max_width, indent
 from StringIO import StringIO
-
+import swga
 
 def load_swga_opts():
     '''Returns the parsed options.yaml file as a Python object.'''
+    swga.core.swga_warn("Options.yaml loaded from: "+resource_filename("swga", "data/options.yaml"))
     with resource_stream("swga", "data/options.yaml") as opts_fp:
         opts = yaml.load(opts_fp)
         return opts

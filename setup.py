@@ -20,7 +20,8 @@ setup(
     author_email='ecl@mail.med.upenn.edu',
     packages=find_packages(),
     install_requires=['pyfaidx',
-                      'click'],
+                      'click',
+                      'pyyaml'],
     classifiers = [
         'Programming Language :: Python',
         'Development Status :: 3 - Alpha',
@@ -34,7 +35,7 @@ setup(
     license='LICENSE.txt',
     description='Pipeline to select compatible primer sets for selective whole-genome amplification.',
     long_description=open('README.md').read(),
-    entry_points = {'console_scripts': ['swga = swga.commands.swga_entry:main']},
+    entry_points = {'console_scripts': ['swga = swga.commands2.swga_entry:main']},
     cmdclass={
         'test': test_swga
     }

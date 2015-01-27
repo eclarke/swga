@@ -22,18 +22,20 @@ count:
   output_dir:
     default: kmers
     desc: folder to store kmers
-  fg_genome: 
+  fg_genome_fp: 
     default: *fg
     desc: path to foreground (aka target) genome
-  bg_genome:
+  bg_genome_fp:
     default: *bg
     desc: path to background genome
   min_size:
     default: 5
     desc: minimum kmer size
+    type: int
   max_size:
     default: 12
     desc: maximum kmer size
+    type: int
   threshold:
     default: 1
     desc: kmer must appear this many times to be counted
@@ -47,7 +49,7 @@ flatten:
     default: *fg
     desc: input FASTA file (usually the foreground genome)
   output:
-    default: %(input).flattened
+    default: "%(input).flattened"
     desc: filename of the flattened gnome
   force:
     default: True
@@ -87,7 +89,7 @@ sets:
     default: 30000
     desc: min avg distance between primers in the bg genome
   bg_genome_len:
-    default: {bg_genome_len}
+    default: "{bg_length}"
     desc: length of background genome (autofilled by swga init)
 
 
@@ -97,7 +99,7 @@ locate-mers:
     default: sys.stdin
     desc: list of primers
   output:
-    default: %(genome).primerstore
+    default: "%(genome).primerstore"
     desc: where to store the primer locations
   genome:
     default: *fg
@@ -126,18 +128,6 @@ filter:
     default: 200
     desc: max number of primers to keep after filtering
 
-count:
-  desc: Count primers in a genome
-  genome:
-    default: *fg
-    desc: path to genome
-    required: True
-  min:
-    default: 5
-    desc: min base pairs in a primer
-  max:
-    default: 12
-    desc: max base pairs in a primer
 
 score:
   desc: Filter and score primer sets

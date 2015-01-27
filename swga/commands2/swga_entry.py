@@ -44,7 +44,7 @@ def main():
                         default=cfg_file)
     parser.add_argument('-q', '--quiet', action='store_true')                        
     args, remaining = parser.parse_known_args()
-    command_opts[args.command](remaining, args.config, args.quiet)
+    command_opts[args.command](remaining, args.config)
 
 
 if __name__ == '__main__':
