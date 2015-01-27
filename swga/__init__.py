@@ -5,4 +5,5 @@ from .core import (swga_error,
                    basic_cmd_parser,
                    print_status,
                    progressbar,
-                   default_config_file)
+                   default_config_file,
+                   message)

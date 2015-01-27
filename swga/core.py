@@ -45,7 +45,7 @@ def parse_config(cfg_file, section):
 
         except ConfigParser.NoSectionError:
             defaults = {}
-        return defaults, config
+        return defaults
 
 
 def mkdirp(path):
@@ -79,6 +79,9 @@ def swga_warn(msg):
     with indent(2, quote=colored.red("!! ")):
         puts(textwrap.fill(textwrap.dedent(msg)), stream=STDERR)
 
+def message(msg):
+    puts(msg, stream=STDERR)
+    
 
 def errprint(text):
     puts(colored.red(textwrap.fill(textwrap.dedent(text)).strip()),

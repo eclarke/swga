@@ -52,3 +52,28 @@ count:
     default: 12
     desc: max base pairs in a primer
 
+score:
+  desc: Filter and score primer sets
+  input:
+    default: stdin
+    desc: >
+      "Compatible sets of primers. One set per row; first number is the size of
+      the set; following numbers are the primer IDs in that set, separated by spaces
+      (the output from the find_sets command). (default: stdin)
+    type: File-r
+  output:
+    default: stdout
+    desc: Where to write output. (default: stdout)
+    type: File-w
+  max_sets:
+    default: 500
+    desc: Max number of sets to check (unused)
+    type: int
+  score_expression:
+    default: "(fg_dist_mean*fg_dist_gini)/(bg_ratio)"
+    desc: |
+      Specify an expression to calculate the score. Available variables:
+      - set_size
+      - fg_dist_mean
+      -
+        
