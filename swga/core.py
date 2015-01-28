@@ -15,7 +15,7 @@ import argparse
 import textwrap
 import ConfigParser
 
-from clint.textui import puts, colored, STDERR, indent
+from clint.textui import puts, colored, STDERR, indent, max_width
 
 default_config_file = 'parameters.cfg'
 
@@ -40,7 +40,7 @@ def parse_config(cfg_file, section):
             if not all(defaults.values()):
                 for key, value in defaults.iteritems():
                     if not value:
-                        swga_warn(("Value for {0}:{1} undefined in config "
+                        warn(("Value for {0}:{1} undefined in config "
                                    "file ({2}).").format(section, key, cfg_file))
 
         except ConfigParser.NoSectionError:
@@ -74,18 +74,19 @@ def swga_error(msg, errcode=1):
     sys.exit(errcode)
 
 
-def swga_warn(msg):
+def warn(msg):
     '''Prints a warning message to stderr.'''
-    with indent(2, quote=colored.red("!! ")):
-        puts(textwrap.fill(textwrap.dedent(msg)), stream=STDERR)
+    with indent(3, quote=colored.red("!! ")):
+        errprint(msg)
+
 
 def message(msg):
     puts(msg, stream=STDERR)
     
 
 def errprint(text):
-    puts(colored.red(textwrap.fill(textwrap.dedent(text)).strip()),
-         stream=sys.stderr.write)
+    text = colored.red(max_width(textwrap.dedent(text), 75))
+    puts(text, stream=STDERR)
 
 
 def print_status(prog_name, args, cfg_file, from_stdin):

@@ -1,6 +1,6 @@
 import swga
 import argparse
-from swga.utils.options import load_swga_opts, add_args_from_opts
+from swga.utils.options import get_swga_opts, add_args_from_opts
 
 class Command:
 
@@ -9,7 +9,7 @@ class Command:
             prog = 'swga ' + name,
             description = description)
 
-        opts = load_swga_opts()
+        opts = get_swga_opts()
         add_args_from_opts(self.parser, name, opts)
         defaults, _ = swga.parse_config(cfg_file, name)
         self.parser.set_defaults(**defaults)

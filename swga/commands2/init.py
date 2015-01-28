@@ -3,7 +3,7 @@ from click._compat import filename_to_ui
 import os, sys, stat
 from pkg_resources import resource_string
 from pyfaidx import Fasta
-from swga.utils.options import load_swga_opts, cfg_from_opts
+from swga.utils.options import get_swga_opts, cfg_from_opts
 
 welcome_message = """
 ## SWGA Initialization ---------------------------
@@ -60,7 +60,7 @@ def main(fg_genome, bg_genome):
     bg_length, bg_nrecords = fasta_stats(bg_genome)
     click.echo(click.style(bg_message.format(**locals()), fg="green"))
 
-    opts = load_swga_opts()
+    opts = get_swga_opts()
     default_parameters = cfg_from_opts(opts)
 
     with open(os.path.join(cwd, default_parameters_name), "wb") as cfg_file:

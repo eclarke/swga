@@ -6,9 +6,9 @@ from swga.clint.textui import puts, max_width, indent
 from StringIO import StringIO
 import swga
 
-def load_swga_opts():
+def get_swga_opts():
     '''Returns the parsed options.yaml file as a Python object.'''
-    swga.core.swga_warn("Options.yaml loaded from: "+resource_filename("swga", "data/options.yaml"))
+    swga.core.warn("Options.yaml loaded from: "+resource_filename("swga", "data/options.yaml"))
     with resource_stream("swga", "data/options.yaml") as opts_fp:
         opts = yaml.load(opts_fp)
         return opts
@@ -27,7 +27,7 @@ def cfg_from_opts(opts):
 
     for section in opts.keys():
         desc = opts[section].get("desc")
-        desc = "\n" + format_comment(desc, quote='##')
+        desc = "\n" + _format_comment(desc, quote='##')
         out_str += desc + section_str.format(section=section)
 
         if section == "DEFAULT":
@@ -38,7 +38,7 @@ def cfg_from_opts(opts):
         for opt in opts[section].keys():
             if opt == "desc": continue  # already handled this in above
             option = opts[section][opt]
-            desc = format_comment(option.get("desc"))
+            desc = _format_comment(option.get("desc"))
             default = option.get("default")            
             out_str += desc + opt_str.format(opt=opt, default=default)
     
@@ -87,7 +87,7 @@ def argparser_from_opts(opts, cmd_name, description=None):
     return parser
 
 
-def format_comment(desc, width=72, quote='#'):
+def _format_comment(desc, width=72, quote='#'):
     '''
     Wraps a description at the specified width and puts a comment character
     before each line. Returns a formatted string.
