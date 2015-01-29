@@ -22,6 +22,14 @@ from math import sqrt, log
 import click
 
 
+def _is_sym(s):
+    r = {'A':'T',
+         'T':'A',
+         'G':'C',
+         'C':'G'}
+    return s == ''.join([r[i] for i in s][::-1])
+
+
 def _overcount(st, p):
     ocu = 0
     x = 0
@@ -37,23 +45,23 @@ def _overcount(st, p):
 
 def _tercorr(st):
     _dh = 0
-    _ds = 0
+    _ds = -1.4 if _is_sym(st) else 0
     start = st[0]
     end = st[-1]
 
     if start == 'G' or start == 'C':
-        _dh -= 0.1
-        _ds += 2.8
+        _dh += 0.1
+        _ds -= 2.8
     elif start == 'A' or start == 'T':
-        _dh -= 2.3
-        _ds -= 4.1
+        _dh += 2.3
+        _ds += 4.1
 
     if end == 'G' or end == 'C':
-        _dh -= 0.1
-        _ds += 2.8
+        _dh += 0.1
+        _ds -= 2.8
     elif end == 'A' or end == 'T':
-        _dh -= 2.3
-        _ds -= 4.1
+        _dh += 2.3
+        _ds += 4.1
     print _dh, _ds
     return _dh, _ds
 
@@ -89,28 +97,28 @@ def Tm(s, DNA_c = 5000.0, Na_c = 10.0, Mg_c = 20.0, dNTPs_c = 10.0, correction=T
 
     ## Adapted from Table 1 in Allawi and SantaLucia (1997).
     # delta H (kcal/mol)
-    dh_coeffs = {"AA": 7.9,  "TT": 7.9,
-                 "AT": 7.2,
-                 "TA": 7.2,
-                 "CA": 8.5,  "TG": 8.5,
-                 "GT": 8.4,  "AC": 8.4,
-                 "CT": 7.8,  "AG": 7.8,
-                 "GA": 8.2,  "TC": 8.2,
-                 "CG": 10.6,
-                 "GC": 9.8,
-                 "GG": 8.0,  "CC": 8.0}
+    dh_coeffs = {"AA": -7.9,  "TT": -7.9,
+                 "AT": -7.2,
+                 "TA": -7.2,
+                 "CA": -8.5,  "TG": -8.5,
+                 "GT": -8.4,  "AC": -8.4,
+                 "CT": -7.8,  "AG": -7.8,
+                 "GA": -8.2,  "TC": -8.2,
+                 "CG": -10.6,
+                 "GC": -9.8,
+                 "GG": -8.0,  "CC": -8.0}
     
     # delta S (eu)
-    ds_coeffs = {"AA": 22.2,  "TT": 22.2,
-                 "AT": 20.4,
-                 "TA": 21.3,
-                 "CA": 22.7,  "TG": 22.7,
-                 "GT": 22.4,  "AC": 22.4,
-                 "CT": 21.0,  "AG": 21.0,
-                 "GA": 22.2,  "TC": 22.2,
-                 "CG": 27.2,
-                 "GC": 24.4,
-                 "GG": 19.9,  "CC": 19.9}
+    ds_coeffs = {"AA": -22.2,  "TT": -22.2,
+                 "AT": -20.4,
+                 "TA": -21.3,
+                 "CA": -22.7,  "TG": -22.7,
+                 "GT": -22.4,  "AC": -22.4,
+                 "CT": -21.0,  "AG": -21.0,
+                 "GA": -22.2,  "TC": -22.2,
+                 "CG": -27.2,
+                 "GC": -24.4,
+                 "GG": -19.9,  "CC": -19.9}
 
     # Multiplies the number of times each nuc pair is in the sequence by the
     # appropriate coefficient, then returns the sum of all the pairs
@@ -123,10 +131,10 @@ def Tm(s, DNA_c = 5000.0, Na_c = 10.0, Mg_c = 20.0, dNTPs_c = 10.0, correction=T
     fgc = len(filter(lambda x: x == 'G' or x == 'C', s)) / float(len(s))
 
     ## Melting temperature
-    tm = ((1000*(-dh)) / (-ds + (R * log(k))))
+    tm = (1000 * dh) / (ds + (R * log(k)))
 
     if not correction:
-        return tm
+        return tm - 273.15
     
     MNa = Na_c * 1e-3
     MMg = Mg_c * 1e-3
@@ -175,6 +183,7 @@ def Tm(s, DNA_c = 5000.0, Na_c = 10.0, Mg_c = 20.0, dNTPs_c = 10.0, correction=T
 @click.option("--mg", default=20.0)
 @click.option("--dntp", default=10.0)
 def main(sequence, dna, na, mg, dntp, correction):
+    print _is_sym(sequence)
     print Tm(sequence, DNA_c=dna, Na_c=na, Mg_c=mg, dNTPs_c=dntp, correction=correction)
 
 
