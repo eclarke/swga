@@ -17,6 +17,7 @@ Based heavily on code by the following authors:
 - Nicolas Le Novere <lenov@ebi.ac.uk>
 - Calvin Morrison <mutantturkey@gmail.com>
 '''
+from __future__ import division
 from math import sqrt, log
 import click
 
@@ -53,11 +54,11 @@ def _tercorr(st):
     elif end == 'A' or end == 'T':
         _dh -= 2.3
         _ds -= 4.1
-
+    print _dh, _ds
     return _dh, _ds
 
 
-def Tm(s, DNA_c = 5000, Na_c = 10, Mg_c = 20, dNTPs_c = 10, correction=True):
+def Tm(s, DNA_c = 5000.0, Na_c = 10.0, Mg_c = 20.0, dNTPs_c = 10.0, correction=True):
     '''
     Returns the DNA/DNA melting temp using nearest-neighbor thermodynamics.
 
@@ -74,12 +75,15 @@ def Tm(s, DNA_c = 5000, Na_c = 10, Mg_c = 20, dNTPs_c = 10, correction=True):
     - dNTPs_c: dNTP concentration [mM]
     - correction: correct for cation concentration?
     '''
+
+
     
     R = 1.987    # Universal gas constant (cal/(K*mol))
     s = s.upper()
     vh, vs = _tercorr(s)
-
-    k = (DNA_c/4) * 1e-9
+    print vh, vs
+    #k = (DNA_c/4.0) * 1e-9
+    k = DNA_c * 1e-9
     print "k:", k
 
 
@@ -114,11 +118,12 @@ def Tm(s, DNA_c = 5000, Na_c = 10, Mg_c = 20, dNTPs_c = 10, correction=True):
     vs = vs + sum(_overcount(s, pair) * coeff for pair, coeff in ds_coeffs.items())
     dh = vh
     ds = vs
-    
+    print vs, vh
+
     fgc = len(filter(lambda x: x == 'G' or x == 'C', s)) / float(len(s))
 
     ## Melting temperature
-    tm = ((1000 * (-dh)) / (-ds + (R * log(k)))) - 273.15
+    tm = ((1000*(-dh)) / (-ds + (R * log(k))))
 
     if not correction:
         return tm
@@ -132,7 +137,9 @@ def Tm(s, DNA_c = 5000, Na_c = 10, Mg_c = 20, dNTPs_c = 10, correction=True):
     D = (Ka * MdNTPs - Ka * MMg + 1)**2 + (4 * Ka * MMg)
     Fmg = (-(Ka * MdNTPs - Ka * MMg + 1) + sqrt(D)) / (2 * Ka)
     
-    cation_ratio = sqrt(Fmg) / MNa
+    cation_ratio = sqrt(Fmg) / MNa if MNa > 0 else 7.0
+
+    print "R: ", cation_ratio
 
     if cation_ratio < 0.22:
         print "Monovalent cation correction used"
@@ -144,27 +151,31 @@ def Tm(s, DNA_c = 5000, Na_c = 10, Mg_c = 20, dNTPs_c = 10, correction=True):
         a = 3.92
         d = 1.42
         g = 8.31
+        Fmg = MMg
         if cation_ratio < 6.0:
             a = a * (0.843 - 0.352 * sqrt(MNa) * log(MNa))
             d = d * (1.279 - 4.03 * log(MNa) * 1e-3 - 8.03 * log(MNa)**2 * 1e-3)
             g = g * (0.486 - 0.258 * log(MNa) + 5.25 * log(MNa)**3 * 1e-3)
+        print "n :", len(s)
         tm = 1 / (
             (1 / tm) +
-            (a - 0.91 * log(Fmg) + fgc * (6.26 + d * log(Fmg)) +
-             1/(2 * (len(s) - 1)) * (-48.2 + 52.5 * log(Fmg) +
+            (a - 0.911 * log(Fmg) + fgc * (6.26 + d * log(Fmg)) +
+             1/(2 * (len(s)-1)) * (-48.2 + 52.5 * log(Fmg) +
                                      g * log(Fmg)**2)) * 1e-5)
 
-    return tm
+
+    return tm - 273.15
 
 
 @click.command()
 @click.argument("sequence")
 @click.option("-c", "--correction", type=bool, default=True)
-@click.option("--na", default=10)
-@click.option("--mg", default=20)
-@click.option("--dntp", default=10)
-def main(sequence, na, mg, dntp, correction):
-    print Tm(sequence, Na_c=na, Mg_c=mg, dNTPs_c=dntp, correction=correction)
+@click.option("--dna", default=5000.0)
+@click.option("--na", default=10.0)
+@click.option("--mg", default=20.0)
+@click.option("--dntp", default=10.0)
+def main(sequence, dna, na, mg, dntp, correction):
+    print Tm(sequence, DNA_c=dna, Na_c=na, Mg_c=mg, dNTPs_c=dntp, correction=correction)
 
 
 if __name__ == "__main__":
