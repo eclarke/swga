@@ -24,3 +24,9 @@ def filter_primers(input,
     # sort by fg/bg ratio
     primers = sorted(primers, key=attrgetter("ratio"), reverse=True)
     write_primer_file(primers, output)
+
+
+def filter_melting_temp():
+    pass
+
+
