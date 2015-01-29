@@ -62,7 +62,6 @@ def _tercorr(st):
     elif end == 'A' or end == 'T':
         _dh += 2.3
         _ds += 4.1
-    print _dh, _ds
     return _dh, _ds
 
 
@@ -88,11 +87,8 @@ def Tm(s, DNA_c = 5000.0, Na_c = 10.0, Mg_c = 20.0, dNTPs_c = 10.0, correction=T
     
     R = 1.987    # Universal gas constant (cal/(K*mol))
     s = s.upper()
-    vh, vs = _tercorr(s)
-    print vh, vs
-    #k = (DNA_c/4.0) * 1e-9
+    dh, ds = _tercorr(s)
     k = DNA_c * 1e-9
-    print "k:", k
 
 
     ## Adapted from Table 1 in Allawi and SantaLucia (1997).
@@ -122,11 +118,8 @@ def Tm(s, DNA_c = 5000.0, Na_c = 10.0, Mg_c = 20.0, dNTPs_c = 10.0, correction=T
 
     # Multiplies the number of times each nuc pair is in the sequence by the
     # appropriate coefficient, then returns the sum of all the pairs
-    vh = vh + sum(_overcount(s, pair) * coeff for pair, coeff in dh_coeffs.items())
-    vs = vs + sum(_overcount(s, pair) * coeff for pair, coeff in ds_coeffs.items())
-    dh = vh
-    ds = vs
-    print vs, vh
+    dh = dh + sum(_overcount(s, pair) * coeff for pair, coeff in dh_coeffs.items())
+    ds = ds + sum(_overcount(s, pair) * coeff for pair, coeff in ds_coeffs.items())
 
     fgc = len(filter(lambda x: x == 'G' or x == 'C', s)) / float(len(s))
 
@@ -147,15 +140,11 @@ def Tm(s, DNA_c = 5000.0, Na_c = 10.0, Mg_c = 20.0, dNTPs_c = 10.0, correction=T
     
     cation_ratio = sqrt(Fmg) / MNa if MNa > 0 else 7.0
 
-    print "R: ", cation_ratio
-
     if cation_ratio < 0.22:
-        print "Monovalent cation correction used"
         tm = 1 / (
             (1 / tm) +
             ((4.29 * fgc - 3.95) * log(MNa) + 0.94 * log(MNa)**2) * 1e-5)
     else:
-        print "Divalent cation correction used"
         a = 3.92
         d = 1.42
         g = 8.31
@@ -164,7 +153,6 @@ def Tm(s, DNA_c = 5000.0, Na_c = 10.0, Mg_c = 20.0, dNTPs_c = 10.0, correction=T
             a = a * (0.843 - 0.352 * sqrt(MNa) * log(MNa))
             d = d * (1.279 - 4.03 * log(MNa) * 1e-3 - 8.03 * log(MNa)**2 * 1e-3)
             g = g * (0.486 - 0.258 * log(MNa) + 5.25 * log(MNa)**3 * 1e-3)
-        print "n :", len(s)
         tm = 1 / (
             (1 / tm) +
             (a - 0.911 * log(Fmg) + fgc * (6.26 + d * log(Fmg)) +
@@ -183,7 +171,6 @@ def Tm(s, DNA_c = 5000.0, Na_c = 10.0, Mg_c = 20.0, dNTPs_c = 10.0, correction=T
 @click.option("--mg", default=20.0)
 @click.option("--dntp", default=10.0)
 def main(sequence, dna, na, mg, dntp, correction):
-    print _is_sym(sequence)
     print Tm(sequence, DNA_c=dna, Na_c=na, Mg_c=mg, dNTPs_c=dntp, correction=correction)
 
 
