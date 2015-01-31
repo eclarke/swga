@@ -1,17 +1,8 @@
 import yaml
 import argparse
-from pkg_resources import resource_stream, resource_filename
 from collections import OrderedDict
 from swga.clint.textui import puts, max_width, indent
 from StringIO import StringIO
-import swga
-
-def get_swga_opts():
-    '''Returns the parsed options.yaml file as a Python object.'''
-    swga.core.warn("Options.yaml loaded from: "+resource_filename("swga", "data/options.yaml"))
-    with resource_stream("swga", "data/options.yaml") as opts_fp:
-        opts = yaml.load(opts_fp)
-        return opts
 
 
 def cfg_from_opts(opts):
@@ -21,22 +12,20 @@ def cfg_from_opts(opts):
     
     Returns: the contents of the config file, as a string.
     '''
-    out_str     = ""
+    out_str = ""
     section_str = "[{section}]\n"
-    opt_str  = "{opt} = {default}\n"
+    opt_str = "{opt} = {default}\n"
 
     for section in opts.keys():
+        if section == "INTERNAL":
+            continue
         desc = opts[section].get("desc")
         desc = "\n" + _format_comment(desc, quote='##')
         out_str += desc + section_str.format(section=section)
 
-        if section == "DEFAULT":
-            for opt in opts[section]:
-                out_str += opt_str.format(opt=opt, default=opts[section][opt])
-            continue
-        
         for opt in opts[section].keys():
-            if opt == "desc": continue  # already handled this in above
+            if opt == "desc": 
+                continue 
             option = opts[section][opt]
             desc = _format_comment(option.get("desc"))
             default = option.get("default")            
@@ -102,12 +91,14 @@ def _format_comment(desc, width=72, quote='#'):
     return string.getvalue()
 
 
-## This ensures that the options we get back from the yaml file are in order by
-## replacing the default constructor with an OrderedDict
+# This ensures that the options we get back from the yaml file are in order by
+# replacing the default constructor with an OrderedDict
 _mapping_tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
+
 
 def _dict_representer(dumper, data):
     return dumper.represent_dict(data.iteritems())
+
 
 def _dict_constructor(loader, node):
     return OrderedDict(loader.construct_pairs(node))

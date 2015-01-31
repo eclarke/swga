@@ -1,9 +1,9 @@
 import click
 from click._compat import filename_to_ui
 import os, sys, stat
-from pkg_resources import resource_string
 from pyfaidx import Fasta
-from swga.utils.options import get_swga_opts, cfg_from_opts
+from swga.resources import get_swga_opts
+from swga.utils.options import cfg_from_opts
 
 welcome_message = """
 ## SWGA Initialization ---------------------------
@@ -35,6 +35,7 @@ Background genome: {bg_genome}
 
 finish_message = """Done!"""
 
+
 @click.command()
 @click.option("-f", "--fg_genome",
               type=click.Path(exists=True, resolve_path=True))
@@ -50,13 +51,13 @@ def main(fg_genome, bg_genome):
                                        
     if (not fg_genome):
         fg_genome = click.prompt("Enter path to foreground genome file, in " +
-        "FASTA format", type=click.Path(exists=True, resolve_path=True))
+                                 "FASTA format", type=click.Path(exists=True, resolve_path=True))
     fg_length, fg_nrecords = fasta_stats(fg_genome)
     click.echo(click.style(fg_message.format(**locals()), fg="green"))
 
     if (not bg_genome):
         bg_genome = click.prompt("Enter path to background genome file, in " +
-        "FASTA format", type=click.Path(exists=True, resolve_path=True))
+                                 "FASTA format", type=click.Path(exists=True, resolve_path=True))
     bg_length, bg_nrecords = fasta_stats(bg_genome)
     click.echo(click.style(bg_message.format(**locals()), fg="green"))
 
@@ -66,6 +67,7 @@ def main(fg_genome, bg_genome):
     with open(os.path.join(cwd, default_parameters_name), "wb") as cfg_file:
         cfg_file.write(default_parameters.format(fg_genome_fp = fg_genome,
                                                  bg_genome_fp = bg_genome,
+                                                 fg_length = fg_length,
                                                  bg_length = bg_length))
     
     click.echo(finish_message)

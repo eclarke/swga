@@ -10,10 +10,11 @@
 #   &xyz is a label, *xyz is a reference to that label resolved by the YAML
 #   parser 
 ---
-DEFAULT:
+INTERNAL:
   fg_genome_fp: &fg "{fg_genome_fp}"
   bg_genome_fp: &bg "{bg_genome_fp}"
-
+  fg_length: &fglen "{fg_length}"
+  bg_length: &bglen "{bg_length}"
 
 count:
   desc: >
@@ -89,7 +90,7 @@ sets:
     default: 30000
     desc: min avg distance between primers in the bg genome
   bg_genome_len:
-    default: "{bg_length}"
+    default: *bglen
     desc: length of background genome (autofilled by swga init)
 
 
@@ -127,8 +128,16 @@ filter:
   num_primers:
     default: 200
     desc: max number of primers to keep after filtering
+  bg_length:
+    default: *bglen
+    desc: length of the background genome (autofilled by swga init)
+    type: int
+  fg_length:
+    default: *fglen
+    desc: length of the foreground genome (autofilled by swga init)
+    type: int
 
-
+    
 score:
   desc: Filter and score primer sets
   input:
@@ -158,8 +167,3 @@ score:
       Specify a path to a scoring function to use instead of the normal
       scoring function, to create custom metrics or output. For help, see
       wiki. Incompatible with --score_expression argument.
-
-
-
-      
-        

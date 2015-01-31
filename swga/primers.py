@@ -4,9 +4,12 @@
 Functions for parsing primers from a file.
 
 """
+from __future__ import with_statement
 import re
 import sys
+import sqlite3
 from .core import errprint
+
 
 class Primer:
 
@@ -29,6 +32,10 @@ class Primer:
                                  ratio = self.ratio)
         line = line + '\n' if newline else line
         return line
+
+
+    def to_tuple(self):
+        return (self.seq, self.fg_freq, self.bg_freq, self.ratio)
 
 
     def __repr__(self):
@@ -105,3 +112,25 @@ def write_primer_file(primers, out_handle, header=True):
         out_handle.write(header_str+'\n')
     for primer in primers:
         out_handle.write(primer.to_line())
+
+
+def mk_primer_tbl(connection):
+    with connection as c:
+        c.execute('''create table primers 
+        (seq text primary key, fg_freq integer, bg_freq integer, ratio real)''')
+
+        
+def update_primer_tbl(primers, connection):
+    primer_tuples = (p.to_tuple() for p in primers)
+    with connection as c:
+        c.executemany("""
+        insert or replace into primers(seq, fg_freq, bg_freq, ratio) 
+        values (?,?,?,?)""", primer_tuples)
+        
+
+def read_count_file(fg_fp, bg_fp):
+    primers = []
+    for line in fg_fp:
+        seq, fg_freq = line.split("\t")
+        Primers.append(Primer(id=0, seq=seq, fg_freq=fg_freq))
+    
