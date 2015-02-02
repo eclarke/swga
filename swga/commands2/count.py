@@ -1,25 +1,23 @@
-from __future__ import division
+#from __future__ import division
 import os
 import subprocess
 import swga
 import csv
-from pkg_resources import resource_filename
+import struct
 from swga.commands2 import Command
 import swga.resources as resources
-from swga.primers import write_primer_file, Primer
+import sqlite3
+from swga.primers import write_primer_file, mk_primer_tbl, update_primer_tbl, Primer
 
 
 def main(argv, cfg_file):
     cmd = Command('count', cfg_file=cfg_file)
     cmd.parse_args(argv)
-    print cmd.args
     count_mers(**cmd.args)
 
 
 def count_mers(fg_genome_fp,
-               fg_length,
                bg_genome_fp, 
-               bg_length,
                min_size, 
                max_size, 
                threshold, 
@@ -79,29 +77,50 @@ def count_mers(fg_genome_fp,
     primers = merge_mers(os.path.join(fg_kmer_dir, "fg_mers.fa"),
                          os.path.join(bg_kmer_dir, "bg_mers.fa"))
 
-    with open(os.path.join(os.path.abspath(output_dir), 'primers.txt')) as out:
+    with open(os.path.join(os.path.abspath(output_dir), 'primers.txt'), 'wb') as out:
         write_primer_file(primers, out, header=True)
 
+    conn = sqlite3.connect("primers.sqlitedb")
+    mk_primer_tbl(conn)
+    update_primer_tbl(primers, conn)
+    
 
 def merge_mers(fg_mers_fp, bg_mers_fp):
     fg = bg = {}
 
     with open(fg_mers_fp) as _fg:
-        fg = dict(csv.DictReader(_fg, fieldnames=["seq", "freq"]))
+        rows = csv.DictReader(_fg, fieldnames=["seq", "freq"], delimiter=' ')
+        fg = dict((row['seq'], row['freq']) for row in rows)
+        
+    with open(bg_mers_fp) as _bg:        
+        rows = csv.DictReader(_bg, fieldnames=['seq', 'freq'], delimiter=' ')
+        bg = dict((row['seq'], row['freq']) for row in rows)
 
-    with open(bg_mers_fp) as _bg:
-        bg = dict(csv.DictReader(_bg, fieldnames=['seq', 'freq']))
-
-    # Merge via set intersection
-    common_primers = fg.viewkeys() & bg.viewkeys()
-    primers = [Primer(id=i,
-                      seq=seq, 
-                      fg_freq=fg[seq], 
-                      bg_freq=bg[seq],
-                      ratio=fg[seq]/bg[seq]) for i, seq in enumerate(common_primers)]
+    # Keep only the primers in fg
+    primers = [Primer(id=i, seq=seq, fg_freq=fg[seq], bg_freq=bg.get(seq, 0))
+               for i, seq in enumerate(fg.keys())]
     return primers
 
 
+def parse_kmer_binary(fp):
+    # Adapted from `dsk/parse_results.py`
+    with open(fp, 'rb') as f:
+        kmer_nbits = struct.unpack('i', f.read(4))[0]
+        k = struct.unpack('i', f.read(4))[0]
+        try:
+            while True:
+                kmer_binary = struct.unpack('B' * (kmer_nbits / 8),
+                                            f.read(kmer_nbits / 8))
+                freq = struct.unpack('I', f.read(4))[0]
+                kmer = ""
+                for i in xrange(k):
+                    kmer = "ACTG"[(kmer_binary[i/4] >> (2 * (i%4))) % 4] + kmer
+                yield kmer, freq
+        except struct.error:
+            pass
+    
+        
+        
 def _run_and_log(cmdstr, fname, cwd):
     swga.message(cmdstr)
     subprocess.check_call(cmdstr, shell=True, cwd=cwd)

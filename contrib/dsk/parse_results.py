@@ -6,7 +6,7 @@ if len(sys.argv) < 2:
 fin = open(sys.argv[1], "rb")
 kmer_nbits = struct.unpack("i",fin.read(4))[0]
 k = struct.unpack("i",fin.read(4))[0]
-
+print kmer_nbits, k
 try:
     while True:
         kmer_binary = struct.unpack('B'*(kmer_nbits / 8), fin.read( kmer_nbits / 8) )
