@@ -5,9 +5,12 @@ Functions for parsing primers from a file.
 
 """
 from __future__ import with_statement, division
+import subprocess
 import csv
 import os
-
+import struct
+import swga
+import swga.resources as resources
 
 class Primer:
 
@@ -51,13 +54,37 @@ class Primer:
 
 
 def count_kmers(k, genome_fp, cwd, threshold=1):
+    dsk = resources.get_dsk()
     genome = genome_fp.split(os.sep).pop()
     out = os.path.join(cwd, genome + '.kmers')
-    cmdstr = "{dsk} {{genome}} {{k}} -o {{out}} -t {threshold}".format(
-        dsk=dsk, threshold=threshold)
+    outfile = out + '.solid_kmers_binary'
+    cmdstr = "{dsk} {genome} {k} -o {out} -t {threshold}".format(**locals())
+
+    # Run DSK
     swga.mkdirp(cwd)
     subprocess.check_call(cmdstr, shell=True, cwd=cwd)
-    ## CONTINUE HERE
+
+    return outfile
+        
+
+def parse_kmer_binary(fp):
+    # Adapted from `dsk/parse_results.py`
+    with open(fp, 'rb') as f:
+        kmer_nbits = struct.unpack('i', f.read(4))[0]
+        k = struct.unpack('i', f.read(4))[0]
+        try:
+            while True:
+                kmer_binary = struct.unpack('B' * (kmer_nbits / 8),
+                                            f.read(kmer_nbits / 8))
+                freq = struct.unpack('I', f.read(4))[0]
+                kmer = ""
+                for i in xrange(k):
+                    kmer = "ACTG"[(kmer_binary[i/4] >> (2 * (i%4))) % 4] + kmer
+                yield kmer, freq
+        except struct.error:
+            pass
+
+
 
 def read_primer_file(infile, echo_input=False):
     '''
@@ -69,7 +96,6 @@ def read_primer_file(infile, echo_input=False):
 
     Returns: A list of Primer objects
     '''
-#    assert isinstance(infile, file)
     rows = csv.DictReader((f for f in infile if not f.startswith('#')),
                           delimiter='\t',
                           fieldnames=['seq', 'fg_freq', 'bg_freq', 'ratio'], 

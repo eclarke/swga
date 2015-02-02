@@ -17,8 +17,8 @@ def _get_resource_file(fp):
 
 def get_dsk():
     dsk_bin = _get_resource_file("bin/dsk")
-    parser_bin = _get_resource_file("bin/parse_results")
-    return dsk_bin, parser_bin
+#    parser_bin = _get_resource_file("bin/parse_results")
+    return dsk_bin
 
 
 def get_setfinder():
