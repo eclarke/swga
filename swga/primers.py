@@ -56,15 +56,17 @@ class Primer:
 def count_kmers(k, genome_fp, cwd, threshold=1):
     dsk = resources.get_dsk()
     genome = genome_fp.split(os.sep).pop()
-    out = os.path.join(cwd, genome + '.kmers')
-    outfile = out + '.solid_kmers_binary'
-    cmdstr = "{dsk} {genome} {k} -o {out} -t {threshold}".format(**locals())
-
-    # Run DSK
-    swga.mkdirp(cwd)
-    subprocess.check_call(cmdstr, shell=True, cwd=cwd)
-
-    return outfile
+    out = '%s-%dmers' % (genome, k)
+    outfile = os.path.join(cwd, out + '.solid_kmers_binary')
+    if os.path.isfile(outfile):
+        swga.message("Binary kmer file found at %s, skipping..." % outfile)
+    else:
+        cmdstr = "{dsk} {genome_fp} {k} -o {out} -t {threshold}".format(**locals())
+        subprocess.check_call(cmdstr, shell=True, cwd=cwd)
+    
+    primers = dict((kmer, freq) for kmer, freq in parse_kmer_binary(outfile))
+    os.remove(outfile)
+    return primers
         
 
 def parse_kmer_binary(fp):
@@ -74,12 +76,12 @@ def parse_kmer_binary(fp):
         k = struct.unpack('i', f.read(4))[0]
         try:
             while True:
-                kmer_binary = struct.unpack('B' * (kmer_nbits / 8),
-                                            f.read(kmer_nbits / 8))
+                kmer_binary = struct.unpack('B' * (kmer_nbits // 8),
+                                            f.read(kmer_nbits // 8))
                 freq = struct.unpack('I', f.read(4))[0]
                 kmer = ""
                 for i in xrange(k):
-                    kmer = "ACTG"[(kmer_binary[i/4] >> (2 * (i%4))) % 4] + kmer
+                    kmer = "ACTG"[(kmer_binary[i//4] >> (2 * (i%4))) % 4] + kmer
                 yield kmer, freq
         except struct.error:
             pass

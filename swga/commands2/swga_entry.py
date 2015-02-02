@@ -26,7 +26,7 @@ Options:
 def main():
     command_opts = {'init':commands.init.main,
 #                    'autopilot':commands.autopilot.main,
-                    'count':commands.count.main,
+                    'count':commands.count2.main,
                     'flatten':commands.flatten.main,
                     'filter':commands.filter.main,
                     'locate':commands.locate_mers.main,
