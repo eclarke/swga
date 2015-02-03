@@ -28,7 +28,7 @@ def main():
 #                    'autopilot':commands.autopilot.main,
                     'count':commands.count2.main,
                     'flatten':commands.flatten.main,
-                    'filter':commands.filter.main,
+                    'filter':commands.filter2.main,
                     'locate':commands.locate_mers.main,
                     'mkgraph':commands.mkgraph.main,
                     'sets':commands.sets.main,

@@ -8,64 +8,56 @@ from __future__ import with_statement, division
 import subprocess
 import csv
 import os
+import re
 import struct
 import swga
 import swga.resources as resources
+import peewee as pw
 
-class Primer:
 
-    def __init__(self, id, seq, bg_freq=None, fg_freq=None, extra=None):
-        self.id = id
-        self.seq = seq
-        self.bg_freq = int(bg_freq) if bg_freq else 0
-        self.fg_freq = int(fg_freq) if fg_freq else 0
-        self.ratio = self.fg_freq / self.bg_freq if self.bg_freq is not 0 else 0
-        self.extra = extra
+# The primer database must be initialized before use
+# ex: `db.init(db_fname)`
+db_fname = 'primer.db'
+db = pw.SqliteDatabase(None)
 
-    def to_line(self, newline=True):
-        primer_str = "{seq}\t{fg_freq}\t{bg_freq}\t{ratio}"
-        line = primer_str.format(id=self.id,
-                                 seq=self.seq,
-                                 fg_freq=self.fg_freq,
-                                 bg_freq=self.bg_freq,
-                                 ratio=self.ratio)
-        line = line + '\n' if newline else line
-        return line
 
-    def to_tuple(self):
-        return (self.seq, self.fg_freq, self.bg_freq, self.ratio)
+class Primer(pw.Model):
+    pid = pw.IntegerField(default=-1)
+    seq = pw.TextField(unique=True)
+    fg_freq = pw.IntegerField(default=0)
+    bg_freq = pw.IntegerField(default=0)
+    ratio = pw.FloatField(default=0.0)
+    tm = pw.FloatField(default=0.0)
+    locations = pw.TextField(default="")
+    active = pw.BooleanField(default=False)
+
+    class Meta:
+        database = db
 
     def __repr__(self):
         rep_str = "Primer {0}:{1} (fg_freq:{2}, bg_freq:{3}, ratio:{4})"
         return rep_str.format(
             self.id, self.seq, self.fg_freq, self.bg_freq, self.ratio)
 
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return (self.seq == other.seq and 
-                    self.fg_freq == other.fg_freq and
-                    self.bg_freq == other.bg_freq and
-                    self.ratio == other.ratio)
-        else:
-            return False
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
 
 def count_kmers(k, genome_fp, cwd, threshold=1):
+    assert isinstance(threshold, int)
     dsk = resources.get_dsk()
     genome = genome_fp.split(os.sep).pop()
     out = '%s-%dmers' % (genome, k)
     outfile = os.path.join(cwd, out + '.solid_kmers_binary')
     if os.path.isfile(outfile):
-        swga.message("Binary kmer file found at %s, skipping..." % outfile)
+        swga.message("Binary kmer file already found at %s, skipping..."
+                     % outfile)
     else:
-        cmdstr = "{dsk} {genome_fp} {k} -o {out} -t {threshold}".format(**locals())
+        cmdstr = ("{dsk} {genome_fp} {k} -o {out} -t {threshold}"
+                  .format(**locals()))
+        swga.message("In {cwd}:\n> {cmdstr}".format(**locals()))
         subprocess.check_call(cmdstr, shell=True, cwd=cwd)
-    
-    primers = dict((kmer, freq) for kmer, freq in parse_kmer_binary(outfile))
-    os.remove(outfile)
+    print threshold
+    primers = dict((kmer, freq)
+                   for kmer, freq in parse_kmer_binary(outfile)
+                   if freq >= threshold)
     return primers
         
 
@@ -79,13 +71,15 @@ def parse_kmer_binary(fp):
                 kmer_binary = struct.unpack('B' * (kmer_nbits // 8),
                                             f.read(kmer_nbits // 8))
                 freq = struct.unpack('I', f.read(4))[0]
+
                 kmer = ""
                 for i in xrange(k):
                     kmer = "ACTG"[(kmer_binary[i//4] >> (2 * (i%4))) % 4] + kmer
+
                 yield kmer, freq
+
         except struct.error:
             pass
-
 
 
 def read_primer_file(infile, echo_input=False):
@@ -106,6 +100,15 @@ def read_primer_file(infile, echo_input=False):
     return primers
 
 
+def read_primer_list(plist):
+    '''
+    Reads in a list of primers, one per line, and returns the corresponding
+    records from the primer database.
+    '''
+    seqs = (re.split(r'[ \t]+', line.strip('\n'))[0] for line in plist)
+    return Primer.select().where(Primer.seq << seqs).execute()
+
+
 def write_primer_file(primers, out_handle, header=True):
     '''Writes each primer in primers to a line.
 
@@ -122,21 +125,5 @@ def write_primer_file(primers, out_handle, header=True):
         out_handle.write("#")
         writer.writeheader()
     [writer.writerow(p.__dict__) for p in primers]
-
-
-def mk_primer_tbl(connection):
-    with connection as c:
-        c.execute('''
-            create table primers 
-            (seq text primary key, fg_freq integer, bg_freq integer, ratio real)
-            ''')
-
-
-def update_primer_tbl(primers, connection):
-    primer_tuples = (p.to_tuple() for p in primers)
-    with connection as c:
-        c.executemany("""
-        insert or replace into primers(seq, fg_freq, bg_freq, ratio) 
-        values (?,?,?,?)""", primer_tuples)
 
 

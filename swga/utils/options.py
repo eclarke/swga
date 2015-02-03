@@ -28,7 +28,9 @@ def cfg_from_opts(opts):
                 continue 
             option = opts[section][opt]
             desc = _format_comment(option.get("desc"))
-            default = option.get("default")            
+            default = option.get("default")
+            if default == "None":
+                default = ""
             out_str += desc + opt_str.format(opt=opt, default=default)
     
     return(out_str)

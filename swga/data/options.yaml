@@ -40,7 +40,16 @@ count:
   threshold:
     default: 1
     desc: kmer must appear this many times to be counted
-
+    type: int
+  exclude_fp:
+    default: None
+    desc: >
+      (FASTA) any primers appearing here above a threshold will be excluded
+  exclude_threshold:
+    default: 1
+    desc: primers appearing >= this in exclude_fp will be excluded
+    type: int
+    
 
 flatten:
   desc: >
@@ -115,14 +124,11 @@ locate-mers:
   
 
 filter: 
-  desc: Filter primers from a list
-  input:
-    default: sys.stdin
-    desc: list of primers to filter
-  output:
-    default: sys.stdout
-    desc: output file
-  max_bg_binding:
+  desc: Activate suitable primers in a database
+  kmer_dir:
+    default: kmers
+    desc: directory containing primer database
+  max_bg_bind:
     default: 12000
     desc: max times a primer can bind to bg genome
   num_primers:
@@ -136,7 +142,23 @@ filter:
     default: *fglen
     desc: length of the foreground genome (autofilled by swga init)
     type: int
-
+  min_avg_fg_bind:
+    default: 0.0001
+    desc: minimum average binding frequency over the foreground genome
+    type: float
+  max_avg_bg_bind:
+    default: 0.00001
+    desc: maximum average binding frequency over the background genome
+    type: float
+  min_tm:
+    default: 0
+    desc: minimum primer melting temperature
+    type: float
+  max_tm:
+    default: 100
+    desc: maximum primer melting temperature
+    type: float
+    
     
 score:
   desc: Filter and score primer sets

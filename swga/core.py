@@ -80,8 +80,8 @@ def warn(msg):
         errprint(msg)
 
 
-def message(msg):
-    puts(msg, stream=STDERR)
+def message(msg, newline=True):
+    puts(msg, stream=STDERR, newline=newline)
     
 
 def errprint(text):

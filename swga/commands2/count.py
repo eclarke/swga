@@ -7,7 +7,7 @@ import struct
 from swga.commands2 import Command
 import swga.resources as resources
 import sqlite3
-from swga.primers import write_primer_file, mk_primer_tbl, update_primer_tbl, Primer
+from swga.primers import write_primer_file, Primer
 
 
 def main(argv, cfg_file):
@@ -102,22 +102,6 @@ def merge_mers(fg_mers_fp, bg_mers_fp):
     return primers
 
 
-def parse_kmer_binary(fp):
-    # Adapted from `dsk/parse_results.py`
-    with open(fp, 'rb') as f:
-        kmer_nbits = struct.unpack('i', f.read(4))[0]
-        k = struct.unpack('i', f.read(4))[0]
-        try:
-            while True:
-                kmer_binary = struct.unpack('B' * (kmer_nbits / 8),
-                                            f.read(kmer_nbits / 8))
-                freq = struct.unpack('I', f.read(4))[0]
-                kmer = ""
-                for i in xrange(k):
-                    kmer = "ACTG"[(kmer_binary[i/4] >> (2 * (i%4))) % 4] + kmer
-                yield kmer, freq
-        except struct.error:
-            pass
     
         
         
