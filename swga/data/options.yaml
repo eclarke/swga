@@ -15,13 +15,14 @@ INTERNAL:
   bg_genome_fp: &bg "{bg_genome_fp}"
   fg_length: &fglen "{fg_length}"
   bg_length: &bglen "{bg_length}"
+  kmer_dir: &kmerdir kmers
 
 count:
   desc: >
     Count kmers in a foreground genome, then count those kmers in a larger
     background genome
   output_dir:
-    default: kmers
+    default: *kmerdir
     desc: folder to store kmers
   fg_genome_fp: 
     default: *fg
@@ -76,15 +77,12 @@ mkgraph:
   output:
     default: stdout
     desc: where to write resulting graph in DIMACS format (default %(default)s)
-  max_hetdimer_bind:
-    default: 3
-    desc: max number of consecutive complimentary bases between two primers
 
 
 sets:
   desc: Find sets of compatible primers in a primer compatibility graph
-  input:
-    default: stdin
+  kmer_dir:
+    default: *kmerdir
     desc: primer compatibility graph, in DIMACS format (default stdin)
   output:
     default: stdout
@@ -95,13 +93,15 @@ sets:
   max_size:
     default: 7
     desc: max size of primer sets
+  max_hetdimer_bind:
+    default: 3
+    desc: max number of consecutive complimentary bases between two primers  
   min_bg_bind_dist:
     default: 30000
     desc: min avg distance between primers in the bg genome
   bg_genome_len:
     default: *bglen
     desc: length of background genome (autofilled by swga init)
-
 
 locate-mers:
   desc: Find primer locations in a genome
@@ -126,7 +126,7 @@ locate-mers:
 filter: 
   desc: Activate suitable primers in a database
   kmer_dir:
-    default: kmers
+    default: *kmerdir
     desc: directory containing primer database
   max_bg_bind:
     default: 12000

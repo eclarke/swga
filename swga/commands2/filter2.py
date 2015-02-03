@@ -45,7 +45,7 @@ def filter_kmers(kmer_dir,
                             (Primer.tm >= min_tm))
                      .execute())
     
-    swga.message("Marked {} qualifying primers".format(valid_primers))
+    swga.message("Identified {} qualifying primers".format(valid_primers))
 
     subquery = (Primer
                 .select(Primer.seq)
@@ -58,5 +58,14 @@ def filter_kmers(kmer_dir,
              .where(Primer.seq << subquery)  # << means "IN"
              .order_by(Primer.ratio.desc()))
     
-    for primer in query.execute():
-        print primer.seq, primer.bg_freq, primer.ratio
+    selected_primers = query.execute()
+
+    # Reset "active" marks
+    Primer.update(active = False).execute()
+
+    n_active = (Primer
+                .update(active = True)
+                .where(Primer << selected_primers).execute())
+
+    swga.message("Marked {} primers as active".format(n_active))
+

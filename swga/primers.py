@@ -20,10 +20,14 @@ import peewee as pw
 db_fname = 'primer.db'
 db = pw.SqliteDatabase(None)
 
+class SwgaBase(pw.Model):
+    class Meta:
+        database = db
+    
 
-class Primer(pw.Model):
-    pid = pw.IntegerField(default=-1)
-    seq = pw.TextField(unique=True)
+class Primer(SwgaBase):
+    pid = pw.IntegerField(null=True)
+    seq = pw.TextField(primary_key=True)
     fg_freq = pw.IntegerField(default=0)
     bg_freq = pw.IntegerField(default=0)
     ratio = pw.FloatField(default=0.0)
@@ -31,13 +35,49 @@ class Primer(pw.Model):
     locations = pw.TextField(default="")
     active = pw.BooleanField(default=False)
 
-    class Meta:
-        database = db
-
     def __repr__(self):
         rep_str = "Primer {0}:{1} (fg_freq:{2}, bg_freq:{3}, ratio:{4})"
         return rep_str.format(
             self.id, self.seq, self.fg_freq, self.bg_freq, self.ratio)
+
+
+class Set(SwgaBase):
+    sid = pw.PrimaryKeyField()
+    score = pw.FloatField()
+    size = pw.IntegerField(default=0)
+    scoring_fn = pw.TextField(default="")
+
+    def __repr__(self):
+        return "Set: "+"; ".join("{}:{}".format(k,v) for k,v in self.__dict__)
+
+
+class Primer_Set(SwgaBase):
+    seq = pw.ForeignKeyField(Primer, related_name='sets', to_field='seq')
+    set = pw.ForeignKeyField(Set, related_name='primers', to_field='sid')
+    class Meta:
+        indexes = (
+            (('seq', 'set'), True),
+        )
+
+
+def create_tables(drop=True, db_fname=db_fname, init=True):
+    if init:
+        db.init(db_fname)
+    if drop:
+        db.drop_tables([Primer, Set, Primer_Set], safe=True)
+    db.create_tables([Primer, Set, Primer_Set], safe=True)
+
+
+def add_set(primers, **kwargs):
+    s = Set.create(**kwargs)
+    for primer in primers:
+        Primer_Set.create(seq=primer.seq, set=s)
+    return set
+
+
+def get_primers_for_set(set_id):
+    set = Set.get(Set.sid == set_id)
+    return list(set.primers.seq)
 
 
 def count_kmers(k, genome_fp, cwd, threshold=1):
@@ -105,8 +145,8 @@ def read_primer_list(plist):
     Reads in a list of primers, one per line, and returns the corresponding
     records from the primer database.
     '''
-    seqs = (re.split(r'[ \t]+', line.strip('\n'))[0] for line in plist)
-    return Primer.select().where(Primer.seq << seqs).execute()
+    seqs = [re.split(r'[ \t]+', line.strip('\n'))[0] for line in plist]
+    return list(Primer.select().where(Primer.seq << seqs).execute())
 
 
 def write_primer_file(primers, out_handle, header=True):
