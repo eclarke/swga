@@ -18,7 +18,6 @@ def main(argv, cfg_file):
 
 
 def find_sets(kmer_dir,
-              output,
               min_size,
               max_size,
               max_hetdimer_bind,
@@ -26,6 +25,7 @@ def find_sets(kmer_dir,
               bg_genome_len):
     assert kmer_dir
     primerdb_fp = os.path.join(kmer_dir, swga.primers.db_fname)
+    print primerdb_fp
     if not os.path.isfile(primerdb_fp):
         swga.swga_error("Missing primers database: re-run `swga count`")
 
