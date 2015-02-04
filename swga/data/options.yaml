@@ -84,9 +84,6 @@ sets:
   kmer_dir:
     default: *kmerdir
     desc: primer compatibility graph, in DIMACS format (default stdin)
-  output:
-    default: stdout
-    desc: where to store results (default stdout)
   min_size:
     default: 2
     desc: minimum size of primer sets

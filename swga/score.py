@@ -10,7 +10,7 @@ import importlib
 
 def read_set_finder_line(line):
     '''
-    Reads a line in the format [size weight primer_id1,primer_id2,...] and returns
+    Reads a line in the format [primer_id1,primer_id2,... weight] and returns
     a tuple (size, weight, [primer_id1, primer_id2, ...]).
     '''
     primer_set, weight = line.strip('\n').split(' ')

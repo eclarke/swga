@@ -31,7 +31,7 @@ def main():
                     'filter':commands.filter2.main,
                     'locate':commands.locate_mers.main,
                     'mkgraph':commands.mkgraph.main,
-                    'sets':commands.sets.main,
+                    'sets':commands.sets2.main,
                     'score':commands.score.main}
 #                    'export':commands.export.main}
     cfg_file = default_config_file

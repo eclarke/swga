@@ -58,14 +58,14 @@ def filter_kmers(kmer_dir,
              .where(Primer.seq << subquery)  # << means "IN"
              .order_by(Primer.ratio.desc()))
     
-    selected_primers = query.execute()
+    selected_primers = [p.seq for p in query.execute()]
 
     # Reset "active" marks
     Primer.update(active = False).execute()
 
     n_active = (Primer
                 .update(active = True)
-                .where(Primer << selected_primers).execute())
+                .where(Primer.seq << selected_primers).execute())
 
     swga.message("Marked {} primers as active".format(n_active))
 
