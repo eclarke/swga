@@ -25,7 +25,9 @@ def cfg_from_opts(opts):
 
         for opt in opts[section].keys():
             if opt == "desc": 
-                continue 
+                continue
+            if opt == "incfg":
+                continue    
             option = opts[section][opt]
             desc = _format_comment(option.get("desc"))
             default = option.get("default")

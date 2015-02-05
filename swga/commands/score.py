@@ -50,7 +50,11 @@ def score_sets(primer_db,
     chr_ends = swga.primers.get_chromosome_ends(fg_genome_fp)
     passed = processed = 0
     for line in sys.stdin:
-        primer_ids, bg_ratio = score.read_set_finder_line(line)
+        try:
+            primer_ids, bg_ratio = score.read_set_finder_line(line)
+        except ValueError:
+            swga.warn("Could not parse line:\n\t"+line)
+            continue
         primers = swga.primers.get_primers_for_ids(primer_ids)
         binding_locations = score.aggregate_primer_locations(primers) + chr_ends
         max_dist = max(score.seq_diff(binding_locations))

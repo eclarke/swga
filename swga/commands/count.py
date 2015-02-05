@@ -18,7 +18,8 @@ def count_kmers(fg_genome_fp,
                 bg_genome_fp, 
                 min_size, 
                 max_size, 
-                threshold, 
+                min_fg_bind,
+                max_bg_bind,
                 primer_db,
                 exclude_fp,
                 exclude_threshold):
@@ -38,8 +39,8 @@ def count_kmers(fg_genome_fp,
 
     kmers = []
     for k in xrange(min_size, max_size + 1):
-        fg = primers.count_kmers(k, fg_genome_fp, output_dir, threshold)
-        bg = primers.count_kmers(k, bg_genome_fp, output_dir, threshold)
+        fg = primers.count_kmers(k, fg_genome_fp, output_dir, 1)
+        bg = primers.count_kmers(k, bg_genome_fp, output_dir, 1)
 
         if exclude_fp:
             assert os.path.isfile(exclude_fp)
@@ -53,17 +54,20 @@ def count_kmers(fg_genome_fp,
         
         def primer_dict(i, seq):
             fg_freq = fg[seq]
-            bg_freq = bg.get(seq, 0)
+            bg_freq = bg.get(seq, 0) 
             ratio = fg_freq / float(bg_freq) if bg_freq > 0 else 0
-            tm = Tm(seq)
+            if fg_freq < min_fg_bind or bg_freq > max_bg_bind:
+                return {}
             return {'seq': seq, 'fg_freq': fg_freq, 'bg_freq': bg_freq,
-                    'ratio': ratio, 'tm': tm}
+                    'ratio': ratio}
         
-        kmers = (primer_dict(i, seq)
+        kmers = [primer_dict(i, seq)
                  for i, seq in enumerate(fg.keys())
-                 if seq not in ex.viewkeys())
+                 if seq not in ex.viewkeys()]
 
-        nkmers = len(fg.viewkeys() - ex.viewkeys())
+        kmers = filter(lambda x: x != {}, kmers)
+        
+        nkmers = len(kmers)
         
         swga.message("Writing %d-mers into db..." % k)
         for kmer in progress.bar(kmers, expected_size=nkmers):

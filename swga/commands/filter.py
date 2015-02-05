@@ -2,6 +2,7 @@ import os
 import json
 import swga
 from swga.commands import Command
+from swga.melting import Tm
 from swga.primers import Primer, get_primer_locations
 from swga.clint.textui import progress
 
@@ -15,8 +16,8 @@ def filter_kmers(primer_db,
                  fg_genome_fp,
                  fg_length,
                  bg_length,
-                 min_avg_fg_bind,
-                 max_avg_bg_bind,
+                 min_avg_fg_rate,
+                 max_avg_bg_rate,
                  max_bg_bind,
                  min_tm,
                  max_tm,
@@ -24,8 +25,8 @@ def filter_kmers(primer_db,
 
     swga.primers.init_db(primer_db)
 
-    fg_min_freq = float(min_avg_fg_bind) * fg_length
-    bg_max_freq = float(max_avg_bg_bind) * bg_length
+    fg_min_freq = float(min_avg_fg_rate) * fg_length
+    bg_max_freq = float(max_avg_bg_rate) * bg_length
 
     assert fg_min_freq > 0
     
@@ -33,11 +34,21 @@ def filter_kmers(primer_db,
     
     fgp = Primer.select(Primer.seq).where(Primer.fg_freq >= fg_min_freq)
     swga.message("{} primers bind foreground genome with avg rate >= {} sites/bp"
-                 .format(fgp.count(), min_avg_fg_bind)) 
+                 .format(fgp.count(), min_avg_fg_rate)) 
 
     bgp = Primer.select(Primer.seq).where(Primer.bg_freq <= bg_max_freq)
     swga.message("{} primers bind background genome with avg rate <= {} sites/bp"
-                 .format(bgp.count(), max_avg_bg_bind))
+                 .format(bgp.count(), max_avg_bg_rate))
+
+    valid_primers = (Primer
+                     .select()
+                     .where((Primer.seq << fgp) & (Primer.seq << bgp) &
+                            (Primer.tm >> None)))
+
+    for p in progress.bar(valid_primers, expected_size=valid_primers.count(),
+                          label="Finding melt temps..."):
+        p.tm = Tm(p.seq)
+        p.save()
     
     tmp = Primer.select(Primer.seq).where((Primer.tm <= max_tm) &
                                           (Primer.tm >= min_tm))

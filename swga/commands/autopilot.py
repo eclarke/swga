@@ -12,7 +12,9 @@ def main(argv, cfg_file):
 
 def autopilot():
     ap = pipes.Template()
-    ap.prepend('swga find_sets', '--')
+    ap.append('swga count', '--')
+    ap.append('swga filter', '--')
+    ap.append('swga find_sets', '--')
     ap.append('swga score 1> $OUT', '-f')
     f = "set_scores.txt"
     ap.open(f, 'w')

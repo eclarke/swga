@@ -23,12 +23,12 @@ corresponding values are not specified on the command line, or if the
 """
 
 fg_message = """
-Foreground genome: {fg_genome}
+Foreground genome: {fg_genome_fp}
   Length:  {fg_length} bp
   Records: {fg_nrecords}
 """
 bg_message = """
-Background genome: {bg_genome}
+Background genome: {bg_genome_fp}
   Length:  {bg_length} bp
   Records: {bg_nrecords}
 """
@@ -37,11 +37,11 @@ finish_message = """Done!"""
 
 
 @click.command()
-@click.option("-f", "--fg_genome",
+@click.option("-f", "--fg_genome_fp",
               type=click.Path(exists=True, resolve_path=True))
-@click.option("-b", "--bg_genome",
+@click.option("-b", "--bg_genome_fp",
               type=click.Path(exists=True, resolve_path=True))
-def main(fg_genome, bg_genome):
+def main(fg_genome_fp, bg_genome_fp):
 
     default_parameters_name = "parameters.cfg"
     cwd = os.getcwd()
@@ -49,19 +49,20 @@ def main(fg_genome, bg_genome):
     click.echo(click.style(welcome_message.format(**locals()),
                            fg = "blue"))
                                        
-    if (not fg_genome):
-        fg_genome = click.prompt("Enter path to foreground genome file, in "
-                                 "FASTA format", 
-                                 type=click.Path(exists=True, resolve_path=True))
-    fg_length, fg_nrecords = fasta_stats(fg_genome)
+    if (not fg_genome_fp):
+        fg_genome_fp = click.prompt("Enter path to foreground genome file, in "
+                                    "FASTA format", 
+                                    type=click.Path(exists=True,
+                                                    resolve_path=True))
+    fg_length, fg_nrecords = fasta_stats(fg_genome_fp)
     click.echo(click.style(fg_message.format(**locals()), fg="green"))
 
-    if (not bg_genome):
-        bg_genome = click.prompt("Enter path to background genome file, in "
-                                 "FASTA format", 
-                                 type=click.Path(exists=True, 
-                                                 resolve_path=True))
-    bg_length, bg_nrecords = fasta_stats(bg_genome)
+    if (not bg_genome_fp):
+        bg_genome_fp = click.prompt("Enter path to background genome file, in "
+                                    "FASTA format", 
+                                    type=click.Path(exists=True, 
+                                                    resolve_path=True))
+    bg_length, bg_nrecords = fasta_stats(bg_genome_fp)
     click.echo(click.style(bg_message.format(**locals()), fg="green"))
 
     opts = get_swga_opts()
@@ -72,11 +73,12 @@ def main(fg_genome, bg_genome):
         click.confirm("Existing file `%s` will be overwritten. Continue?" 
                       % default_parameters_name, abort=True)
 
+    min_fg_bind = 100
+    min_fg_rate = min_fg_bind/float(fg_length)
+    max_bg_bind = 10000
+    max_bg_rate = max_bg_bind/float(bg_length)
     with open(os.path.join(cwd, default_parameters_name), "wb") as cfg_file:
-        cfg_file.write(default_parameters.format(fg_genome_fp = fg_genome,
-                                                 bg_genome_fp = bg_genome,
-                                                 fg_length = fg_length,
-                                                 bg_length = bg_length))
+        cfg_file.write(default_parameters.format(**locals()))
     
     click.echo(finish_message)
               

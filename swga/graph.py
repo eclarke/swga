@@ -63,8 +63,10 @@ def write_graph(primers, edges, file_handle):
     file_handle.write('p sp {} {}\n'.format(len(primers), len(edges)))
     for primer in primers:
         try:
+            weight = primer.bg_freq if primer.bg_freq > 0 else 1
             file_handle.write('n {} {}\n'.format(primer.pid,
-                                                 primer.bg_freq))
+                                                 weight))
+
         except AttributeError:
             raise ValueError("Primers must be of the form {}".format(type(Primer)))
     for edge in edges:

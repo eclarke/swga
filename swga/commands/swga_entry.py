@@ -12,9 +12,6 @@ Commands:
 Other commands:
   count:            find kmer counts in foreground and background genomes
   filter:           filter kmers according to various criteria
-  locate:           locate primers in a genome and store locations in file
-  flatten:          flatten a genome file for easy searching
-  mkgraph:          create heterodimer compatibility graph
   sets:             find compatible sets of primers in graph
   score:            score sets of primers
   export:           export information about primer sets in various formats
@@ -33,7 +30,7 @@ def main():
                     'find_sets':commands.find_sets.main,
                     'score':commands.score.main,
                     'setopt':commands.setopt.main}
-#                    'export':commands.export.main}
+
     cfg_file = default_config_file
     parser = argparse.ArgumentParser(usage=usage % cfg_file,
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -42,12 +39,11 @@ def main():
     parser.add_argument('-c', '--config', metavar="CFG_FILE",
                         help='path to config file (default: %(default)s)',
                         default=cfg_file)
-    parser.add_argument('-q', '--quiet', action='store_true')                        
     args, remaining = parser.parse_known_args()
     try:
         command_opts[args.command](remaining, args.config)
     except KeyboardInterrupt:
-        swga_error("-- Stopped by user --")
+        swga_error("\n-- Stopped by user --")
 
 
 if __name__ == '__main__':

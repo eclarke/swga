@@ -43,6 +43,8 @@ def find_sets(primer_db,
 
     swga.message("Composing primer compatibility graph...")
     edges = graph.test_pairs(primers, max_hetdimer_bind)
+    if len(edges) == 0:
+        swga.swga_error("No compatible primers. Try relaxing your parameters.")
     with open(graph_fname, 'wb') as out:
         graph.write_graph(primers, edges, out)
     

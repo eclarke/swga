@@ -15,6 +15,10 @@ INTERNAL:
   bg_genome_fp: &bg "{bg_genome_fp}"
   fg_length: &fglen "{fg_length}"
   bg_length: &bglen "{bg_length}"
+  min_fg_rate: &fgrate "{min_fg_rate}"
+  min_fg_bind: &fgbind "{min_fg_bind}"
+  max_bg_rate: &bgrate "{max_bg_rate}"
+  max_bg_bind: &bgbind "{max_bg_bind}"
   primer_db: &primerdb primers.db
 
 count:
@@ -38,9 +42,13 @@ count:
     default: 12
     desc: maximum kmer size
     type: int
-  threshold:
-    default: 1
-    desc: kmer must appear this many times to be counted
+  min_fg_bind:
+    default: *fgbind
+    desc: minimum primer binding sites (autofilled)
+    type: int
+  max_bg_bind:
+    default: *bgbind
+    desc: maximum primer binding sites (autofilled)
     type: int
   exclude_fp:
     default: None
@@ -65,75 +73,6 @@ summary:
     default: *fglen
     desc: length of the foreground genome (autofilled by swga init)
     type: int
-    
-
-flatten:
-  desc: >
-    Flatten a FASTA genome file into one line, stripping out entry headers and
-    keeping only the > marks.
-  input:
-    default: *fg
-    desc: input FASTA file (usually the foreground genome)
-  output:
-    default: "%(input).flattened"
-    desc: filename of the flattened gnome
-  force:
-    default: True
-    desc: overwrite output file if it exists
-
-
-mkgraph:
-  desc: Create a primer compatibility graph from a list of primers
-  input:
-    default: stdin
-    desc: >
-      a file containing one primer per line, with associated info as output
-      by other swga commands (default %(default)s)
-  output:
-    default: stdout
-    desc: where to write resulting graph in DIMACS format (default %(default)s)
-
-
-find_sets:
-  desc: Find sets of compatible primers in a primer compatibility graph
-  primer_db:
-    default: *primerdb
-    desc: primer database name
-  min_size:
-    default: 2
-    desc: minimum size of primer sets
-  max_size:
-    default: 7
-    desc: max size of primer sets
-  max_hetdimer_bind:
-    default: 3
-    desc: max number of consecutive complimentary bases between two primers  
-  min_bg_bind_dist:
-    default: 30000
-    desc: min avg distance between primers in the bg genome
-  bg_genome_len:
-    default: *bglen
-    desc: length of background genome (autofilled by swga init)
-
-locate-mers:
-  desc: Find primer locations in a genome
-  input:
-    default: sys.stdin
-    desc: list of primers
-  output:
-    default: "%(genome).primerstore"
-    desc: where to store the primer locations
-  genome:
-    default: *fg
-    desc: path to genome
-    required: True
-  ncores:
-    default: "multiprocessing.cpu_count()"
-    desc: Number of cores to use when searching (default %(default)s)
-  passthrough:
-    default: True
-    desc: Echo input to stdout (for argument chaining). (default %(default)s)
-  
 
 filter: 
   desc: Activate suitable primers in a database
@@ -158,12 +97,12 @@ filter:
     default: *fglen
     desc: length of the foreground genome (autofilled by swga init)
     type: int
-  min_avg_fg_bind:
-    default: 0.0001
+  min_avg_fg_rate:
+    default: *fgrate
     desc: minimum average binding frequency over the foreground genome
     type: float
-  max_avg_bg_bind:
-    default: 0.00001
+  max_avg_bg_rate:
+    default: *bgrate
     desc: maximum average binding frequency over the background genome
     type: float
   min_tm:
@@ -174,7 +113,27 @@ filter:
     default: 100
     desc: maximum primer melting temperature (C)
     type: float
-    
+
+find_sets:
+  desc: Find sets of compatible primers in a primer compatibility graph
+  primer_db:
+    default: *primerdb
+    desc: primer database name
+  min_size:
+    default: 2
+    desc: minimum size of primer sets
+  max_size:
+    default: 7
+    desc: max size of primer sets
+  max_hetdimer_bind:
+    default: 3
+    desc: max number of consecutive complimentary bases between two primers  
+  min_bg_bind_dist:
+    default: 30000
+    desc: min avg distance between primers in the bg genome
+  bg_genome_len:
+    default: *bglen
+    desc: length of background genome (autofilled by swga init)
     
 score:
   desc: Filter and score primer sets
@@ -205,8 +164,10 @@ score:
       scoring function, to create custom metrics or output. For help, see
       wiki. Incompatible with --score_expression argument.
 
+      
 setopt:
   desc: change a value in the parameters file
+  incfg: False
   command:
     default: None
     desc: the command whose option is being modified
