@@ -1,111 +1,73 @@
-#from __future__ import division
+# -*- coding: utf-8 -*-
 import os
-import subprocess
 import swga
-import csv
-import struct
+import swga.primers as primers
+from swga.primers import Primer
 from swga.commands import Command
-import swga.resources as resources
-import sqlite3
-from swga.primers import write_primer_file, Primer
-
+from swga.melting import Tm
+from swga.clint.textui import progress
+import click
 
 def main(argv, cfg_file):
     cmd = Command('count', cfg_file=cfg_file)
     cmd.parse_args(argv)
-    count_mers(**cmd.args)
+    count_kmers(**cmd.args)
 
-
-def count_mers(fg_genome_fp,
-               bg_genome_fp, 
-               min_size, 
-               max_size, 
-               threshold, 
-               output_dir):
+    
+def count_kmers(fg_genome_fp,
+                bg_genome_fp, 
+                min_size, 
+                max_size, 
+                threshold, 
+                primer_db,
+                exclude_fp,
+                exclude_threshold):
     assert os.path.isfile(fg_genome_fp)
     assert os.path.isfile(bg_genome_fp)
-    try:
-        dsk, parse_dsk = resources.get_dsk()
-    except ValueError as e:
-        swga.swga_error("Error: %s \n\n Required dsk binaries not found. "
-                        "Try re-installing SWGA." % e.message)
 
-    fg_genome_name = fg_genome_fp.split(os.sep).pop()
-    bg_genome_name = bg_genome_fp.split(os.sep).pop()
-    fg_kmer_dir = os.path.join(output_dir, fg_genome_name+'.fgkmers')
-    bg_kmer_dir = os.path.join(output_dir, bg_genome_name+'.bgkmers')
-    cmdstr = "{dsk} {{genome}} {{i}} -o {{output}} -t {threshold}".format(
-        dsk=dsk, threshold=threshold)
-    parser_cmdstr = ("{parse_dsk} {{output}}.solid_kmers_binary "
-                     "> {{output}}").format(parse_dsk=parse_dsk, 
-                                            threshold=threshold)
-    # Create the directories if they don't exist already
-    for d in (output_dir, fg_kmer_dir, bg_kmer_dir):
-        swga.mkdirp(d)
+    if os.path.isfile(primer_db):
+        swga.warn("Existing database found at %s" % os.path.abspath(primer_db))
+        swga.warn("Re-counting primers will reset the entire database!")
+        click.confirm("Are you sure you want to proceed?", abort=True)
 
-    tmp_files = []
-    for i in xrange(min_size, max_size+1):
-        output_name = '%i-mers.fa' % i
-
-        fg_cmdstr = cmdstr.format(i=i, genome=fg_genome_fp,
-                                  output=output_name)
-        fg_parser_cmdstr = parser_cmdstr.format(output=output_name)
-
-        bg_cmdstr = cmdstr.format(i=i, genome=bg_genome_fp,
-                                  output=output_name)
-        bg_parser_cmdstr = parser_cmdstr.format(output=output_name)
-
-        # Runs each command and adds the resulting file to the tmp_files array
-        tmp_files.append(
-            _run_and_log(fg_cmdstr, output_name+'.solid_kmers_binary',
-                         fg_kmer_dir))
-        tmp_files.append(
-            _run_and_log(fg_parser_cmdstr, output_name, fg_kmer_dir))
-
-        tmp_files.append(
-            _run_and_log(bg_cmdstr, output_name+'.solid_kmers_binary',
-                         bg_kmer_dir))
-        tmp_files.append(
-            _run_and_log(bg_parser_cmdstr, output_name, bg_kmer_dir))
-
-    subprocess.check_call(["cat *-mers.fa > fg_mers.fa"], shell=True, cwd=fg_kmer_dir)   
-    subprocess.check_call(["cat *-mers.fa > bg_mers.fa"], shell=True, cwd=bg_kmer_dir)
-
-    [os.remove(f) for f in tmp_files]
-
-    swga.message("Merging primers...")
-    primers = merge_mers(os.path.join(fg_kmer_dir, "fg_mers.fa"),
-                         os.path.join(bg_kmer_dir, "bg_mers.fa"))
-
-    with open(os.path.join(os.path.abspath(output_dir), 'primers.txt'), 'wb') as out:
-        write_primer_file(primers, out, header=True)
-
-    conn = sqlite3.connect("primers.sqlitedb")
-    mk_primer_tbl(conn)
-    update_primer_tbl(primers, conn)
+    primers.init_db(primer_db, create_if_missing=True)
+    primers.create_tables()
     
+    output_dir = ".swga_tmp"
+    swga.mkdirp(output_dir)
 
-def merge_mers(fg_mers_fp, bg_mers_fp):
-    fg = bg = {}
+    kmers = []
+    for k in xrange(min_size, max_size + 1):
+        fg = primers.count_kmers(k, fg_genome_fp, output_dir, threshold)
+        bg = primers.count_kmers(k, bg_genome_fp, output_dir, threshold)
 
-    with open(fg_mers_fp) as _fg:
-        rows = csv.DictReader(_fg, fieldnames=["seq", "freq"], delimiter=' ')
-        fg = dict((row['seq'], row['freq']) for row in rows)
+        if exclude_fp:
+            assert os.path.isfile(exclude_fp)
+            ex = primers.count_kmers(k, exclude_fp, output_dir,
+                                     exclude_threshold)
+        else:
+            ex = {}
+
+        # Keep kmers found in foreground, merging bg binding values, and
+        # excluding those found in the excluded fasta
         
-    with open(bg_mers_fp) as _bg:        
-        rows = csv.DictReader(_bg, fieldnames=['seq', 'freq'], delimiter=' ')
-        bg = dict((row['seq'], row['freq']) for row in rows)
+        def primer_dict(i, seq):
+            fg_freq = fg[seq]
+            bg_freq = bg.get(seq, 0)
+            ratio = fg_freq / float(bg_freq) if bg_freq > 0 else 0
+            tm = Tm(seq)
+            return {'seq': seq, 'fg_freq': fg_freq, 'bg_freq': bg_freq,
+                    'ratio': ratio, 'tm': tm}
+        
+        kmers = (primer_dict(i, seq)
+                 for i, seq in enumerate(fg.keys())
+                 if seq not in ex.viewkeys())
 
-    # Keep only the primers in fg
-    primers = [Primer(id=i, seq=seq, fg_freq=fg[seq], bg_freq=bg.get(seq, 0))
-               for i, seq in enumerate(fg.keys())]
-    return primers
+        nkmers = len(fg.viewkeys() - ex.viewkeys())
+        
+        swga.message("Writing %d-mers into db..." % k)
+        for kmer in progress.bar(kmers, expected_size=nkmers):
+            Primer.create(**kmer)
 
-
+    swga.message("Counted kmers in range %d-%d" % (min_size, max_size))
     
-        
-        
-def _run_and_log(cmdstr, fname, cwd):
-    swga.message(cmdstr)
-    subprocess.check_call(cmdstr, shell=True, cwd=cwd)
-    return os.path.abspath(os.path.join(cwd, fname))
