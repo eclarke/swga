@@ -3,7 +3,7 @@ import subprocess
 import swga
 import swga.primers
 import swga.graph as graph
-from swga.commands2 import Command
+from swga.commands import Command
 from pkg_resources import resource_filename
 from swga.primers import Primer
 

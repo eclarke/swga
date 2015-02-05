@@ -21,11 +21,9 @@ class Command:
         self.kwargs_as_args(**self.args)
         if not quiet:
             self.pprint_args()
-        if all(v is None for k, v in self.args.items()):
-            warn("All parameters are empty- this may indicate a corrupt or "
-                 "missing parameters file. You will need to specify each "
-                 "command manually, or re-generate a parameters file with "
-                 "`swga init`.")
+        if len(self.args) > 0 and all(v is None for k, v in self.args.items()):
+            warn("[swga %s]: All parameters are missing- this may indicate a corrupt or "
+                 "missing parameters file." % self.name)
         
     def kwargs_as_args(self, **kwargs):
         '''

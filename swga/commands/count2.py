@@ -3,7 +3,7 @@ import os
 import swga
 import swga.primers as primers
 from swga.primers import Primer
-from swga.commands2 import Command
+from swga.commands import Command
 from swga.melting import Tm
 from swga.clint.textui import progress
 import click

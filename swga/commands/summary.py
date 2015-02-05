@@ -1,6 +1,6 @@
 import os
 import swga
-from swga.commands2 import Command
+from swga.commands import Command
 from swga.primers import Primer, Set
 from swga.clint.textui import puts, indent, colored, max_width
 import swga.stats as stats

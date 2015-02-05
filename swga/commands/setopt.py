@@ -1,7 +1,7 @@
 import click
 import swga
 from ConfigParser import SafeConfigParser
-from swga.commands2 import Command
+from swga.commands import Command
 
 def main(argv, cfg_file):
     cmd = Command('setopt', cfg_file=cfg_file)

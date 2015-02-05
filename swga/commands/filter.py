@@ -1,6 +1,6 @@
 from operator import attrgetter
 from swga.primers import read_primer_file, write_primer_file
-from swga.commands2 import Command
+from swga.commands import Command
 
 
 def main(argv, cfg_file):

@@ -4,7 +4,7 @@ import subprocess
 import swga
 import csv
 import struct
-from swga.commands2 import Command
+from swga.commands import Command
 import swga.resources as resources
 import sqlite3
 from swga.primers import write_primer_file, Primer

@@ -1,7 +1,7 @@
 import subprocess
 import sys
 import os
-from swga.commands2 import Command
+from swga.commands import Command
     
         
 def main(argv, cfg_file):

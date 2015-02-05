@@ -1,5 +1,5 @@
 import argparse
-import swga.commands2 as commands
+import swga.commands as commands
 from swga import default_config_file, swga_error
 
 usage="""Usage: swga [-c --config CFG_FILE] <command> [options]

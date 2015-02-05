@@ -4,7 +4,7 @@ import multiprocessing
 import swga
 import swga.primers
 import swga.genome
-from swga.commands2 import Command
+from swga.commands import Command
 
 def main(argv, cfg_file):
     cmd = Command('locate-mers', cfg_file=cfg_file)

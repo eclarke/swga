@@ -1,7 +1,7 @@
 import os
 import json
 import swga
-from swga.commands2 import Command
+from swga.commands import Command
 from swga.primers import Primer, get_primer_locations
 from swga.clint.textui import progress
 

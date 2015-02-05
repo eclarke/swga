@@ -1,7 +1,7 @@
 
 import swga
 import pipes
-from swga.commands2 import Command
+from swga.commands import Command
 
 
 def main(argv, cfg_file):

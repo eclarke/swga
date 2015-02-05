@@ -1,5 +1,5 @@
 import subprocess
-from swga.commands2 import Command
+from swga.commands import Command
 from pkg_resources import resource_filename
 
 

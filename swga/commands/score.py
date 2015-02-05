@@ -4,7 +4,7 @@ import json
 import swga
 import swga.primers
 import swga.score as score
-from swga.commands2 import Command
+from swga.commands import Command
 from functools import partial
 
 
