@@ -2,11 +2,11 @@
 import os
 import swga
 import swga.primers as primers
+from swga.core import chunk_iterator
 from swga.primers import Primer
 from swga.commands import Command
-from swga.melting import Tm
-from swga.clint.textui import progress
 import click
+
 
 def main(argv, cfg_file):
     cmd = Command('count', cfg_file=cfg_file)
@@ -68,10 +68,13 @@ def count_kmers(fg_genome_fp,
         kmers = filter(lambda x: x != {}, kmers)
         
         nkmers = len(kmers)
-        
-        swga.message("Writing %d-mers into db..." % k)
-        for kmer in progress.bar(kmers, expected_size=nkmers):
-            Primer.create(**kmer)
+
+        chunk_size = 199
+        swga.message("Writing {n} {k}-mers into db in blocks of {cs}..."
+                     .format(n=nkmers, k=k, cs=chunk_size))
+        chunk_iterator(kmers,
+                       fn=lambda c: Primer.insert_many(c).execute(),
+                       n=chunk_size, label="Blocks written: ")
 
     swga.message("Counted kmers in range %d-%d" % (min_size, max_size))
     

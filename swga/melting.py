@@ -20,6 +20,10 @@ Based heavily on code by the following authors:
 from __future__ import division
 from math import sqrt, log
 import click
+import multiprocessing
+import signal
+from swga.core import progressbar
+import time
 
 
 def _is_sym(s):
@@ -162,6 +166,41 @@ def Tm(s, DNA_c = 5000.0, Na_c = 10.0, Mg_c = 20.0, dNTPs_c = 10.0, correction=T
 
     return tm - 273.15
 
+
+def _init_worker():
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+
+def _Tm(primer, **kwargs):
+    primer.tm = Tm(primer.seq, **kwargs)
+    return primer
+    
+
+def Tm_parallel(primers, cores = multiprocessing.cpu_count()):
+    updated_primers = []
+    progressbar(0, len(primers))
+
+    def update_temps(updated_primer):
+        updated_primers.append(updated_primer)
+        progressbar(len(updated_primers), len(primers))
+
+    pool = multiprocessing.Pool(cores, _init_worker)
+    for primer in primers:
+        pool.apply_async(_Tm, args=(primer,),
+                         callback=update_temps)
+        
+    try:
+        time.sleep(5)
+    except KeyboardInterrupt as k:
+        pool.terminate()
+        pool.join()
+        raise k
+    else:
+        pool.close()
+        pool.join()
+
+    return updated_primers
+            
 
 @click.command()
 @click.argument("sequence")

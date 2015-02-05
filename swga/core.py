@@ -14,7 +14,7 @@ import errno
 import argparse
 import textwrap
 import ConfigParser
-
+from swga.clint.textui import progress
 from clint.textui import puts, colored, STDERR, indent, max_width
 
 default_config_file = 'parameters.cfg'
@@ -85,7 +85,26 @@ def errprint(text):
     text = colored.red(max_width(textwrap.dedent(text), 75))
     puts(text, stream=STDERR)
 
+def chunks(l, n):
+    for i in xrange(0, len(l), n):
+        yield l[i:i+n]
 
+
+def chunk_iterator(itr, fn, n=100, show_progress=True, label=None):
+    if len(itr) == 0:
+        return
+    label = "" if label is None else label
+    if len(itr)/n <= 1:
+        show_progress = False
+        message(label)
+    chunked_itr = chunks(itr, n)
+    chunked = progress.bar(chunked_itr,
+                          expected_size=max(len(itr)/n, 1),
+                          label=label) if show_progress else chunked_itr
+    for chunk in chunked:
+        fn(chunk)
+
+        
 def print_status(prog_name, args, cfg_file, from_stdin):
     
     puts("Command: {}".format(prog_name), stream=STDERR)
