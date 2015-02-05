@@ -4,6 +4,7 @@ import json
 import swga
 import swga.primers
 import swga.score as score
+import swga.locate as locate
 from swga.commands import Command
 from functools import partial
 
@@ -47,7 +48,7 @@ def score_sets(primer_db,
                             expression=score_expression)
 
     swga.primers.init_db(primer_db)
-    chr_ends = swga.primers.get_chromosome_ends(fg_genome_fp)
+    chr_ends = locate.chromosome_ends(fg_genome_fp)
     passed = processed = 0
     for line in sys.stdin:
         try:
