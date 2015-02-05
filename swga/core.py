@@ -37,12 +37,6 @@ def parse_config(cfg_file, section):
         config.readfp(cfg_file_fp)
         try:
             defaults = dict(config.items(section))
-            if not all(defaults.values()):
-                for key, value in defaults.iteritems():
-                    if not value:
-                        warn(("Value for {0}:{1} undefined in config "
-                                   "file ({2}).").format(section, key, cfg_file))
-
         except ConfigParser.NoSectionError:
             defaults = {}
         return defaults

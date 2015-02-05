@@ -6,7 +6,8 @@ Functions for retrieving and scoring primer sets.
 """
 import stats
 import importlib
-
+import swga.primers
+import json
 
 def read_set_finder_line(line):
     '''
@@ -31,19 +32,18 @@ def get_primers_from_ids(primer_ids, primer_store):
     return [primer_store[primer]['primer'] for primer in primer_ids]
 
 
-def get_primer_locations(primer_ids, primer_store):
+def aggregate_primer_locations(primers):
     '''
     Retrieves the primer binding locations for each id in a list from the stored
     binding locations.
 
     Arguments:
-    primer_ids: a list of primer ids (integers)
-    primer_store: A dict of the form {primer_id: {'primer':Primer, 'loc':[locations]}}
+    primer: a list of primers
 
     Returns: a list with all the binding sites of the primers in a set, aggregated
     '''
     # Aggregates all the locations into one list
-    return sum([primer_store[primer]['loc'] for primer in primer_ids], [])
+    return sum([json.loads(primer.locations) for primer in primers], [])
 
 
 def seq_diff(seq):
@@ -94,7 +94,8 @@ def default_score_set(expression, primer_set, primer_locs, max_dist, bg_ratio,
     except NameError as e:
         raise NameError(e.message + '. Permitted variables are %s. Refer to README or docs for help.' % permitted_var_str)
     del namespace['__builtins__']
-    print_primer_set(primer_set, [score, namespace], output_handle)
+#    print_primer_set(primer_set, [score, namespace], output_handle)
+    return score, namespace
 
 
 def print_primer_set(primers, other_vals, output_handle):

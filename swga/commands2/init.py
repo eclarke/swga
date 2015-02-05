@@ -43,26 +43,34 @@ finish_message = """Done!"""
               type=click.Path(exists=True, resolve_path=True))
 def main(fg_genome, bg_genome):
 
-    default_parameters_name = "default_parameters.cfg"
+    default_parameters_name = "parameters.cfg"
     cwd = os.getcwd()
 
     click.echo(click.style(welcome_message.format(**locals()),
                            fg = "blue"))
                                        
     if (not fg_genome):
-        fg_genome = click.prompt("Enter path to foreground genome file, in " +
-                                 "FASTA format", type=click.Path(exists=True, resolve_path=True))
+        fg_genome = click.prompt("Enter path to foreground genome file, in "
+                                 "FASTA format", 
+                                 type=click.Path(exists=True, resolve_path=True))
     fg_length, fg_nrecords = fasta_stats(fg_genome)
     click.echo(click.style(fg_message.format(**locals()), fg="green"))
 
     if (not bg_genome):
-        bg_genome = click.prompt("Enter path to background genome file, in " +
-                                 "FASTA format", type=click.Path(exists=True, resolve_path=True))
+        bg_genome = click.prompt("Enter path to background genome file, in "
+                                 "FASTA format", 
+                                 type=click.Path(exists=True, 
+                                                 resolve_path=True))
     bg_length, bg_nrecords = fasta_stats(bg_genome)
     click.echo(click.style(bg_message.format(**locals()), fg="green"))
 
     opts = get_swga_opts()
     default_parameters = cfg_from_opts(opts)
+
+    cfg_fp = os.path.join(cwd, default_parameters_name)
+    if os.path.isfile(cfg_fp):
+        click.confirm("Existing file `%s` will be overwritten. Continue?" 
+                      % default_parameters_name, abort=True)
 
     with open(os.path.join(cwd, default_parameters_name), "wb") as cfg_file:
         cfg_file.write(default_parameters.format(fg_genome_fp = fg_genome,

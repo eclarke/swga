@@ -1,6 +1,8 @@
 import sys
+import json
+
 import swga
-import swga.genome as genome
+import swga.primers
 import swga.score as score
 from swga.commands2 import Command
 from functools import partial
@@ -12,9 +14,8 @@ def main(argv, cfg_file):
     score_sets(**cmd.args)
 
 
-def score_sets(input, 
-               output,
-               fg_bind_locations,
+def score_sets(primer_db, 
+               fg_genome_fp,
                score_expression,
                max_fg_bind_dist,
                max_sets,
@@ -29,8 +30,11 @@ def score_sets(input,
 
     After a specified number of sets pass the filter, it exits the process.
     '''
-    primer_store = genome.load_locations(fg_bind_locations)
-    # Find the user-defined scoring function
+
+    if max_sets < 1:
+        max_sets = float("inf")
+
+    # Find the user-defined scoring function    
     score_fun = None
     if score_expression and plugin_score_fun:
         sys.stderr.write("Warning: User or config file specified both scoring "
@@ -42,26 +46,32 @@ def score_sets(input,
         score_fun = partial(score.default_score_set,
                             expression=score_expression)
 
+    swga.primers.init_db(primer_db)
+    chr_ends = swga.primers.get_chromosome_ends(fg_genome_fp)
     passed = processed = 0
-    for line in input:
-        # Parse output from find_sets
+    for line in sys.stdin:
         primer_ids, bg_ratio = score.read_set_finder_line(line)
-        primer_set = score.get_primers_from_ids(primer_ids, primer_store)
-        primer_locs = score.get_primer_locations(primer_ids, primer_store)
-        max_dist = max(score.seq_diff(primer_locs))
+        primers = swga.primers.get_primers_for_ids(primer_ids)
+        binding_locations = score.aggregate_primer_locations(primers) + chr_ends
+        max_dist = max(score.seq_diff(binding_locations))
         processed += 1
+
         if max_dist <= max_fg_bind_dist:
             passed += 1
-            # Pass the set and attributes to the user-defined scoring function
-            score_fun(primer_set=primer_set,
-                      primer_locs=primer_locs,
-                      max_dist=max_dist,
-                      bg_ratio=bg_ratio,
-                      output_handle=output)
-
+            set_score, variables = score_fun(primer_set=primers,
+                                             primer_locs=binding_locations,
+                                             max_dist=max_dist,
+                                             bg_ratio=bg_ratio,
+                                             output_handle=sys.stdout)
+            swga.primers.add_set(primers, score=set_score, 
+                                 scoring_fn=score_expression, 
+                                 pids=json.dumps(sorted(primer_ids)),
+                                 **variables)
+            
         sys.stderr.write(
             "\rSets passing filter: \t{}/{}".format(passed, processed))
         if passed >= max_sets:
-            sys.stderr.write("\nDone (scored %i sets). To quit, press Ctrl-C.\n")
+            sys.stderr.write("\nDone (scored %i sets). To quit, press Ctrl-C.\n" % passed)
+            sys.exit()
             break
-    sys.exit()
+

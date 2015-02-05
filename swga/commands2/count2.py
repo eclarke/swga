@@ -6,7 +6,7 @@ from swga.primers import Primer
 from swga.commands2 import Command
 from swga.melting import Tm
 from swga.clint.textui import progress
-
+import click
 
 def main(argv, cfg_file):
     cmd = Command('count', cfg_file=cfg_file)
@@ -19,21 +19,24 @@ def count_kmers(fg_genome_fp,
                 min_size, 
                 max_size, 
                 threshold, 
-                output_dir,
+                primer_db,
                 exclude_fp,
                 exclude_threshold):
     assert os.path.isfile(fg_genome_fp)
     assert os.path.isfile(bg_genome_fp)
 
-    swga.mkdirp(output_dir)
+    if os.path.isfile(primer_db):
+        swga.warn("Existing database found at %s" % os.path.abspath(primer_db))
+        swga.warn("Re-counting primers will reset the entire database!")
+        click.confirm("Are you sure you want to proceed?", abort=True)
+
+    primers.init_db(primer_db, create_if_missing=True)
+    primers.create_tables()
     
-    primers.db.init(os.path.join(output_dir, primers.db_fname))
-    primers.db.connect()
-    primers.db.drop_tables([Primer], safe=True)
-    primers.db.create_tables([Primer])
+    output_dir = ".swga_tmp"
+    swga.mkdirp(output_dir)
 
     kmers = []
-    print threshold
     for k in xrange(min_size, max_size + 1):
         fg = primers.count_kmers(k, fg_genome_fp, output_dir, threshold)
         bg = primers.count_kmers(k, bg_genome_fp, output_dir, threshold)
@@ -42,11 +45,9 @@ def count_kmers(fg_genome_fp,
             assert os.path.isfile(exclude_fp)
             ex = primers.count_kmers(k, exclude_fp, output_dir,
                                      exclude_threshold)
-            print(len(ex.viewkeys()))
         else:
             ex = {}
 
-        print(len(fg), len(bg))
         # Keep kmers found in foreground, merging bg binding values, and
         # excluding those found in the excluded fasta
         

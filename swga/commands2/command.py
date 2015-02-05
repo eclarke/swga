@@ -1,21 +1,31 @@
 from swga.utils.options import argparser_from_opts
 from swga.resources import get_swga_opts
-from swga import parse_config
+from swga import parse_config, message, warn
+from swga.clint.textui import puts, indent, colored
 
 class Command:
-
+    args = None
+    name = ""
+    cfg_file = None
     def __init__(self, name, description=None, cfg_file=None):
         opts = get_swga_opts()
+        self.name = name
         self.parser = argparser_from_opts(opts, name)
 
         defaults = parse_config(cfg_file, name) if cfg_file else {}
         self.parser.set_defaults(**defaults)
         
 
-    def parse_args(self, argv):
+    def parse_args(self, argv, quiet=False):
         self.args = vars(self.parser.parse_args(argv))
         self.kwargs_as_args(**self.args)
-        
+        if not quiet:
+            self.pprint_args()
+        if all(v is None for k, v in self.args.items()):
+            warn("All parameters are empty- this may indicate a corrupt or "
+                 "missing parameters file. You will need to specify each "
+                 "command manually, or re-generate a parameters file with "
+                 "`swga init`.")
         
     def kwargs_as_args(self, **kwargs):
         '''
@@ -27,7 +37,13 @@ class Command:
         for k, v in kwargs.items():
             setattr(self, k, v)
 
-
-
-    def run(self, **kwargs):
-        pass
+    def pprint_args(self):
+        if not self.args: 
+            return
+        else:
+            message(colored.green("Command: " + self.name))
+            with indent(2, quote='-'):
+                for arg, val in self.args.iteritems():
+                    if val is None or val == "":
+                        val = colored.red("None")
+                    message(colored.blue("{}: {}".format(arg, val)))

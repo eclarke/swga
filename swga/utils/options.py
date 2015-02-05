@@ -70,12 +70,16 @@ def argparser_from_opts(opts, cmd_name, description=None):
         argvals = section[argname]
         _type = eval(argvals.get('type', 'str'))
 
+        if argvals.get('ctype', 'opt') == 'arg':
+            prefix = ""
+        else:
+            prefix = "--"
+
         parser.add_argument(
-            '--' + argname,
+            prefix + argname,
             action = argvals.get('action', 'store'),
             type = _type,
-            help = argvals.get('desc', ''),
-            required = argvals.get('required', False))
+            help = argvals.get('desc', ''))
 
     return parser
 
