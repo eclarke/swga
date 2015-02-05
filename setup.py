@@ -21,7 +21,8 @@ setup(
     packages=find_packages(),
     install_requires=['pyfaidx',
                       'click',
-                      'pyyaml'],
+                      'pyyaml',
+                      'peewee'],
     classifiers = [
         'Programming Language :: Python',
         'Development Status :: 3 - Alpha',
