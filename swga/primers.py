@@ -179,3 +179,6 @@ def read_primer_list(plist):
     return list(Primer.select().where(Primer.seq << seqs).execute())
 
 
+def upsert_chunk(chunk, model=Primer):
+    '''For use with core.chunk_iterator'''
+    model.insert_many(p.to_dict() for p in chunk).upsert().execute()

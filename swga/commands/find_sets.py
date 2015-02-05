@@ -3,9 +3,10 @@ import subprocess
 import swga
 import swga.primers
 import swga.graph as graph
+from swga.core import chunk_iterator
 from swga.commands import Command
 from pkg_resources import resource_filename
-from swga.primers import Primer
+from swga.primers import Primer, upsert_chunk
 
 graph_fname = "compatibility_graph.dimacs"
 
@@ -33,13 +34,16 @@ def find_sets(primer_db,
                    .where(Primer.active==True)
                    .order_by(Primer.ratio.desc())
                    .execute())
-
+    
     if len(primers) == 0:
         swga.swga_error("No active sets found. Run `swga filter` first.")
-    
-    for i, primer in enumerate(primers):
-        primer.pid = i+1
-        primer.save()
+
+    for i, p in enumerate(primers):
+        p.pid = i + 1
+    chunk_iterator(primers, upsert_chunk, show_progress=False)
+    # for i, primer in enumerate(primers):
+    #     primer.pid = i+1
+    #     primer.save()
 
     swga.message("Composing primer compatibility graph...")
     edges = graph.test_pairs(primers, max_hetdimer_bind)

@@ -4,7 +4,7 @@ import swga.locate as locate
 from swga.core import chunk_iterator
 from swga.commands import Command
 from swga.melting import Tm
-from swga.primers import Primer
+from swga.primers import Primer, upsert_chunk
 from swga.clint.textui import progress
 
 def main(argv, cfg_file):
@@ -119,6 +119,4 @@ def filter_kmers(primer_db,
                  .format(n_active, num_primers))
 
 
-def upsert_chunk(chunk, model=Primer):
-    model.insert_many(p.to_dict() for p in chunk).upsert().execute()
 
