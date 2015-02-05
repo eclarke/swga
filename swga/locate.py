@@ -25,7 +25,7 @@ def primer_bind_sites(seq, genome_fp):
         rev_locs = substr_indices(str(seq)[::-1], str(chromosome))
         locations += [l + len_so_far for l in fwd_locs + rev_locs]
         len_so_far += chr_len
-    return "blah" #json.dumps(locations)
+    return json.dumps(locations)
 
 def _primer_bind_sites(primer, genome_fp):
     primer.locations = primer_bind_sites(primer.seq, genome_fp)
