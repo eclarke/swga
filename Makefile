@@ -39,7 +39,7 @@ ifeq ($(osx),1)
 	dsk_gcc?=g++-4.8
 	binaries=contrib/bin/osx
 else
-	dsk_gcc?=gcc
+	dsk_gcc?=g++
 	binaries=contrib/bin/linux
 endif
 
