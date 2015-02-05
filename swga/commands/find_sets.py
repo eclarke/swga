@@ -1,32 +1,58 @@
+import os
 import subprocess
+import swga
+import swga.primers
+import swga.graph as graph
 from swga.commands2 import Command
 from pkg_resources import resource_filename
+from swga.primers import Primer
+
+graph_fname = "compatibility_graph.dimacs"
 
 
 def main(argv, cfg_file):
-    cmd = Command('sets', cfg_file = cfg_file)
+    cmd = Command('find_sets', cfg_file=cfg_file)
     cmd.parse_args(argv)
     find_sets(**cmd.args)
 
 
-def find_sets(input,
-              output,
+def find_sets(primer_db,
               min_size,
               max_size,
+              max_hetdimer_bind,
               min_bg_bind_dist,
               bg_genome_len):
-    '''
-    Calls the set_finder binary with the specified options on the
-    heterodimer compatibility graph and outputs valid sets for
-    post-processing.
-    '''
-    set_finder = resource_filename("swga", "bin/set_finder")
 
-    output = '> ' + output if output else ''
+    swga.primers.init_db(primer_db)
+    
+    # Reset all the primer IDs (only used for set_finder)
+    Primer.update(pid = -1).execute()
+
+    primers = list(Primer
+                   .select()
+                   .where(Primer.active==True)
+                   .order_by(Primer.ratio.desc())
+                   .execute())
+
+    if len(primers) == 0:
+        swga.swga_error("No active sets found. Run `swga filter` first.")
+    
+    for i, primer in enumerate(primers):
+        primer.pid = i+1
+        primer.save()
+
+    swga.message("Composing primer compatibility graph...")
+    edges = graph.test_pairs(primers, max_hetdimer_bind)
+    with open(graph_fname, 'wb') as out:
+        graph.write_graph(primers, edges, out)
+    
+    swga.message("Now finding sets. If nothing appears, try relaxing your parameters.")
+    set_finder = resource_filename("swga", "bin/set_finder")
     find_set_cmd = [set_finder, '-q', '-q', '-B', min_bg_bind_dist,
                     '-L', bg_genome_len, '-m', min_size, '-M',
                     max_size, '-a', '-u', '-r', 'unweighted-coloring',
-                    input, output]
-    find_set_cmd = [str(_) for _ in find_set_cmd]
-
-    subprocess.check_call(" ".join(find_set_cmd), shell=True)
+                    graph_fname]
+    find_set_cmd = " ".join([str(_) for _ in find_set_cmd])
+    swga.message("Set finder command:")
+    swga.message(find_set_cmd)
+    subprocess.check_call(find_set_cmd, shell=True)

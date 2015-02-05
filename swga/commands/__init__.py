@@ -1,11 +1,11 @@
-import mer_count
-import flatten
-import locate
-import filter_primers
-import make_graph
-import find_sets
-import process_sets
-import locate_sets
-import export
-import init
-import autopilot
+from swga import parse_config
+from swga.utils.options import argparser_from_opts
+from command import Command
+from . import (count2, 
+               autopilot,
+               filter2, 
+               init, 
+               score, 
+               find_sets,
+               summary,
+               setopt)
