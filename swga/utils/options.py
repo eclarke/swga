@@ -68,7 +68,8 @@ def argparser_from_opts(opts, cmd_name, description=None):
     for argname in section:
         if argname == "desc": 
             continue
-            
+        if argname == "incfg":
+            continue
         argvals = section[argname]
         _type = eval(argvals.get('type', 'str'))
 

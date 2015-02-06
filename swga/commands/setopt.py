@@ -21,7 +21,7 @@ def setopt(cfg_file, command, opt, value):
     old_val = None
     if parser.has_option(command, opt):
         old_val = parser.get(command, opt)
-    click.confirm("Change {command}:{opt} to {value}? (currently {old_val})".format(**locals()), abort=True)
+    click.confirm("Change [{command}]:{opt} from {old_val} --> {value}?".format(**locals()), abort=True)
     parser.set(command, opt, value)
     with open(cfg_file, 'wb') as out:
         parser.write(out)
