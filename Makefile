@@ -35,8 +35,15 @@ ifeq ($(editable),1)
 	pip_flags+= --editable
 endif
 
-ifeq ($(osx),1)
-	dsk_gcc?=g++-4.8
+# Mac OS X a) ships with an out-of-date GCC and b) symlinks `g++` to
+# clang. Clang won't work with dsk.
+# We need to be explicit with what we're using in this case. Most users will
+# need to upgrade. 
+
+uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
+ifeq ($(uname_S), Darwin)  # We're on a Mac
+	dsk_gcc?=/usr/bin/g++
+	osx=1
 	binaries=contrib/bin/osx
 else
 	dsk_gcc?=g++
@@ -52,7 +59,7 @@ pip:
 
 compile: pip
 	make -C contrib/cliquer
-	make -C contrib/dsk CC=$(dsk_gcc)
+	make -C contrib/dsk CC=$(dsk_gcc) osx=$(osx)
 	mkdir -p swga/bin
 	cp contrib/cliquer/set_finder swga/bin/
 	cp contrib/dsk/dsk swga/bin/
