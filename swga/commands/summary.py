@@ -1,22 +1,22 @@
 import os
 import swga
+import swga.database
 from swga.commands import Command
 from swga.database import Primer, Set
 from swga.clint.textui import puts, indent, colored, max_width
-import swga.stats as stats
 from peewee import fn
 
 def main(argv, cfg_file):
     cmd = Command('summary', cfg_file=cfg_file)
-    cmd.parse_args(argv, quiet=True)
+    cmd.parse_args(argv)
     summary(**cmd.args)
 
 
 def summary(primer_db, fg_length, bg_length):
     
-    db = swga.primers.init_db(primer_db)
+    db = swga.database.init_db(primer_db)
     db.connect()
-    swga.primers.create_tables(drop=False)
+    swga.database.create_tables(drop=False)
 
     avg_fg_bind, avg_bg_bind, nprimers = (Primer
                                           .select(fn.Avg(Primer.fg_freq),
@@ -36,7 +36,7 @@ def summary(primer_db, fg_length, bg_length):
     nsets = Set.select(fn.Count(Set.sid)).scalar()
     if nsets > 0:
         bs = Set.select().order_by(Set.score.desc()).limit(1).get()
-        bs_primers = ", ".join(swga.primers.get_primers_for_set(bs.sid)).strip()
+        bs_primers = ", ".join(swga.database.get_primers_for_set(bs.sid)).strip()
         best_set = bs.sid
         bs_size = bs.set_size
         bs_score = bs.score

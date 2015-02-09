@@ -84,9 +84,8 @@ filter:
     desc: "List of primers (one per line) to activate, instead of pulling from db"
     incfg: False
   skip_filtering:
-    default: False
     desc: "Skip filtering and simply mark the provided primers from --input as active"
-    ctype: flag
+    opttype: flag
   primer_db:
     default: *primerdb
     desc: primer database name
@@ -176,6 +175,43 @@ score:
       scoring function, to create custom metrics or output. For help, see
       wiki. Incompatible with --score_expression argument.
 
+
+export:
+  META:
+    desc: retrieve or export primers or sets from the database
+  what:
+    incfg: False
+    default: sets
+    desc: what to export (sets, primers, bedfile)
+    opttype: arg
+    choices: {set, sets, primer, primers, bedfile}
+  primer_db:
+    default: *primerdb
+    desc: primer database name
+  output:
+    default: stdout
+    desc: where to write results
+    type: File-w
+    incfg: False
+  order_by:
+    incfg: False
+    default: null
+    desc: order the results (before any limits imposed)
+  descending:
+    incfg: False
+    desc: return in descending order if --order_by specified
+    opttype: flag
+  limit:
+    incfg: False
+    default: -1
+    desc: max results to display, at max (values less than zero mean no limit)
+    type: int
+  ids:
+    incfg: False
+    default: null
+    desc: the ids of the sets or primers to use
+    type: int
+    nargs: '*'
       
 setopt:
   META:
@@ -184,12 +220,12 @@ setopt:
   command:
     default: null
     desc: the command whose option is being modified
-    ctype: arg
+    opttype: arg
   opt:
     default: null
     desc: the option to change
-    ctype: arg
+    opttype: arg
   value:
     default: null
     desc: the new value of the option
-    ctype: arg
+    opttype: arg

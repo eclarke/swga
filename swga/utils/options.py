@@ -1,3 +1,4 @@
+import sys
 import yaml
 import argparse
 from collections import OrderedDict
@@ -27,14 +28,18 @@ def cfg_from_opts(opts):
         out_str += desc + section_str.format(section=section)
 
         for opt in opts[section].keys():
+            if opt == "META":
+                continue
             if opt == "desc": 
                 continue
             if opt == "incfg":
                 continue    
             option = opts[section][opt]
+            if not option.get("incfg", True):
+                continue
             desc = _format_comment(option.get("desc"))
             default = option.get("default")
-            if default == "None":
+            if default == "None" or default is None:
                 default = ""
             out_str += desc + opt_str.format(opt=opt, default=default)
     
@@ -73,28 +78,56 @@ def argparser_from_opts(opts, cmd_name, description=None):
         if argname == "META":
             continue
         argvals = section[argname]
-        _type = eval(argvals.get('type', 'str'))
+        _type = argvals.get('type')
+        if _type == "File-w":
+            _type = argparse.FileType('w')
+        elif _type == "File-r":
+            _type = argparse.FileType('r')
+        elif _type:
+            _type = eval(_type)
 
-
-        ctype = argvals.get('ctype', 'opt')
+        opttype = argvals.get('opttype', 'opt')
         action = argvals.get('action', 'store')
         prefix = "--"
-        if ctype == 'arg':
+        help = argvals.get('desc', '')
+        choices = argvals.get('choices', None)
+        nargs = argvals.get('nargs', None)
+        default = argvals.get('default')
+        if default == 'stdin':
+            default = sys.stdin
+        elif default == 'stdout':
+            default = sys.stdout
+        else:
+            default = False
+        if opttype == 'arg':
             prefix = ""
-        elif ctype == 'flag':
+        elif opttype == 'flag':
             action = 'store_true'
-
-        if ctype == 'flag':
+        if opttype == 'flag':
+            print argname, default
             parser.add_argument(
                 prefix + argname,
                 action = action,
-                help = argvals.get('desc',''))
+                help = help)
+        elif default:
+            print argname, default
+            parser.add_argument(
+                prefix + argname,
+                action = action,
+                nargs = nargs,
+                choices = choices,
+                default = default,
+                type = _type,
+                help = help)
         else:
             parser.add_argument(
                 prefix + argname,
                 action = action,
+                nargs = nargs,
+                choices = choices,
                 type = _type,
-                help = argvals.get('desc', ''))
+                help = help)
+
 
     return parser
 

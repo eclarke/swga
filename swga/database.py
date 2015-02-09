@@ -34,6 +34,18 @@ def init_db(db_fname, create_if_missing=False):
 
 class SwgaBase(pw.Model):
     '''Specifies what database the inheriting models will use.'''
+
+    @classmethod
+    def fieldnames(cls):
+        '''Returns the fields defined in the model as a list of strings.'''
+        return [name for name, attr in cls.__dict__.items() 
+                if isinstance(attr, pw.FieldDescriptor)] 
+
+    @classmethod
+    def fields(cls):
+        return dict((name, attr.field) for name, attr in cls.__dict__.items()
+                    if isinstance(attr, pw.FieldDescriptor))
+
     class Meta:
         database = db
     
@@ -44,7 +56,7 @@ class Primer(SwgaBase):
     set composition is determined, the sets that each primer belongs to can be
     found by using the Primer_Set intermediate table.
     '''
-    pid = pw.IntegerField(null=True)
+    _id = pw.IntegerField(null=True)
     seq = pw.CharField(primary_key=True)
     fg_freq = pw.IntegerField(default=0)
     bg_freq = pw.IntegerField(default=0)
@@ -67,7 +79,7 @@ class Set(SwgaBase):
     The sets table contains each set's metadata. The actual primers that belong
     in the set are found using the Primer_Set intermediate table.
     '''
-    sid = pw.PrimaryKeyField()
+    _id = pw.PrimaryKeyField()
     pids= pw.TextField(unique=True)
     score = pw.FloatField()
     set_size = pw.IntegerField(null=True)
@@ -80,7 +92,7 @@ class Set(SwgaBase):
 
     def __repr__(self):
         return "Set: "+"; ".join("{}:{}".format(k,v)
-                                 for k,v in self.__dict__['_data_'])
+                                 for k,v in self.__dict__['_data'].items())
 
 
 class Primer_Set(SwgaBase):
@@ -90,7 +102,7 @@ class Primer_Set(SwgaBase):
     primers). 
     ''' 
     seq = pw.ForeignKeyField(Primer, related_name='sets', to_field='seq')
-    set = pw.ForeignKeyField(Set, related_name='primers', to_field='sid')
+    set = pw.ForeignKeyField(Set, related_name='primers', to_field='_id')
     class Meta:
         indexes = (
             (('seq', 'set'), True),  # expects a tuple so needs a trailing ','
@@ -114,12 +126,12 @@ def add_set(primers, **kwargs):
 
 
 def get_primers_for_set(set_id):
-    set = Set.get(Set.sid == set_id)
+    set = Set.get(Set._id == set_id)
     return [p.seq.seq for p in set.primers]
 
 
 def get_primers_for_ids(pids):
-    return list(Primer.select().where(Primer.pid << pids).execute())
+    return list(Primer.select().where(Primer._id << pids).execute())
 
 
 def update_in_chunks(itr, chunksize=100, model=Primer, show_progress=True,
@@ -141,3 +153,5 @@ def update_in_chunks(itr, chunksize=100, model=Primer, show_progress=True,
     swga.core.chunk_iterator(itr, upsert_chunk, n=chunksize,
                              show_progress=show_progress,
                              label=label)
+
+

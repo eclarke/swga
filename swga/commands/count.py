@@ -2,6 +2,7 @@
 import os
 import swga
 import swga.primers as primers
+import swga.database as database
 from swga.core import chunk_iterator
 from swga.primers import Primer
 from swga.commands import Command
@@ -31,8 +32,8 @@ def count_kmers(fg_genome_fp,
         swga.warn("Re-counting primers will reset the entire database!")
         click.confirm("Are you sure you want to proceed?", abort=True)
 
-    primers.init_db(primer_db, create_if_missing=True)
-    primers.create_tables()
+    database.init_db(primer_db, create_if_missing=True)
+    database.create_tables()
     
     output_dir = ".swga_tmp"
     swga.mkdirp(output_dir)

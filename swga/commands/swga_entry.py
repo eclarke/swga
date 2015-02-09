@@ -29,6 +29,7 @@ def main():
                     'filter':commands.filter.main,
                     'find_sets':commands.find_sets.main,
                     'score':commands.score.main,
+                    'export':commands.export.main,
                     'setopt':commands.setopt.main}
 
     cfg_file = default_config_file

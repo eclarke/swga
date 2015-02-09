@@ -8,5 +8,6 @@ from . import (count,
                score, 
                find_sets,
                summary,
+               export,
                setopt)
 
