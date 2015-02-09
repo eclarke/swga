@@ -21,13 +21,14 @@ def init_db(db_fname, create_if_missing=False):
     If `create_if_missing` is True, it will create the database if it can't be
     found. Otherwise, it throws an error.
     '''
-    fp = db_fname
-    if not os.path.isfile(fp) and create_if_missing:
-        db.init(fp)
-    elif not os.path.isfile(fp):
+    if not db_fname:
+        swga.swga_error("Primer database name unspecified.")
+    if create_if_missing and not os.path.isfile(db_fname):
+        db.init(db_fname)
+    elif not os.path.isfile(db_fname):
         swga.swga_error("Primer db not found at %s: specify different path or "
-                        "re-run `swga count`" % fp)
-    db.init(fp)
+                        "re-run `swga count`" % db_fname)
+    db.init(db_fname)
     return db
 
 

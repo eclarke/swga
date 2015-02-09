@@ -14,7 +14,7 @@ import struct
 import swga
 import swga.core
 import swga.locate
-import swga.resources as resources
+import swga.utils.resources as resources
 from swga.database import Primer
 from pyfaidx import Fasta
 

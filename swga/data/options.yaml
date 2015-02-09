@@ -22,9 +22,10 @@ INTERNAL:
   primer_db: &primerdb primers.db
 
 count:
-  desc: >
-    Count kmers in a foreground genome, then count those in a
-    background genome, and add results to database
+  META:
+    desc: >
+      Count kmers in a foreground genome, then count those in a
+      background genome, and add results to database
   primer_db:
     default: *primerdb
     desc: primer database name
@@ -51,7 +52,7 @@ count:
     desc: maximum primer binding sites (autofilled)
     type: int
   exclude_fp:
-    default: None
+    default: null
     desc: >
       (FASTA) any primers appearing here above a threshold will be excluded
   exclude_threshold:
@@ -61,7 +62,8 @@ count:
 
 
 summary:
-  desc: Summarizes current primer and sets database.
+  META:
+    desc: Summarizes current primer and sets database.
   primer_db:
     default: *primerdb
     desc: primer database name
@@ -75,17 +77,25 @@ summary:
     type: int
 
 filter: 
-  desc: Activate suitable primers in a database
+  META:
+    desc: Activate suitable primers in a database
   input:
-    default: None
+    default: null
     desc: "List of primers (one per line) to activate, instead of pulling from db"
     incfg: False
+  skip_filtering:
+    default: False
+    desc: "Skip filtering and simply mark the provided primers from --input as active"
+    ctype: flag
   primer_db:
     default: *primerdb
     desc: primer database name
   fg_genome_fp: 
     default: *fg
     desc: path to foreground (aka target) genome  
+  bg_genome_fp:
+    default: *bg
+    desc: path to background genome
   max_primers:
     default: 200
     desc: max number of primers to keep after filtering
@@ -115,7 +125,8 @@ filter:
     type: float
 
 find_sets:
-  desc: Find sets of compatible primers in a primer compatibility graph
+  META:
+    desc: Find sets of compatible primers in a primer compatibility graph
   primer_db:
     default: *primerdb
     desc: primer database name
@@ -136,7 +147,8 @@ find_sets:
     desc: length of background genome (autofilled by swga init)
     
 score:
-  desc: Filter and score primer sets
+  META:
+    desc: Filter and score primer sets
   primer_db:
     default: *primerdb
     desc: primer database name
@@ -158,7 +170,7 @@ score:
       following variables: set_size, fg_dist_mean, fg_dist_std, fg_dist_gini,
       fg_dist_max, bg_ratio. Expression must have valid Python syntax.
   plugin_score_fun:
-    default: None
+    default: null
     desc: >
       Specify a path to a scoring function to use instead of the normal
       scoring function, to create custom metrics or output. For help, see
@@ -166,17 +178,18 @@ score:
 
       
 setopt:
-  desc: change a value in the parameters file
-  incfg: False
+  META:
+    desc: change a value in the parameters file
+    incfg: False
   command:
-    default: None
+    default: null
     desc: the command whose option is being modified
     ctype: arg
   opt:
-    default: None
+    default: null
     desc: the option to change
     ctype: arg
   value:
-    default: None
+    default: null
     desc: the new value of the option
     ctype: arg

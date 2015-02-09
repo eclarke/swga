@@ -30,14 +30,18 @@ def main(argv, cfg_file):
     # If we have an input file, use that. Otherwise pull from db
     if cmd.input:
         with open(cmd.input, 'rb') as infile:
-            primers = swga.primers.read_primer_list(infile)
+            primers = swga.primers.read_primer_list(infile, cmd.fg_genome_fp,
+                                                    cmd.bg_genome_fp)  
     else:
+        cmd.skip_filtering = False
         primers = Primer.select()
 
     deactivate_all_primers()
-    primers = filter_primers(primers, cmd.fg_min_avg_rate, cmd.bg_max_avg_rate,
-                             cmd.fg_length, cmd.bg_length, cmd.min_tm,
-                             cmd.max_tm, cmd.max_primers)
+    if not cmd.skip_filtering:
+        primers = filter_primers(primers, cmd.fg_min_avg_rate, cmd.bg_max_avg_rate,
+                                 cmd.fg_length, cmd.bg_length, cmd.min_tm,
+                                 cmd.max_tm, cmd.max_primers)
+    
     update_locations(primers, cmd.fg_genome_fp)
     activate_primers(primers)
 

@@ -65,10 +65,9 @@ def basic_cmd_parser(description, cmd_name, cfg_file):
     return parser
 
 
-def swga_error(msg, errcode=1):
+def swga_error(msg):
     '''Prints an error message to stderr and exits.'''
-    errprint('{}\n'.format(msg))
-    raise SWGAError()
+    raise SWGAError(msg)
 
 
 def warn(msg):

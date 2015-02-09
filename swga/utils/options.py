@@ -19,7 +19,10 @@ def cfg_from_opts(opts):
     for section in opts.keys():
         if section == "INTERNAL":
             continue
-        desc = opts[section].get("desc")
+        meta = opts[section]["META"]
+        if not meta.get('incfg', True):
+            continue
+        desc = meta.get('desc', '')
         desc = "\n" + _format_comment(desc, quote='##')
         out_str += desc + section_str.format(section=section)
 
@@ -58,31 +61,40 @@ def argparser_from_opts(opts, cmd_name, description=None):
 
     if cmd_name not in opts:
         return make_parser(cmd_name, description)
-
+    
     section = opts[cmd_name]
-
+    meta = opts[cmd_name]['META']
     # Use passed description if provided, else use the one from the opts
-    description = description if description else section.get("desc")
+    description = description if description else meta['desc']
     parser = make_parser(cmd_name, description)
 
     for argname in section:
-        if argname == "desc": 
-            continue
-        if argname == "incfg":
+
+        if argname == "META":
             continue
         argvals = section[argname]
         _type = eval(argvals.get('type', 'str'))
 
-        if argvals.get('ctype', 'opt') == 'arg':
-            prefix = ""
-        else:
-            prefix = "--"
 
-        parser.add_argument(
-            prefix + argname,
-            action = argvals.get('action', 'store'),
-            type = _type,
-            help = argvals.get('desc', ''))
+        ctype = argvals.get('ctype', 'opt')
+        action = argvals.get('action', 'store')
+        prefix = "--"
+        if ctype == 'arg':
+            prefix = ""
+        elif ctype == 'flag':
+            action = 'store_true'
+
+        if ctype == 'flag':
+            parser.add_argument(
+                prefix + argname,
+                action = action,
+                help = argvals.get('desc',''))
+        else:
+            parser.add_argument(
+                prefix + argname,
+                action = action,
+                type = _type,
+                help = argvals.get('desc', ''))
 
     return parser
 

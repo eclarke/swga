@@ -1,7 +1,7 @@
 from swga.utils.options import argparser_from_opts
-from swga.resources import get_swga_opts
+from swga.utils.resources import get_swga_opts
 from swga import parse_config, message, warn
-from swga.clint.textui import puts, indent, colored
+from swga.clint.textui import indent, colored
 
 class Command:
     args = None

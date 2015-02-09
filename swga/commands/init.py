@@ -2,7 +2,7 @@ import click
 from click._compat import filename_to_ui
 import os, sys, stat
 from pyfaidx import Fasta
-from swga.resources import get_swga_opts
+from swga.utils.resources import get_swga_opts
 from swga.utils.options import cfg_from_opts
 
 welcome_message = """
