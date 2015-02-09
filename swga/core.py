@@ -68,7 +68,7 @@ def basic_cmd_parser(description, cmd_name, cfg_file):
 def swga_error(msg, errcode=1):
     '''Prints an error message to stderr and exits.'''
     errprint('{}\n'.format(msg))
-    sys.exit(errcode)
+    raise SWGAError()
 
 
 def warn(msg):
@@ -124,3 +124,7 @@ def progressbar(i, length):
         i = i/(length*1.0)
     sys.stderr.write('\r[%-20s] %-3d%%' % ('='*int(round(i*20)), i*100))
     sys.stderr.flush()
+
+
+class SWGAError(Exception):
+    pass

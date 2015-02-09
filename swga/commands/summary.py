@@ -1,7 +1,7 @@
 import os
 import swga
 from swga.commands import Command
-from swga.primers import Primer, Set
+from swga.database import Primer, Set
 from swga.clint.textui import puts, indent, colored, max_width
 import swga.stats as stats
 from peewee import fn

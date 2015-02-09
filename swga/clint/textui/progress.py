@@ -24,7 +24,7 @@ BAR_TEMPLATE = '%s[%s%s] %i/%i - %s\r'
 MILL_TEMPLATE = '%s %s %i/%i\r'
 
 DOTS_CHAR = '.'
-BAR_FILLED_CHAR = '#'
+BAR_FILLED_CHAR = '='
 BAR_EMPTY_CHAR = ' '
 MILL_CHARS = ['|', '/', '-', '\\']
 

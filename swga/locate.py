@@ -101,3 +101,14 @@ def substr_indices(substring, string):
         else:
             return locations
         
+def count(substring, string):
+    n = start = 0
+    substring = substring.upper()
+    while True:
+        start = string.find(substring, start)
+        if start > 0:
+            n += 1
+        else:
+            return n
+
+            

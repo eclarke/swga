@@ -76,17 +76,17 @@ summary:
 
 filter: 
   desc: Activate suitable primers in a database
+  input:
+    default: None
+    desc: "List of primers (one per line) to activate, instead of pulling from db"
+    incfg: False
   primer_db:
     default: *primerdb
     desc: primer database name
   fg_genome_fp: 
     default: *fg
     desc: path to foreground (aka target) genome  
-  max_bg_bind:
-    default: 12000
-    desc: max times a primer can bind to bg genome (currently unused)
-    type: int
-  num_primers:
+  max_primers:
     default: 200
     desc: max number of primers to keep after filtering
   bg_length:
@@ -97,11 +97,11 @@ filter:
     default: *fglen
     desc: length of the foreground genome (autofilled by swga init)
     type: int
-  min_avg_fg_rate:
+  fg_min_avg_rate:
     default: *fgrate
     desc: minimum average binding frequency over the foreground genome
     type: float
-  max_avg_bg_rate:
+  bg_max_avg_rate:
     default: *bgrate
     desc: maximum average binding frequency over the background genome
     type: float

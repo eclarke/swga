@@ -2,10 +2,9 @@ import subprocess
 import swga
 import swga.primers
 import swga.graph as graph
-from swga.core import chunk_iterator
 from swga.commands import Command
 from pkg_resources import resource_filename
-from swga.primers import Primer, upsert_chunk
+from swga.database import Primer, update_in_chunks
 
 graph_fname = "compatibility_graph.dimacs"
 
@@ -34,7 +33,7 @@ def make_graph(max_hetdimer_bind, outfile):
     for i, p in enumerate(primers):
         p.pid = i + 1
 
-    chunk_iterator(primers, upsert_chunk, show_progress=False)
+    update_in_chunks(primers, show_progress=False)
 
     swga.message("Composing primer compatibility graph...")
     edges = graph.test_pairs(primers, max_hetdimer_bind)
