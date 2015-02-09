@@ -1,9 +1,10 @@
 ## --- Notes ---
-## Prebuilt binaries are available for Linux and Mac OS X. To compile from 
-## source instead, use `make source`.
+## Prebuilt binaries are available for Linux and Mac OS X. To use, use 
+## `make prebuilt`. 
 ## 
-## For Mac OS X, pass `osx=1`.
-## Yosemite, gcc 4.8 or higher may need to be installed.
+## To use multithreading, pass `omp=1`. Requires gcc-4.6 or higher. Specify
+## using `dsk_gcc=g++-4.6` or equivalent on Mac OS X to avoid using clang
+## (default). 
 ##
 ## For a user-only install (no root needed), pass `user=1`.
 ## This is incompatible with virtualenvs or with homebrew python on Mac OS X.
@@ -15,11 +16,8 @@
 ## Installing on Linux using prebuilt binaries:
 ## $ make user=1
 ##
-## Installing on Mac OS X from source:
-## $ make compile user=1 osx=1
-##
 ## Using a different compiler for the dsk sources:
-## $ make compile user=1 osx=1 dsk_gcc=g++-4.9
+## $ make dsk_gcc=g++-4.9
 
 ifeq ($(user),1)
 	pip_flags+= --user
@@ -36,9 +34,8 @@ ifeq ($(editable),1)
 endif
 
 # Mac OS X a) ships with an out-of-date GCC and b) symlinks `g++` to
-# clang. Clang won't work with dsk.
-# We need to be explicit with what we're using in this case. Most users will
-# need to upgrade. 
+# clang. Clang won't work with OpenMP, so to use dsk_gcc must be explicitly
+# specified (e.g. dsk_gcc=g++-4.8)
 
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 ifeq ($(uname_S), Darwin)  # We're on a Mac
