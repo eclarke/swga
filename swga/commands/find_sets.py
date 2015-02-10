@@ -1,9 +1,12 @@
+import os
 import io
 import sys
 import swga
 import time
 import json
 import click
+import signal
+import tempfile
 import functools
 import subprocess
 import swga.primers
@@ -11,8 +14,9 @@ import swga.database
 import swga.graph as graph
 import swga.score as score
 import swga.locate as locate
-from swga.clint.textui import progress
+
 from swga.commands import Command
+from swga.clint.textui import progress
 from pkg_resources import resource_filename
 from swga.database import Primer, Set, update_in_chunks, init_db
 
@@ -70,17 +74,19 @@ def find_sets(min_bg_bind_dist, min_size, max_size, bg_genome_len):
                     max_size, '-a', '-u', '-r', 'unweighted-coloring',
                     graph_fname]
     find_set_cmd = " ".join([str(_) for _ in find_set_cmd])
-    with io.open('sets.out', 'wb') as writer, io.open('sets.out', 'rb', 1) as reader:        
-        process = subprocess.Popen(find_set_cmd, shell=True,
-                                        stdout=writer)
-        reader.seek(0, 2)
-        while process.poll() is None:
-            line = reader.readline()
-            if not line:
-                time.sleep(0.1)
-                continue
-            yield line
 
+    # We call the set_finder command as a line-buffered subprocess that passes
+    # its output back to this process. The function then yields each line as a
+    # generator; when close() is called, it terminates the set_finder subprocess.
+    process = subprocess.Popen(find_set_cmd, shell=True, stdout=subprocess.PIPE,
+                               preexec_fn=os.setsid, bufsize=1)
+    try:
+        for line in iter(process.stdout.readline, b''):
+            (yield line)
+    finally:
+        pass
+#        os.killpg(process.pid, signal.SIGKILL)
+        
 
 def score_sets(setlines, 
                fg_genome_fp,
@@ -115,36 +121,47 @@ def score_sets(setlines,
                                       expression=score_expression)
 
     chr_ends = locate.chromosome_ends(fg_genome_fp)
-    passed = processed = 0
-    for line in setlines:
-        try:
-            primer_ids, bg_ratio = score.read_set_finder_line(line)
-        except ValueError:
-            swga.warn("Could not parse line:\n\t"+line)
-            continue
-        primers = swga.database.get_primers_for_ids(primer_ids)
-        binding_locations = score.aggregate_primer_locations(primers) + chr_ends
-        max_dist = max(score.seq_diff(binding_locations))
-        processed += 1
 
-        if max_dist <= max_fg_bind_dist:
-            passed += 1
-            set_score, variables = score_fun(primer_set=primers,
-                                             primer_locs=binding_locations,
-                                             max_dist=max_dist,
-                                             bg_ratio=bg_ratio,
-                                             output_handle=sys.stdout)
-            swga.database.add_set(primers, score=set_score, 
-                                 scoring_fn=score_expression, 
-                                 pids=json.dumps(sorted(primer_ids)),
-                                 **variables)
+    passed = processed = 0
+    try:
+        for line in setlines:
+            try:
+                primer_ids, bg_ratio = score.read_set_finder_line(line)
+            except ValueError:
+                swga.warn("Could not parse line:\n\t"+line)
+                continue
+            primers = swga.database.get_primers_for_ids(primer_ids)
+
+            # Add chromosome ends to locations to make distances accurate
+            binding_locations = (score.aggregate_primer_locations(primers) +
+                                 chr_ends)
+            max_dist = max(score.seq_diff(binding_locations))
+
+            processed += 1
+
+            if max_dist <= max_fg_bind_dist:
+                passed += 1
+                set_score, variables = score_fun(primer_set=primers,
+                                                 primer_locs=binding_locations,
+                                                 max_dist=max_dist,
+                                                 bg_ratio=bg_ratio,
+                                                 output_handle=sys.stdout)
+                swga.database.add_set(primers, 
+                                      score=set_score, 
+                                      scoring_fn=score_expression, 
+                                      pids=json.dumps(sorted(primer_ids)),
+                                      **variables)
             
-        swga.message(
-            "\rSets passing filter: \t{}/{}".format(passed, processed),
-            newline=False)
-        if passed >= max_sets:
-            swga.message("\nDone (scored %i sets)" % passed)
-            return
+            swga.message(
+                "\rSets passing filter: \t{}/{}".format(passed, processed),
+                newline=False)
+            if passed >= max_sets:
+                swga.message("\nDone (scored %i sets)" % passed)
+                break
+    finally:
+        # Raises a GeneratorExit inside the find_sets command, prompting it to quit
+        # the subprocess
+        setlines.close()
 
 
     
