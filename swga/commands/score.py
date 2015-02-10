@@ -3,6 +3,7 @@ import json
 
 import swga
 import swga.primers
+import swga.database
 import swga.score as score
 import swga.locate as locate
 from swga.commands import Command
@@ -47,7 +48,8 @@ def score_sets(primer_db,
         score_fun = partial(score.default_score_set,
                             expression=score_expression)
 
-    swga.primers.init_db(primer_db)
+    swga.database.init_db(primer_db)
+
     chr_ends = locate.chromosome_ends(fg_genome_fp)
     passed = processed = 0
     for line in sys.stdin:
@@ -56,7 +58,7 @@ def score_sets(primer_db,
         except ValueError:
             swga.warn("Could not parse line:\n\t"+line)
             continue
-        primers = swga.primers.get_primers_for_ids(primer_ids)
+        primers = swga.database.get_primers_for_ids(primer_ids)
         binding_locations = score.aggregate_primer_locations(primers) + chr_ends
         max_dist = max(score.seq_diff(binding_locations))
         processed += 1
@@ -68,7 +70,7 @@ def score_sets(primer_db,
                                              max_dist=max_dist,
                                              bg_ratio=bg_ratio,
                                              output_handle=sys.stdout)
-            swga.primers.add_set(primers, score=set_score, 
+            swga.database.add_set(primers, score=set_score, 
                                  scoring_fn=score_expression, 
                                  pids=json.dumps(sorted(primer_ids)),
                                  **variables)
