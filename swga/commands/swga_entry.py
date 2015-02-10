@@ -23,12 +23,12 @@ Options:
 
 def main():
     command_opts = {'init':commands.init.main,
-                    'autopilot':commands.autopilot.main,
+#                    'autopilot':commands.autopilot.main,
                     'summary':commands.summary.main,
                     'count':commands.count.main,
                     'filter':commands.filter.main,
                     'find_sets':commands.find_sets.main,
-                    'score':commands.score.main,
+ #                   'score':commands.score.main,
                     'export':commands.export.main,
                     'setopt':commands.setopt.main}
 

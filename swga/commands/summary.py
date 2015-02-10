@@ -8,7 +8,7 @@ from peewee import fn
 
 def main(argv, cfg_file):
     cmd = Command('summary', cfg_file=cfg_file)
-    cmd.parse_args(argv)
+    cmd.parse_args(argv, quiet=True)
     summary(**cmd.args)
 
 
@@ -33,7 +33,7 @@ def summary(primer_db, fg_length, bg_length):
                               .where(Primer.active==True)
                               .scalar(as_tuple=True))
 
-    nsets = Set.select(fn.Count(Set.sid)).scalar()
+    nsets = Set.select(fn.Count(Set._id)).scalar()
     if nsets > 0:
         bs = Set.select().order_by(Set.score.desc()).limit(1).get()
         bs_primers = ", ".join(swga.database.get_primers_for_set(bs.sid)).strip()
@@ -74,7 +74,7 @@ def summary(primer_db, fg_length, bg_length):
 """ if nactive > 0 else "No melting temps have been calculated yet.")
 
     
-    ifzero_sets_msg = colored.green("Run `swga sets` after identifying valid primers to "
+    ifzero_sets_msg = colored.green("Run `swga find_sets` after identifying valid primers to "
                                     "begin collecting sets.\n")
 
     set_msg = ("""

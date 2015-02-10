@@ -80,28 +80,11 @@ def read_primer_list(lines, fg_genome_fp, bg_genome_fp):
         primer_seqs = [p.seq for p in primers]
         missing = [_ for _ in seqs if _ not in primer_seqs]
         for seq in missing:
-            try:
-                primers.append(create_primer_from_seq(seq, fg_genome_fp,
-                                                      bg_genome_fp)) 
-            except swga.core.SWGAError:                
-                swga.warn(seq + " does not bind to the foreground genome; skipping.")
+            swga.message(seq + " not in the database; skipping. Add it "
+                         "manually with `swga count --input <file>` ")
     return primers
 
 
-def create_primer_from_seq(seq, fg_genome_fp, bg_genome_fp):
-    """
-    Instead of using DSK, count the number of times a primer occurs in the
-    foreground and genome background manually. 
-    For user-entered primer sets that contain primers that don't exist in the
-    database already. 
-    """
-    
-    fg = Fasta(fg_genome_fp)
-    bg = Fasta(bg_genome_fp)
-    fg_freq = swga.locate.count(seq, fg)
-    if fg_freq == 0:
-        raise swga.core.SWGAError("Primer not found in foreground genome")
-    bg_freq = swga.locate.count(seq, bg) if fg_freq > 0 else 0
-    ratio = fg_freq/float(bg_freq) if bg_freq > 0 else 0
-    return Primer(seq=seq, fg_freq=fg_freq, bg_freq=bg_freq,
-                  ratio=ratio).execute() 
+def parse_kmer_file(lines):
+    seqs = [re.split(r'[ \t]+', line.strip('\n'))[0] for line in lines]
+    return seqs

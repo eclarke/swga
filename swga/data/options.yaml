@@ -59,7 +59,12 @@ count:
     default: 1
     desc: primers appearing >= this in exclude_fp will be excluded
     type: int
-
+  input:
+    default: null
+    desc: a list of primers to manually add to the database
+    type: File-r
+    incfg: False
+    
 
 summary:
   META:
@@ -144,13 +149,6 @@ find_sets:
   bg_genome_len:
     default: *bglen
     desc: length of background genome (autofilled by swga init)
-    
-score:
-  META:
-    desc: Filter and score primer sets
-  primer_db:
-    default: *primerdb
-    desc: primer database name
   fg_genome_fp: 
     default: *fg
     desc: path to foreground (aka target) genome  
