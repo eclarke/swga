@@ -84,8 +84,7 @@ def find_sets(min_bg_bind_dist, min_size, max_size, bg_genome_len):
         for line in iter(process.stdout.readline, b''):
             (yield line)
     finally:
-        pass
-#        os.killpg(process.pid, signal.SIGKILL)
+        os.killpg(process.pid, signal.SIGKILL)
         
 
 def score_sets(setlines, 
