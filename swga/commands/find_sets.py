@@ -3,6 +3,7 @@ import sys
 import swga
 import time
 import json
+import click
 import functools
 import subprocess
 import swga.primers
@@ -10,10 +11,10 @@ import swga.database
 import swga.graph as graph
 import swga.score as score
 import swga.locate as locate
-
+from swga.clint.textui import progress
 from swga.commands import Command
 from pkg_resources import resource_filename
-from swga.database import Primer, update_in_chunks, init_db
+from swga.database import Primer, Set, update_in_chunks, init_db
 
 graph_fname = "compatibility_graph.dimacs"
 
@@ -22,6 +23,11 @@ def main(argv, cfg_file):
     cmd = Command('find_sets', cfg_file=cfg_file)
     cmd.parse_args(argv)
     init_db(cmd.primer_db)
+    if cmd.reset:
+        click.confirm("Remove all previously-found sets?", abort=True)
+        allsets = Set.select()
+        for s in progress.bar(allsets, expected_size=allsets.count()):
+            s.delete_instance()
     make_graph(cmd.max_hetdimer_bind, graph_fname)
     setlines = find_sets(cmd.min_bg_bind_dist, cmd.min_size, cmd.max_size,
                          cmd.bg_genome_len)
@@ -43,7 +49,6 @@ def make_graph(max_hetdimer_bind, outfile):
 
     for i, p in enumerate(primers):
         p.pid = i + 1
-        print p.seq
 
     update_in_chunks(primers, show_progress=False)
 
@@ -134,10 +139,12 @@ def score_sets(setlines,
                                  pids=json.dumps(sorted(primer_ids)),
                                  **variables)
             
-        sys.stderr.write(
-            "\rSets passing filter: \t{}/{}".format(passed, processed))
+        swga.message(
+            "\rSets passing filter: \t{}/{}".format(passed, processed),
+            newline=False)
         if passed >= max_sets:
-            sys.stderr.write("\nDone (scored %i sets). To quit, press Ctrl-C.\n" % passed)
-            sys.exit()
+            swga.message("\nDone (scored %i sets)" % passed)
+            return
+
 
     

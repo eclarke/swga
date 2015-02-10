@@ -172,6 +172,10 @@ find_sets:
       Specify a path to a scoring function to use instead of the normal
       scoring function, to create custom metrics or output. For help, see
       wiki. Incompatible with --score_expression argument.
+  reset:
+    incfg: False
+    desc: remove all previously-found sets
+    opttype: flag
 
 
 export:
