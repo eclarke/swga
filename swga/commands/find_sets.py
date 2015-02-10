@@ -121,7 +121,7 @@ def score_sets(setlines,
 
     chr_ends = locate.chromosome_ends(fg_genome_fp)
 
-    passed = processed = 0
+    passed = processed = max_dist_avg = 0
     try:
         for line in setlines:
             try:
@@ -137,6 +137,7 @@ def score_sets(setlines,
             max_dist = max(score.seq_diff(binding_locations))
 
             processed += 1
+            max_dist_avg = (max_dist_avg * (processed - 1) + max_dist) / float(processed)
 
             if max_dist <= max_fg_bind_dist:
                 passed += 1
@@ -145,15 +146,16 @@ def score_sets(setlines,
                                                  max_dist=max_dist,
                                                  bg_ratio=bg_ratio,
                                                  output_handle=sys.stdout)
-                swga.database.add_set(primers, 
+                swga.database.add_set(_id = passed,
+                                      primers=primers, 
                                       score=set_score, 
                                       scoring_fn=score_expression, 
                                       pids=json.dumps(sorted(primer_ids)),
                                       **variables)
             
-            swga.message(
-                "\rSets passing filter: \t{}/{}".format(passed, processed),
-                newline=False)
+            swga.message("\rSets passing filter: \t{}/{:g} \t avg bind dist so far: "
+                         "{}".format(passed, processed, max_dist_avg),
+                         newline=False)
             if passed >= max_sets:
                 swga.message("\nDone (scored %i sets)" % passed)
                 break

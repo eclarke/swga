@@ -8,28 +8,12 @@ contains a litany of helper functions for adding and retrieving stored data.
 """
 import os
 import peewee as pw
+from playhouse.shortcuts import ManyToManyField
 import swga
 
 # The primer database must be initialized before use
 # ex: `db.init(db_fname)`
 db = pw.SqliteDatabase(None)
-
-
-def init_db(db_fname, create_if_missing=False):
-    '''
-    Initializes the database at the file path specified. 
-    If `create_if_missing` is True, it will create the database if it can't be
-    found. Otherwise, it throws an error.
-    '''
-    if not db_fname:
-        swga.swga_error("Primer database name unspecified.")
-    if create_if_missing and not os.path.isfile(db_fname):
-        db.init(db_fname)
-    elif not os.path.isfile(db_fname):
-        swga.swga_error("Primer db not found at %s: specify different path or "
-                        "re-run `swga count`" % db_fname)
-    db.init(db_fname)
-    return db
 
 
 class SwgaBase(pw.Model):
@@ -77,10 +61,10 @@ class Primer(SwgaBase):
 class Set(SwgaBase):
     '''
     The sets table contains each set's metadata. The actual primers that belong
-    in the set are found using the Primer_Set intermediate table.
+    in the set are found using the PrimerSet intermediate table.
     '''
     _id = pw.PrimaryKeyField()
-    pids= pw.TextField(unique=True)
+    primers = ManyToManyField(Primer, related_name='sets')
     score = pw.FloatField()
     set_size = pw.IntegerField(null=True)
     bg_ratio = pw.FloatField(null=True)
@@ -95,39 +79,67 @@ class Set(SwgaBase):
                                  for k,v in self.__dict__['_data'].items())
 
 
+#PrimerSet = Set.primers.get_through_model()
+
+
 class Primer_Set(SwgaBase):
     '''
     The "lookup table" enabling a many-to-many relationship between
     primers (which can belong to many sets) and sets (which contain many
     primers). 
     ''' 
-    seq = pw.ForeignKeyField(Primer, related_name='sets', to_field='seq')
-    set = pw.ForeignKeyField(Set, related_name='primers', to_field='_id')
+    seq = pw.ForeignKeyField(Primer, related_name='sets', on_delete="CASCADE")
+    set = pw.ForeignKeyField(Set, related_name='primers', on_delete="CASCADE")
     class Meta:
         indexes = (
             (('seq', 'set'), True),  # expects a tuple so needs a trailing ','
         )
 
 
+def init_db(db_fname, create_if_missing=False):
+    '''
+    Initializes the database at the file path specified. 
+    If `create_if_missing` is True, it will create the database if it can't be
+    found. Otherwise, it throws an error.
+    '''
+    if not db_fname:
+        swga.swga_error("Primer database name unspecified.")
+    if db_fname == ":memory:":
+        db.init(db_fname)
+    elif create_if_missing and not os.path.isfile(db_fname):
+        db.init(db_fname)
+    elif not os.path.isfile(db_fname):
+        swga.swga_error("Primer db not found at %s: specify different path or "
+                        "re-run `swga count`" % db_fname)
+    db.init(db_fname)
+    return db
+
+
 def create_tables(drop=True):
+    '''
+    Creates the tables in the database. If `drop`=True, attempts to safely drop
+    the tables before creating them.
+    '''
+    tbl_list = [Primer, Set, Primer_Set]
     if drop:
-        db.drop_tables([Primer, Set, Primer_Set], safe=True)        
-    db.create_tables([Primer, Set, Primer_Set], safe=True)
+        db.drop_tables(tbl_list, safe=True)  
+    db.create_tables(tbl_list, safe=True)
 
 
-def add_set(primers, **kwargs):
-    try:
-        s = Set.create(**kwargs)
-        for primer in primers:
-            Primer_Set.create(seq=primer.seq, set=s)
-        return set
-    except pw.IntegrityError:
-        pass
+def add_set(_id, primers, **kwargs):
+    assert primers.count() > 0
+    Set.delete().where(Set._id == _id)
+    s = Set.create(_id=_id, **kwargs)
+    s.primers.execute().add(primers)
+#    for primer in primers:
+#        Set.primers.add(primer).execute()
+#        Primer_Set.create(seq=primer, set=s)
+    return s
 
 
 def get_primers_for_set(set_id):
     set = Set.get(Set._id == set_id)
-    return [p.seq.seq for p in set.primers]
+    return [p.seq for p in set.primers]
 
 
 def get_primers_for_ids(pids):
