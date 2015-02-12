@@ -7,14 +7,14 @@ contains a litany of helper functions for adding and retrieving stored data.
 
 """
 import os
+import csv
+import swga
 import peewee as pw
 from playhouse.shortcuts import ManyToManyField
-import swga
 
 # The primer database must be initialized before use
 # ex: `db.init(db_fname)`
 db = pw.SqliteDatabase(None)
-
 
 class SwgaBase(pw.Model):
     '''Specifies what database the inheriting models will use.'''
@@ -30,6 +30,9 @@ class SwgaBase(pw.Model):
         return dict((name, attr.field) for name, attr in cls.__dict__.items()
                     if isinstance(attr, pw.FieldDescriptor))
 
+    def to_dict(self):
+        return self.__dict__['_data']
+    
     class Meta:
         database = db
     
@@ -54,9 +57,18 @@ class Primer(SwgaBase):
         return rep_str.format(
             self.id, self.seq, self.fg_freq, self.bg_freq, self.ratio)
 
-    def to_dict(self):
-        return self.__dict__['_data']
+    @staticmethod
+    def exported_fields():
+        fields = [
+            'seq',
+            'fg_freq',
+            'bg_freq',
+            'ratio',
+            'tm'
+        ]
+        return fields
 
+    
     
 class Set(SwgaBase):
     '''
@@ -78,6 +90,21 @@ class Set(SwgaBase):
         return "Set: "+"; ".join("{}:{}".format(k,v)
                                  for k,v in self.__dict__['_data'].items())
 
+    @staticmethod
+    def exported_fields():
+        fields = [
+            'score',
+            'set_size',
+            'bg_ratio',
+            'fg_max_dist',
+            'fg_dist_mean',
+            'fg_dist_std',
+            'fg_dist_gini',
+            'scoring_fn',
+            'primers'
+        ]
+        return fields
+            
 
 PrimerSet = Set.primers.get_through_model()
     

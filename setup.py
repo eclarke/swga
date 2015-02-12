@@ -22,7 +22,8 @@ setup(
     install_requires=['pyfaidx',
                       'click',
                       'pyyaml',
-                      'peewee'],
+                      'peewee',
+                      'data_hacks'],
     classifiers = [
         'Programming Language :: Python',
         'Development Status :: 3 - Alpha',

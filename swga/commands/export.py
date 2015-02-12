@@ -23,21 +23,26 @@ $ swga export bed_file --set_id 5
 '''
 
 import swga.database as database
-from swga import message, warn, swga_error
+from swga import warn, swga_error
 from swga.database import Primer, Set
 from swga.commands import Command
+import swga.utils.exporter as exporter
 
 def main(argv, cfg_file):
     cmd = Command('export', cfg_file=cfg_file)
     cmd.parse_args(argv)
-    
+    header = not cmd.no_header
     what = cmd.what
     database.init_db(cmd.primer_db)
+
     if what in ['set', 'sets']:
-        for _set in export(Set, cmd.ids, cmd.order_by, cmd.limit, cmd.descending):
-            cmd.output.write(_set+'\n')
+        sets = get_items(Set, cmd.ids, cmd.order_by, cmd.limit, cmd.descending)
+        exporter.export(Set, sets, cmd.output, header)
+
     if what in ['primer', 'primers']:
-        export(Primer, cmd.ids, cmd.order_by, cmd.limit)
+        primers = get_items(Primer, cmd.ids, cmd.order_by, cmd.limit, cmd.descending)
+        exporter.export(Primer, primers, cmd.output, header)
+
     if what == "bedfile":
         warn("Not yet implemented.")
         pass
@@ -54,30 +59,29 @@ def validate_args(export_fn):
 
 
 @validate_args
-def export(model, ids=None, order_by=None, limit=None, descending=False):
+def get_items(model, ids=None, order_by=None, limit=None, descending=False):
     if ids:
-        print ids
         targets = model.select().where(model._id << ids)
-        print targets
+        for target in targets:
+            yield target
     else:
         query = model.select()
         if order_by:
             if descending:
-                print descending
                 query = query.order_by(model.fields()[order_by].desc())
-                print query
             else:
                 query = query.order_by(model.fields()[order_by])
         if limit:
             query = query.limit(limit)
         targets = query
         for target in targets:
-            yield str(target)
+            yield target
     
-
 
 def validate_order_field(field, model):
     if field and field not in model.fields():
-        swga_error("Cannot order by '{}'. Valid choices are {}"
-                   .format(field, ", ".join(Primer.fields())))
+        swga_error(
+            "Cannot order by '{}'. Valid choices are {}"
+            .format(field, ", ".join(Primer.fields()))
+        )
 

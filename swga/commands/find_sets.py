@@ -20,16 +20,18 @@ from swga.database import Primer, Set, update_in_chunks, init_db
 
 graph_fname = "compatibility_graph.dimacs"
 
-
 def main(argv, cfg_file):
     cmd = Command('find_sets', cfg_file=cfg_file)
     cmd.parse_args(argv)
     init_db(cmd.primer_db)
-    
-    if cmd.reset:
+
+    # We need to clear all the previously-used sets each time due to uniqueness
+    # constraints
+    allsets = Set.select()
+    if allsets.count() > 0:
         click.confirm("Remove all previously-found sets?", abort=True)
-        allsets = Set.select()
         for s in progress.bar(allsets, expected_size=allsets.count()):
+            s.primers.clear()
             s.delete_instance()
 
     make_graph(cmd.max_hetdimer_bind, graph_fname)

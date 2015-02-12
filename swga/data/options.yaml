@@ -214,6 +214,10 @@ export:
     desc: the ids of the sets or primers to use
     type: int
     nargs: '*'
+  no_header:
+    incfg: False
+    desc: "don't display header"
+    opttype: flag
       
 setopt:
   META:
