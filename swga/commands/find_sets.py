@@ -2,6 +2,7 @@ import os
 import sys
 import swga
 import json
+import time
 import click
 import signal
 import functools
@@ -98,11 +99,11 @@ def find_sets(
         for line in iter(process.stdout.readline, b''):
             (yield line)
     finally:
-        if process.poll() is not None:
-            try:
-                os.killpg(process.pid, signal.SIGKILL)
-            except OSError:
-                pass
+        time.sleep(0.1)
+        if process.poll() is None:
+            print "Force killing process..."
+            os.killpg(process.pid, signal.SIGKILL)
+
         
 
 def score_sets(setlines, 

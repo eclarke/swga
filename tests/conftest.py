@@ -1,5 +1,4 @@
 import pytest
-import os
 import swga.database
 from swga.database import Primer, Set, PrimerSet
 
@@ -10,13 +9,12 @@ def seqs():
 
 @pytest.fixture(scope="function")
 def initdb(request):
-    swga.database.db.init("test.db")
+    swga.database.db.init(":memory:")
     swga.database.db.create_tables([Primer, Set, PrimerSet])
     def fin():
         print ("Closing database")
         swga.database.db.drop_tables([Primer, Set, PrimerSet])
         swga.database.db.close()
-        os.remove("test.db")
     request.addfinalizer(fin)
 
 @pytest.fixture
