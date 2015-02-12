@@ -4,7 +4,7 @@ from swga.database import Primer
 from swga.commands.find_sets import make_graph, find_sets
 
 @pytest.fixture
-def primers(initdb):
+def primers():
     primers = [
         Primer.create(seq="ATGC", fg_freq=1, bg_freq=2, ratio=1.0, active=True),
         Primer.create(seq="GGCC", fg_freq=1, bg_freq=3, ratio=0.5, active=True),
@@ -12,7 +12,7 @@ def primers(initdb):
     ]
     return primers
     
-def test_make_graph(primers, tmpdir):
+def test_make_graph(initdb, primers, tmpdir):
     outfile = tmpdir.join('graph')
     make_graph(max_hetdimer_bind=3, outfile=str(outfile))
     graph = outfile.read()
