@@ -14,6 +14,7 @@ def initdb(request):
     swga.database.db.create_tables([Primer, Set, PrimerSet])
     def fin():
         print ("Closing database")
+        swga.database.db.drop_tables([Primer, Set, PrimerSet])
         swga.database.db.close()
     request.addfinalizer(fin)
 
