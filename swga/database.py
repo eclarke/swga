@@ -136,7 +136,7 @@ def get_primers_for_ids(pids):
     return list(Primer.select().where(Primer._id << pids).execute())
 
 
-def update_in_chunks(itr, chunksize=100, model=Primer, show_progress=True,
+def update_in_chunks(itr, chunksize=100, show_progress=True,
                      label=None):
     '''
     Inserts or updates records in database in chunks of a given size.
@@ -149,11 +149,16 @@ def update_in_chunks(itr, chunksize=100, model=Primer, show_progress=True,
     - show_progress, label: passed to progress.bar
     '''
     def upsert_chunk(chunk):
-        model.insert_many(p.to_dict() for p in chunk).upsert().execute()
+        query = Primer.insert_many(p.to_dict() for p in chunk)
+        print "hello!"
+        query.execute()
     if isinstance(itr, pw.SelectQuery):
-        itr = list(itr)    
+        itr = list(itr)
+    seqs = [p.seq for p in itr]
+    Primer.delete().where(Primer.seq << seqs).execute()
     swga.core.chunk_iterator(itr, upsert_chunk, n=chunksize,
                              show_progress=show_progress,
                              label=label)
 
+    
 
