@@ -74,10 +74,29 @@ def argparser_from_opts(opts, cmd_name, description=None):
     parser = make_parser(cmd_name, description)
 
     for argname in section:
-
         if argname == "META":
             continue
+        
         argvals = section[argname]
+
+        # Setting some defaults 
+        opttype = argvals.get('opttype', 'opt')
+        action = argvals.get('action', 'store')
+        prefix = "--"
+        help = argvals.get('desc', '')
+        choices = argvals.get('choices', None)
+        nargs = argvals.get('nargs', None)
+
+        # Converting from 'std[in/out] string to actual streams
+        default = argvals.get('default')
+        if default == 'stdin':
+            default = sys.stdin
+        elif default == 'stdout':
+            default = sys.stdout
+        else:
+            default = False
+
+        # What kind of values can the argument take?
         _type = argvals.get('type')
         if _type == "File-w":
             _type = argparse.FileType('w')
@@ -86,31 +105,20 @@ def argparser_from_opts(opts, cmd_name, description=None):
         elif _type:
             _type = eval(_type)
 
-        opttype = argvals.get('opttype', 'opt')
-        action = argvals.get('action', 'store')
-        prefix = "--"
-        help = argvals.get('desc', '')
-        choices = argvals.get('choices', None)
-        nargs = argvals.get('nargs', None)
-        default = argvals.get('default')
-        if default == 'stdin':
-            default = sys.stdin
-        elif default == 'stdout':
-            default = sys.stdout
-        else:
-            default = False
+        # We remove the -- prefix for arguments (as opposed to options)
         if opttype == 'arg':
             prefix = ""
-        elif opttype == 'flag':
-            action = 'store_true'
+
+        # Flag-type options cannot have a type (even if None) specified in the
+        # constructor 
         if opttype == 'flag':
-            print argname, default
             parser.add_argument(
                 prefix + argname,
-                action = action,
+                action = 'store_true',
                 help = help)
+        # We only use a non-False default value for stdin/stdout options- all
+        # the other options use defaults from the config file for clarity
         elif default:
-            print argname, default
             parser.add_argument(
                 prefix + argname,
                 action = action,
@@ -119,6 +127,8 @@ def argparser_from_opts(opts, cmd_name, description=None):
                 default = default,
                 type = _type,
                 help = help)
+        # No default specified (annoyingly, specifying None conflicts with
+        # specifying a type, so we must omit it from the constructor)
         else:
             parser.add_argument(
                 prefix + argname,
@@ -145,19 +155,3 @@ def _format_comment(desc, width=72, quote='#'):
     with indent(len(quote)+1, quote):
         puts(desc, stream=stream)
     return string.getvalue()
-
-
-# This ensures that the options we get back from the yaml file are in order by
-# replacing the default constructor with an OrderedDict
-_mapping_tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
-
-
-def _dict_representer(dumper, data):
-    return dumper.represent_dict(data.iteritems())
-
-
-def _dict_constructor(loader, node):
-    return OrderedDict(loader.construct_pairs(node))
-
-yaml.add_constructor(_mapping_tag, _dict_constructor)
-yaml.add_representer(OrderedDict, _dict_representer)

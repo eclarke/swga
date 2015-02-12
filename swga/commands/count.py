@@ -105,7 +105,7 @@ def count_kmers(fg_genome_fp,
 def primer_dict(seq, fg, bg, min_fg_bind, max_bg_bind):
     fg_freq = fg[seq]
     bg_freq = bg.get(seq, 0) 
-    ratio = fg_freq / float(bg_freq) if bg_freq > 0 else 0
+    ratio = fg_freq / float(bg_freq) if bg_freq > 0 else float('inf')
     if fg_freq < min_fg_bind or bg_freq > max_bg_bind:
         return {}
     return {'seq': seq, 'fg_freq': fg_freq, 'bg_freq': bg_freq,

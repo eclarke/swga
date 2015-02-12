@@ -1,12 +1,9 @@
 import os
-import io
 import sys
 import swga
-import time
 import json
 import click
 import signal
-import tempfile
 import functools
 import subprocess
 import swga.primers
@@ -27,16 +24,28 @@ def main(argv, cfg_file):
     cmd = Command('find_sets', cfg_file=cfg_file)
     cmd.parse_args(argv)
     init_db(cmd.primer_db)
+    
     if cmd.reset:
         click.confirm("Remove all previously-found sets?", abort=True)
         allsets = Set.select()
         for s in progress.bar(allsets, expected_size=allsets.count()):
             s.delete_instance()
+
     make_graph(cmd.max_hetdimer_bind, graph_fname)
-    setlines = find_sets(cmd.min_bg_bind_dist, cmd.min_size, cmd.max_size,
-                         cmd.bg_genome_len)
-    score_sets(setlines, cmd.fg_genome_fp, cmd.score_expression,
-               cmd.max_fg_bind_dist, cmd.max_sets, cmd.plugin_score_fun)
+
+    setlines = find_sets(
+        cmd.min_bg_bind_dist,
+        cmd.min_size,
+        cmd.max_size,
+        cmd.bg_genome_len)
+    
+    score_sets(
+        setlines,
+        cmd.fg_genome_fp,
+        cmd.score_expression,
+        cmd.max_fg_bind_dist,
+        cmd.max_sets,
+        cmd.plugin_score_fun)
     
     
 def make_graph(max_hetdimer_bind, outfile):
@@ -49,10 +58,10 @@ def make_graph(max_hetdimer_bind, outfile):
                    .order_by(Primer.ratio.desc()).execute())
     
     if len(primers) == 0:
-        swga.swga_error("No active sets found. Run `swga filter` first.")
+       swga.swga_error("No active sets found. Run `swga filter` first.")
 
     for i, p in enumerate(primers):
-        p.pid = i + 1
+        p._id = i + 1
 
     update_in_chunks(primers, show_progress=False)
 
@@ -66,7 +75,12 @@ def make_graph(max_hetdimer_bind, outfile):
         graph.write_graph(primers, edges, out)
 
         
-def find_sets(min_bg_bind_dist, min_size, max_size, bg_genome_len):
+def find_sets(
+        min_bg_bind_dist,
+        min_size,
+        max_size,
+        bg_genome_len,
+        graph_fname=graph_fname):
     swga.message("Now finding sets. If nothing appears, try relaxing your parameters.")
     set_finder = resource_filename("swga", "bin/set_finder")
     find_set_cmd = [set_finder, '-q', '-q', '-B', min_bg_bind_dist,
@@ -84,7 +98,11 @@ def find_sets(min_bg_bind_dist, min_size, max_size, bg_genome_len):
         for line in iter(process.stdout.readline, b''):
             (yield line)
     finally:
-        os.killpg(process.pid, signal.SIGKILL)
+        if process.poll() is not None:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except OSError:
+                pass
         
 
 def score_sets(setlines, 

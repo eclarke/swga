@@ -79,22 +79,8 @@ class Set(SwgaBase):
                                  for k,v in self.__dict__['_data'].items())
 
 
-#PrimerSet = Set.primers.get_through_model()
-
-
-class Primer_Set(SwgaBase):
-    '''
-    The "lookup table" enabling a many-to-many relationship between
-    primers (which can belong to many sets) and sets (which contain many
-    primers). 
-    ''' 
-    seq = pw.ForeignKeyField(Primer, related_name='sets', on_delete="CASCADE")
-    set = pw.ForeignKeyField(Set, related_name='primers', on_delete="CASCADE")
-    class Meta:
-        indexes = (
-            (('seq', 'set'), True),  # expects a tuple so needs a trailing ','
-        )
-
+PrimerSet = Set.primers.get_through_model()
+    
 
 def init_db(db_fname, create_if_missing=False):
     '''
@@ -120,20 +106,24 @@ def create_tables(drop=True):
     Creates the tables in the database. If `drop`=True, attempts to safely drop
     the tables before creating them.
     '''
-    tbl_list = [Primer, Set, Primer_Set]
+    tbl_list = [Primer, Set, Set.ps.get_through_model()]
     if drop:
         db.drop_tables(tbl_list, safe=True)  
     db.create_tables(tbl_list, safe=True)
 
 
 def add_set(_id, primers, **kwargs):
-    assert primers.count() > 0
+    if not primers:
+        swga.swga_error("Invalid primers for set")
+    if isinstance(primers, pw.SelectQuery):
+        nprimers = primers.count()
+    else:
+        nprimers = len(primers)
+    if nprimers == 0:
+        swga.swga_error("Cannot have an empty set")
     Set.delete().where(Set._id == _id)
     s = Set.create(_id=_id, **kwargs)
-    s.primers.execute().add(primers)
-#    for primer in primers:
-#        Set.primers.add(primer).execute()
-#        Primer_Set.create(seq=primer, set=s)
+    s.primers.add(primers)
     return s
 
 
