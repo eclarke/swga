@@ -52,4 +52,11 @@ class TestPrimersSets:
         for primer in primers:
             assert primer.fg_freq == 100
 
+    def test_create_tables(self):
+        database.db.init(":memory:")
+        database.create_tables()
+        p = Primer.create(seq="ATGC")
+        s = Set.create(_id=1, score=1)
+        s.primers.add(p)
+        database.db.close()
         

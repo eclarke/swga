@@ -106,7 +106,7 @@ def create_tables(drop=True):
     Creates the tables in the database. If `drop`=True, attempts to safely drop
     the tables before creating them.
     '''
-    tbl_list = [Primer, Set, Set.ps.get_through_model()]
+    tbl_list = [Primer, Set, PrimerSet]
     if drop:
         db.drop_tables(tbl_list, safe=True)  
     db.create_tables(tbl_list, safe=True)
@@ -149,13 +149,11 @@ def update_in_chunks(itr, chunksize=100, show_progress=True,
     - show_progress, label: passed to progress.bar
     '''
     def upsert_chunk(chunk):
-        query = Primer.insert_many(p.to_dict() for p in chunk)
-        print "hello!"
-        query.execute()
+        seqs = [p.seq for p in chunk]
+        Primer.delete().where(Primer.seq << seqs).execute()
+        Primer.insert_many(p.to_dict() for p in chunk).execute()
     if isinstance(itr, pw.SelectQuery):
         itr = list(itr)
-    seqs = [p.seq for p in itr]
-    Primer.delete().where(Primer.seq << seqs).execute()
     swga.core.chunk_iterator(itr, upsert_chunk, n=chunksize,
                              show_progress=show_progress,
                              label=label)
