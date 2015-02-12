@@ -125,7 +125,7 @@ def update_tms(primers):
     if len(primers) > 0:
         for p in progress.bar(primers, label="Finding melting temps..."):
             p.tm = Tm(p.seq)
-    update_in_chunks(primers, label="Updating database...", chunksize=10)
+    update_in_chunks(primers, label="Updating database...")
 
 
 def update_locations(primers, fg_genome_fp):
