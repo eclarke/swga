@@ -18,6 +18,8 @@ You can run SWGA on hardware ranging from a Mac laptop to a high-end server.
 - Score each set based on certain binding metrics and allows exploration of high-scoring sets via output to common formats.
 
 
+Follow the installation instructions below, then visit [Quick Start](https://github.com/eclarke/swga/wiki) to get started!
+
 # Installation
 ## Requirements
 
