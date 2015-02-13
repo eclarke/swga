@@ -6,16 +6,17 @@ SWGA code. In particular, it contains the default config parser and command-line
 argument parsers for the subcommands, as well as error and warning functions.
 
 """
-
+import ConfigParser
+import errno
+import json
 import os
 import sys
-import json
-import errno
-import argparse
 import textwrap
-import ConfigParser
-from swga.clint.textui import progress
+
 from clint.textui import puts, colored, STDERR, indent, max_width
+
+from swga.clint.textui import progress
+
 
 default_config_file = 'parameters.cfg'
 
@@ -52,17 +53,6 @@ def mkdirp(path):
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
-
-
-@DeprecationWarning
-def basic_cmd_parser(description, cmd_name, cfg_file):
-    try:
-        defaults, _ = parse_config(cfg_file, cmd_name)
-    except IOError:
-        defaults = dict()
-    parser = argparse.ArgumentParser(description=description, prog='swga '+cmd_name)
-    parser.set_defaults(**defaults)
-    return parser
 
 
 def swga_error(msg, exception=True):
