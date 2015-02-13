@@ -64,7 +64,7 @@ def get_user_fun(spec_str):
     '''
     Parses a string to get a function from a module. The string format is simply
     modulename.possible_submodule:function_name. For instance, this function's
-    string would be PrimerSets:get_user_fun.
+    string would be swga:score:get_user_fun.
     '''
     try:
         module, fun = spec_str.split(':')

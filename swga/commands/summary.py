@@ -34,15 +34,23 @@ def summary(primer_db, fg_length, bg_length):
                               .scalar(as_tuple=True))
 
     nsets = Set.select(fn.Count(Set._id)).scalar()
+    set_stat_line = "{key:.<16}: {val: >10s}"
+    num_fmt_str = "{:,G}"
+    def fmtkv(k, v):
+        if not isinstance(v, basestring):
+            v = num_fmt_str.format(v)
+        return set_stat_line.format(key=k, val=v)
     if nsets > 0:
         bs = Set.select().order_by(Set.score.desc()).limit(1).get()
         bs_primers = ", ".join(swga.database.get_primers_for_set(bs._id)).strip()
         best_set = bs._id
         bs_size = bs.set_size
         bs_score = bs.score
-        bs_stats = "- "+"\n - ".join("{}: {}".format(k,v)
-                                     for k, v in bs.__dict__['_data'].items()
-                             if k not in ["_id", "pids", "score"])
+        bs_stats = "- "+"\n - ".join(
+            fmtkv(k, v)
+            for k, v in bs.__dict__['_data'].items()
+            if k not in ["_id", "pids", "score"]
+        )
 
     summary_msg = """
 
@@ -78,7 +86,7 @@ def summary(primer_db, fg_length, bg_length):
                                     "begin collecting sets.\n")
 
     set_msg = ("""
-    The best scoring set is #{best_set}, with {bs_size} primers and a score of {bs_score:03f}. Various statistics: 
+    The best scoring set is #{best_set}, with {bs_size} primers and a score of {bs_score:03f}.\nVarious statistics: 
     {bs_stats}
 The primers in Set {best_set} are:
     {bs_primers}

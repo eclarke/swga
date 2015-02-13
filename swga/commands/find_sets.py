@@ -1,22 +1,22 @@
-import os
-import sys
-import swga
-import json
-import time
-import click
-import signal
 import functools
+import json
+import os
+import signal
 import subprocess
-import swga.primers
+import sys
+import time
+
+import click
+from pkg_resources import resource_filename
+
 import swga.database
 import swga.graph as graph
-import swga.score as score
 import swga.locate as locate
-
-from swga.commands import Command
+import swga.score as score
 from swga.clint.textui import progress
-from pkg_resources import resource_filename
+from swga.commands import Command
 from swga.database import Primer, Set, update_in_chunks, init_db
+
 
 graph_fname = "compatibility_graph.dimacs"
 
@@ -103,17 +103,16 @@ def find_sets(
     finally:
         time.sleep(0.1)
         if process.poll() is None:
-            print "Force killing process..."
             os.killpg(process.pid, signal.SIGKILL)
 
         
-
-def score_sets(setlines, 
-               fg_genome_fp,
-               score_expression,
-               max_fg_bind_dist,
-               max_sets,
-               plugin_score_fun=None):
+def score_sets(
+        setlines, 
+        fg_genome_fp,
+        score_expression,
+        max_fg_bind_dist,
+        max_sets,
+        plugin_score_fun=None):
     '''
     Retrieves the primers and their binding locations from the output of
     find_sets and calculates the max binding distance between primers in the
@@ -131,18 +130,24 @@ def score_sets(setlines,
     # Find the user-defined scoring function    
     score_fun = None
     if score_expression and plugin_score_fun:
-        sys.stderr.write("Warning: User or config file specified both scoring "
-                         "expression and plugin score function. Using "
-                         "the plugin score function "
-                         "given by %s." % plugin_score_fun)
+        swga.warn("Warning: User or config file specified both scoring"
+                  " expression and plugin score function. Using the plugin score"
+                  " function given by %s." % plugin_score_fun)
         score_fun = swga.get_user_fun(score_fun)
     elif score_expression:
-        score_fun = functools.partial(score.default_score_set,
-                                      expression=score_expression)
+        score_fun = functools.partial(
+            score.default_score_set,
+            expression=score_expression
+        )
 
     chr_ends = locate.chromosome_ends(fg_genome_fp)
 
-    passed = processed = max_dist_avg = 0
+    passed = processed = 0
+    min_max_dist = float('inf')
+    
+    status = "\rSets: {: ^5,.6g} | Passed: {: ^5,.6g} | Smallest max binding distance:{: ^12,.4G}"
+
+
     try:
         for line in setlines:
             try:
@@ -158,7 +163,8 @@ def score_sets(setlines,
             max_dist = max(score.seq_diff(binding_locations))
 
             processed += 1
-            max_dist_avg = (max_dist_avg * (processed - 1) + max_dist) / float(processed)
+            # Remember the smallest max distance seen so far
+            min_max_dist = min_max_dist if max_dist > min_max_dist else max_dist
 
             if max_dist <= max_fg_bind_dist:
                 passed += 1
@@ -170,12 +176,10 @@ def score_sets(setlines,
                 swga.database.add_set(_id = passed,
                                       primers=primers, 
                                       score=set_score, 
-                                      scoring_fn=score_expression, 
-                                      pids=json.dumps(sorted(primer_ids)),
+                                      scoring_fn=score_expression,
                                       **variables)
             
-            swga.message("\rSets passing filter: \t{}/{:g} \t avg bind dist so far: "
-                         "{}".format(passed, processed, max_dist_avg),
+            swga.message(status.format(processed, passed, min_max_dist),
                          newline=False)
             if passed >= max_sets:
                 swga.message("\nDone (scored %i sets)" % passed)
@@ -184,6 +188,4 @@ def score_sets(setlines,
         # Raises a GeneratorExit inside the find_sets command, prompting it to quit
         # the subprocess
         setlines.close()
-
-
     
