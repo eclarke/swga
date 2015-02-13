@@ -56,7 +56,7 @@ $ mkdir ~/swga_workspace
 
 3. Build and install SWGA
 
-    This part should be easy: just type `make`. 
+    This part should be easy: just type `make editable=1`. 
     The compiler should detect if you're using a Mac or Linux computer automatically. If you encounter problems, make sure you have a relatively up-to-date version of GCC installed, or have installed the Xcode tools on Mac OS X.
 
 4. (optional) Run the tests
