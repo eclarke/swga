@@ -137,8 +137,7 @@ def score_sets(
     elif score_expression:
         score_fun = functools.partial(
             score.default_score_set,
-            expression=score_expression
-        )
+            expression=score_expression)
 
     chr_ends = locate.chromosome_ends(fg_genome_fp)
 
@@ -156,31 +155,35 @@ def score_sets(
                 swga.warn("Could not parse line:\n\t"+line)
                 continue
             primers = swga.database.get_primers_for_ids(primer_ids)
-
+            processed += 1
+            
             # Add chromosome ends to locations to make distances accurate
-            binding_locations = (score.aggregate_primer_locations(primers) +
-                                 chr_ends)
+            binding_locations = locate.linearize_binding_sites(primers, chr_ends)
             max_dist = max(score.seq_diff(binding_locations))
 
-            processed += 1
             # Remember the smallest max distance seen so far
             min_max_dist = min_max_dist if max_dist > min_max_dist else max_dist
 
+            # Score the set if it passes the binding cutoff
             if max_dist <= max_fg_bind_dist:
                 passed += 1
-                set_score, variables = score_fun(primer_set=primers,
-                                                 primer_locs=binding_locations,
-                                                 max_dist=max_dist,
-                                                 bg_ratio=bg_ratio,
-                                                 output_handle=sys.stdout)
-                swga.database.add_set(_id = passed,
-                                      primers=primers, 
-                                      score=set_score, 
-                                      scoring_fn=score_expression,
-                                      **variables)
+                
+                set_score, variables = score_fun(
+                    primer_set=primers,
+                    primer_locs=binding_locations,
+                    max_dist=max_dist,
+                    bg_ratio=bg_ratio,
+                    output_handle=sys.stdout)
+
+                swga.database.add_set(
+                    _id = passed,
+                    primers=primers, 
+                    score=set_score, 
+                    scoring_fn=score_expression,
+                    **variables)
             
-            swga.message(status.format(processed, passed, min_max_dist),
-                         newline=False)
+            swga.message(
+                status.format(processed, passed, min_max_dist), newline=False)
             if passed >= max_sets:
                 swga.message("\nDone (scored %i sets)" % passed)
                 break

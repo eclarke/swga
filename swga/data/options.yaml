@@ -186,7 +186,7 @@ export:
     default: sets
     desc: what to export (sets, primers, bedfile)
     opttype: arg
-    choices: {set, sets, primer, primers, bedfile}
+    choices: {set, sets, primer, primers, bedfile, bedgraph}
   primer_db:
     default: *primerdb
     desc: primer database name
@@ -218,6 +218,24 @@ export:
     incfg: False
     desc: "don't display header"
     opttype: flag
+  opts_str:
+    incfg: False
+    desc: (bedgraph export only) the options string to add to the track line
+    type: str
+  window_size:
+    default: 10000
+    desc: (bedgraph export only) the size of the sliding window used to calculate avg primer binding
+    type: float
+  step_size:
+    incfg: False
+    desc: "(bedgraph export only) the step size used to move the sliding window (default: window_size/5)"
+  output_folder:
+    incfg: False
+    desc: (bed* export only) the folder to store the bedgraph or bedfiles
+    type: str
+  fg_genome_fp:
+    default: *fg
+    desc: (bed* export only) path to foreground genome (autofilled)
       
 setopt:
   META:
