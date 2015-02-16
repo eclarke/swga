@@ -47,7 +47,7 @@ def summary(primer_db, fg_length, bg_length):
         return set_stat_line.format(key=k, val=v)
 
     if nsets > 0:
-        bs = Set.select().order_by(Set.score.desc()).limit(1).get()
+        bs = Set.select().order_by(Set.score).limit(1).get()
         bs_primers = ", ".join(swga.database.get_primers_for_set(bs._id)).strip()
         best_set = bs._id
         bs_size = bs.set_size

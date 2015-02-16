@@ -12,14 +12,15 @@ Since all the results of the calculations are stored in the primer db,
 the user can run this command multiple times to tune parameters and
 subsequent runs will be much faster.
 '''
+import json
 
-import swga
-import swga.primers
 import swga.locate as locate
-from swga.commands import Command
-from swga.melting import Tm
-from swga.database import Primer, update_in_chunks
+import swga.primers
 from swga.clint.textui import progress
+from swga.commands import Command
+from swga.database import Primer, update_in_chunks
+from swga.melting import Tm
+
 
 def main(argv, cfg_file):
     cmd = Command('filter', cfg_file=cfg_file)
@@ -30,17 +31,27 @@ def main(argv, cfg_file):
     # If we have an input file, use that. Otherwise pull from db
     if cmd.input:
         with open(cmd.input, 'rb') as infile:
-            primers = swga.primers.read_primer_list(infile, cmd.fg_genome_fp,
-                                                    cmd.bg_genome_fp)  
+            primers = swga.primers.read_primer_list(
+                infile,
+                cmd.fg_genome_fp,
+                cmd.bg_genome_fp)  
     else:
         cmd.skip_filtering = False
         primers = Primer.select()
 
+    # Undo all active marks, if any
     deactivate_all_primers()
+    
     if not cmd.skip_filtering:
-        primers = filter_primers(primers, cmd.fg_min_avg_rate, cmd.bg_max_avg_rate,
-                                 cmd.fg_length, cmd.bg_length, cmd.min_tm,
-                                 cmd.max_tm, cmd.max_primers)
+        primers = filter_primers(
+            primers,
+            cmd.fg_min_avg_rate,
+            cmd.bg_max_avg_rate,
+            cmd.fg_length,
+            cmd.bg_length,
+            cmd.min_tm,
+            cmd.max_tm,
+            cmd.max_primers)
     
     update_locations(primers, cmd.fg_genome_fp)
     activate_primers(primers)
@@ -141,7 +152,7 @@ def update_locations(primers, fg_genome_fp):
     # For more than 15 primers, we find the locations in parallel for performance
     if 0 < len(primers) < 15:
         for p in progress.bar(primers, label="Finding binding locations... "):
-            p.locations = locate.primer_bind_sites(p.seq, fg_genome_fp)
+            p.locations = json.dumps(locate.binding_sites(p.seq, fg_genome_fp))
     elif 0 < len(primers):
         primers = locate.primers_in_parallel(primers,
                                              fg_genome_fp)

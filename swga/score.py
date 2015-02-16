@@ -6,7 +6,6 @@ Functions for retrieving and scoring primer sets.
 """
 import stats
 import importlib
-import swga.primers
 import json
 
 def read_set_finder_line(line):
@@ -19,31 +18,20 @@ def read_set_finder_line(line):
     return (primer_set, float(weight))
 
 
-def get_primers_from_ids(primer_ids, primer_store):
+def linearize_binding_sites(primers, chr_ends):
     '''
-    Retrieves the Primer object for each id in a list from the stored locations.
-
-    Arguments:
-    primer_ids: a list of primer ids (integers)
-    primer_store: A dict of the form {primer_id: {'primer':Primer, 'loc':[locations]}}
-
-    Returns: a list of Primers
+    Modifies the primer binding site locations as if they were positions on a
+    linear genome composed of all the chromosomes concatenated together. This
+    allows us to compute distances between primer binding sites correctly.
     '''
-    return [primer_store[primer]['primer'] for primer in primer_ids]
-
-
-def aggregate_primer_locations(primers):
-    '''
-    Retrieves the primer binding locations for each id in a list from the stored
-    binding locations.
-
-    Arguments:
-    primer: a list of primers
-
-    Returns: a list with all the binding sites of the primers in a set, aggregated
-    '''
-    # Aggregates all the locations into one list
-    return sum([json.loads(primer.locations) for primer in primers], [])
+    new_locs = []
+    for primer in primers:
+        for rec, locs in json.loads(primer.locations).iteritems():
+            print rec
+            assert rec in chr_ends.keys()
+            chr_start, chr_end = chr_ends[rec]
+            new_locs += [l + chr_start for l in locs] + [chr_start, chr_end]
+    return new_locs
 
 
 def seq_diff(seq):
