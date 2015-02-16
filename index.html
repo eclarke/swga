@@ -1,37 +1,72 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
+
   <head>
-    <meta charset="utf-8">
+    <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>SWGA by eclarke</title>
+    <meta name="description" content="SWGA : Workflow to select primers for selective whole-genome amplification (SWGA)">
 
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>SWGA</title>
   </head>
+
   <body>
-    <div class="wrapper">
-      <header>
-        <h1>SWGA</h1>
-        <p>Workflow to select primers for selective whole-genome amplification (SWGA)</p>
 
-        <p class="view"><a href="https://github.com/eclarke/swga">View the Project on GitHub <small>eclarke/swga</small></a></p>
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/eclarke/swga">View on GitHub</a>
 
+          <h1 id="project_title">SWGA</h1>
+          <h2 id="project_tagline">Workflow to select primers for selective whole-genome amplification (SWGA)</h2>
 
-        <ul>
-          <li><a href="https://github.com/eclarke/swga/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/eclarke/swga/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/eclarke/swga">View On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
-      <section>
-        <h3>
-<a id="welcome-to-swga" class="anchor" href="#welcome-to-swga" aria-hidden="true"><span class="octicon octicon-link"></span></a>Welcome to SWGA.</h3>
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/eclarke/swga/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/eclarke/swga/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
 
-<p>Selective whole-genome amplification (SWGA) is a way to specifically amplify a target genome over background sample DNA. For more information, see <a href="http://www.genetics.org/content/198/2/473.long">Leichty &amp; Brisson, <em>Genetics</em>, 2014</a>.</p>
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a id="selective-whole-genome-amplification" class="anchor" href="#selective-whole-genome-amplification" aria-hidden="true"><span class="octicon octicon-link"></span></a>Selective whole genome amplification</h1>
+
+<p>Selective whole-genome amplification (SWGA) is a way to specifically amplify a target genome over background sample DNA. 
+For instance, we can design a set of primers that amplify a parasite's genome in a sample that is overwhelmingly composed of host DNA. For more information, see <a href="http://www.genetics.org/content/198/2/473.long">Leichty &amp; Brisson, <em>Genetics</em>, 2014</a>.</p>
+
+<p>This software is built to find sets of compatible PCR primers that can be used for SWGA. It can be run on a range of hardware, from personal laptops to computing clusters and servers.</p>
+
+<h2>
+<a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features:</h2>
+
+<ul>
+<li>Counts all the possible primers in a size range in both genomes</li>
+<li>Filters primers based on:
+
+<ul>
+<li>foreground and background genome binding rates</li>
+<li>melting temperatures (with a built-in melt temp calculator that accounts for mono- and divalent cation solutions!)</li>
+<li>Possible homodimerization</li>
+</ul>
+</li>
+<li>Finds primer sets containing primers that are compatible with each other using graph theory (largest clique formation). The process ensures:
+
+<ul>
+<li>No primer in a set is a heterodimer</li>
+<li>Even binding site spacing in foreground genome</li>
+<li>Low total binding to background genome</li>
+</ul>
+</li>
+<li>Score each set based on certain binding metrics and allows exploration of high-scoring sets via output to common formats.</li>
+</ul>
+
+<h2>
+<a id="using-swga" class="anchor" href="#using-swga" aria-hidden="true"><span class="octicon octicon-link"></span></a>Using SWGA</h2>
+
+<p>Follow the installation instructions <a href="https://github.com/eclarke/swga/wiki/Installation">here</a>, then visit <a href="https://github.com/eclarke/swga/wiki">Quick Start</a> to get started!</p>
 
 <h3>
 <a id="quick-start" class="anchor" href="#quick-start" aria-hidden="true"><span class="octicon octicon-link"></span></a>Quick start:</h3>
@@ -44,14 +79,19 @@
 <h3>
 <a id="support" class="anchor" href="#support" aria-hidden="true"><span class="octicon octicon-link"></span></a>Support</h3>
 
-<p>Check out the wiki, mailing list, or contact me at <a href="https://github.com/eclarke" class="user-mention">@eclarke</a>.</p>
+<p>Check out the wiki, mailing list (<a href="mailto:swga-dev@googlegroups.com">swga-dev@googlegroups.com</a>), or contact me at <a href="https://github.com/eclarke" class="user-mention">@eclarke</a>.</p>
       </section>
-      <footer>
-        <p>This project is maintained by <a href="https://github.com/eclarke">eclarke</a></p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">SWGA maintained by <a href="https://github.com/eclarke">eclarke</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>
-    <script src="javascripts/scale.fix.js"></script>
+
     
+
   </body>
 </html>
