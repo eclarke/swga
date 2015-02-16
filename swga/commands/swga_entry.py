@@ -15,6 +15,7 @@ Pipeline commands:
   export:           export sets and primers
 
 Other commands:
+  score:            score a set specified by a list of primers in a file
   setopt:           set an option's default value in the parameters file
 
 Options:
@@ -27,6 +28,7 @@ def main():
                     'count': commands.count.main,
                     'filter': commands.filter.main,
                     'find_sets': commands.find_sets.main,
+                    'score': commands.score.main,
                     'export': commands.export.main,
                     'setopt': commands.setopt.main}
 

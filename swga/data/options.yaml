@@ -160,22 +160,37 @@ find_sets:
     default: 500
     desc: Max number of sets to check
     type: int
-  score_expression:
-    default: "(fg_dist_mean * (1 / fg_dist_gini)) / (bg_ratio)"
-    desc: >
-      Specify an expression to calculate the set score. Code must only use the
-      following variables: set_size, fg_dist_mean, fg_dist_std, fg_dist_gini,
-      fg_dist_max, bg_ratio. Expression must have valid Python syntax.
-  plugin_score_fun:
-    default: null
-    desc: >
-      Specify a path to a scoring function to use instead of the normal
-      scoring function, to create custom metrics or output. For help, see
-      wiki. Incompatible with --score_expression argument.
   reset:
     incfg: False
     desc: remove all previously-found sets
     opttype: flag
+
+
+score:
+  META:
+    desc: score a set of primers
+  primer_db:
+    default: *primerdb
+    desc: primer database name
+  fg_genome_fp: 
+    default: *fg
+    desc: path to foreground (aka target) genome
+  bg_genome_fp:
+    default: *bg
+    desc: path to background genome
+  input:
+    default: null
+    desc: a file containing a list of primers to score, one per line
+    type: File-r
+    opttype: arg
+    incfg: False
+  score_expression:
+    default: "(fg_dist_mean * fg_dist_gini) / (bg_ratio)"
+    desc: >
+      Specify an expression to calculate the set score. Code must only use the
+      following variables: set_size, fg_dist_mean, fg_dist_std, fg_dist_gini,
+      fg_dist_max, bg_ratio. Expression must have valid Python syntax.
+
 
 
 export:

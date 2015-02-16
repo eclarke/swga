@@ -38,8 +38,6 @@ def summary(primer_db, fg_length, bg_length):
         .scalar(as_tuple=True))
 
     nsets = Set.select(fn.Count(Set._id)).scalar()
-    set_stat_line = "{key:.<16}: {val: >10s}"
-    num_fmt_str = "{:,G}"
 
     def fmtkv(k, v):
         if not isinstance(v, basestring):
@@ -108,3 +106,10 @@ The primers in Set {best_set} are:
 
     with indent(2):
         puts(max_width(summary_msg, 80))
+
+def fmtkv(k, v):
+    set_stat_line = "{key:.<16}: {val: >10s}"
+    num_fmt_str = "{:,G}"
+    if not isinstance(v, basestring):
+        v = num_fmt_str.format(v)
+    return set_stat_line.format(key=k, val=v)
