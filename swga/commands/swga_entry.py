@@ -15,6 +15,7 @@ Pipeline commands:
   export:           export sets and primers
 
 Other commands:
+  activate:         activate a list of primers, calculating Tm and locations
   score:            score a set specified by a list of primers in a file
   setopt:           set an option's default value in the parameters file
 
@@ -29,6 +30,7 @@ def main():
                     'filter': commands.filter.main,
                     'find_sets': commands.find_sets.main,
                     'score': commands.score.main,
+                    'activate': commands.activate.main,
                     'export': commands.export.main,
                     'setopt': commands.setopt.main}
 

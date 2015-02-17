@@ -153,6 +153,7 @@ def score_sets(
 
             set_passed = score_set(
                 set_id=passed,
+                bg_ratio=bg_ratio,
                 primers=primers,
                 chr_ends=chr_ends,
                 score_fun=score_fun,

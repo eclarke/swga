@@ -23,7 +23,7 @@ def main(argv, cfg_file):
 
 
 def count_specific_kmers(kmers, fg_genome_fp, bg_genome_fp):
-    # Remove primers that already exist and warn users
+    # Skip primers that already exist and warn users
     existing = [p.seq for p in Primer.select().where(Primer.seq << kmers)]
     for p in existing:
         swga.message("{} already exists in db, skipping...".format(p))

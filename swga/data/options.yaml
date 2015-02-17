@@ -178,6 +178,9 @@ score:
   bg_genome_fp:
     default: *bg
     desc: path to background genome
+  bg_genome_len:
+    default: *bglen
+    desc: length of background genome (autofilled by swga init)
   input:
     default: null
     desc: a file containing a list of primers to score, one per line
@@ -268,3 +271,26 @@ setopt:
     default: null
     desc: the new value of the option
     opttype: arg
+
+activate:
+  META:
+    desc: activate a list of primers, updating melting temp and fg binding locations as needed
+  input:
+    default: null
+    desc: a file containing a list of primers to score, one per line
+    type: File-r
+    opttype: arg
+    incfg: False
+  reset:
+    desc: reset what primers are marked as active
+    opttype: flag
+    incfg: False
+  primer_db:
+    default: *primerdb
+    desc: primer database name
+  fg_genome_fp: 
+    default: *fg
+    desc: path to foreground (aka target) genome  
+  bg_genome_fp:
+    default: *bg
+    desc: path to background genome

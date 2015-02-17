@@ -35,17 +35,21 @@ def main(argv, cfg_file):
         chr_ends=chr_ends,
         score_fun=score_fun,
         score_expression=cmd.score_expression,
+        bg_genome_len=cmd.bg_genome_len,
+        bg_ratio=None,
         max_fg_bind_dist=0,
         interactive=True)
 
 
 def score_set(
         set_id,
+        bg_ratio,
         primers,
         chr_ends,
         score_fun,
         score_expression,
         max_fg_bind_dist, 
+        bg_genome_len=None,
         interactive=False):
     
 
@@ -56,7 +60,12 @@ def score_set(
     if not interactive and max_dist > max_fg_bind_dist:
         return False
 
-    bg_ratio = sum(p.bg_freq for p in primers)
+    if not bg_ratio and not bg_genome_len:
+        swga_error("Neither background length nor ratio were provided, "
+                   "cannot calculate bg_ratio")    
+    elif not bg_ratio:
+        bg_ratio = float(bg_genome_len)/sum(p.bg_freq for p in primers)
+
     set_score, variables = score_fun(
         primer_set=primers,
         primer_locs=binding_locations,
@@ -90,7 +99,7 @@ def score_set(
         if interactive:
             swga.message("Set {} added successfully.".format(set_id))
 
-
+    return True
             
                 
                 

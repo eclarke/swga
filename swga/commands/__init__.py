@@ -9,5 +9,6 @@ from . import (
     score,
     summary,
     export,
+    activate,
     setopt)
 
