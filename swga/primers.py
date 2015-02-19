@@ -16,7 +16,6 @@ import swga.core
 import swga.locate
 import swga.utils.resources as resources
 from swga.database import Primer
-from pyfaidx import Fasta
 
 
 def count_kmers(k, genome_fp, cwd, threshold=1):
