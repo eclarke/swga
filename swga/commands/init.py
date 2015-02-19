@@ -1,4 +1,5 @@
 import click
+import subprocess
 from click._compat import filename_to_ui
 import os, sys, stat
 from pyfaidx import Fasta
@@ -84,6 +85,7 @@ def main(fg_genome_fp, bg_genome_fp):
               
 
 def fasta_stats(fasta_fp):
+    check_empty_lines(fasta_fp)
     try:
         fasta = Fasta(fasta_fp)
         length = sum([len(r) for r in fasta])
@@ -92,8 +94,28 @@ def fasta_stats(fasta_fp):
     except:
         click.echo(click.style("\nError reading %s: invalid FASTA format?" %
                                fasta_fp, fg = "red"))
-        sys.exit(1)
+        raise
 
+
+def check_empty_lines(fasta_fp):
+    '''
+    The pyfaidx module has issues with blank lines in Fasta files. This checks
+    for their presence and offers to remove them in-place.
+    '''
+    basename = os.path.basename(fasta_fp)
+    try:
+        check = subprocess.check_output(
+            "grep -n '^$' {}".format(basename), shell=True)
+        print check
+    except subprocess.CalledProcessError as e:
+        check = None
+    if check:
+        click.confirm(
+            "{} has blank lines, which can interfere with SWGA."
+            " Is it okay to remove these lines from the file?"
+            .format(fasta_fp), abort=True)
+        subprocess.check_call("sed -i '/^$/d' {}".format(basename), shell=True)
+            
 
 def monkeypatch_method(cls):
     def decorator(func):

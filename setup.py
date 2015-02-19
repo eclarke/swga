@@ -23,7 +23,8 @@ setup(
                       'click',
                       'pyyaml',
                       'peewee',
-                      'data_hacks'],
+                      'data_hacks',
+                      'pytest'],
     classifiers = [
         'Programming Language :: Python',
         'Development Status :: 3 - Alpha',
