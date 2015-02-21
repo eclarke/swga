@@ -76,7 +76,7 @@ class Set(SwgaBase):
     in the set are found using the PrimerSet intermediate table.
     '''
     _id = pw.PrimaryKeyField()
-    _hash = pw.IntegerField(unique=True)
+    _hash = pw.IntegerField(unique=True, null=True)
     primers = ManyToManyField(Primer, related_name='sets')
     score = pw.FloatField()
     set_size = pw.IntegerField(null=True)
