@@ -76,6 +76,7 @@ class Set(SwgaBase):
     in the set are found using the PrimerSet intermediate table.
     '''
     _id = pw.PrimaryKeyField()
+    _hash = pw.IntegerField(unique=True)
     primers = ManyToManyField(Primer, related_name='sets')
     score = pw.FloatField()
     set_size = pw.IntegerField(null=True)
@@ -148,8 +149,9 @@ def add_set(_id, primers, **kwargs):
         nprimers = len(primers)
     if nprimers == 0:
         swga.swga_error("Cannot have an empty set")
-    Set.delete().where(Set._id == _id)
-    s = Set.create(_id=_id, **kwargs)
+    _hash = hash(frozenset([p.seq for p in primers]))
+    Set.delete().where((Set._id == _id) | (Set._hash == _hash))
+    s = Set.create(_id=_id, _hash=_hash, **kwargs)
     s.primers.add(primers)
     return s
 

@@ -88,9 +88,10 @@ def find_sets(
         graph_fname=graph_fname):
     swga.message("Now finding sets. If nothing appears, try relaxing your parameters.")
     set_finder = resource_filename("swga", "bin/set_finder")
+    
     find_set_cmd = [set_finder, '-q', '-q', '-B', min_bg_bind_dist,
                     '-L', bg_genome_len, '-m', min_size, '-M',
-                    max_size, '-a', '-u', '-r', 'unweighted-coloring',
+                    max_size, '-a', '-u', '-r', 'random',
                     graph_fname]
     find_set_cmd = " ".join([str(_) for _ in find_set_cmd])
 
@@ -151,7 +152,7 @@ def score_sets(
             primers = swga.database.get_primers_for_ids(primer_ids)
             processed += 1
 
-            set_passed = score_set(
+            set_passed, max_dist = score_set(
                 set_id=passed,
                 bg_ratio=bg_ratio,
                 primers=primers,
@@ -163,6 +164,8 @@ def score_sets(
 
             if set_passed:
                 passed += 1
+
+            min_max_dist = max_dist if max_dist < min_max_dist else min_max_dist
 
             swga.message(
                 status.format(processed, passed, min_max_dist), newline=False)

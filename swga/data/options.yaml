@@ -164,6 +164,11 @@ find_sets:
     incfg: False
     desc: remove all previously-found sets
     opttype: flag
+  set_finder_filter:
+    default: bg
+    desc: prioritize the min background binding dist (bg, default), or foreground binding max dist
+    choices: {bg, fg}
+    
 
 
 score:
@@ -185,7 +190,6 @@ score:
     default: null
     desc: a file containing a list of primers to score, one per line
     type: File-r
-    opttype: arg
     incfg: False
   score_expression:
     default: "(fg_dist_mean * fg_dist_gini) / (bg_ratio)"

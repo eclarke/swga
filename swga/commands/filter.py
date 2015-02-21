@@ -110,7 +110,7 @@ def filter_primers(
                                           (Primer.tm <= max_tm) &
                                           (Primer.tm >= min_tm))
     swga.message("{} of those primers have a melting temp within given range"
-                 .format(candidates.count()))
+                 .format(valid_primers.count()))
 
     # Sort by background binding rate (smallest -> largest) and select top `n`,
     # then sort those by ratio (highest -> lowest)

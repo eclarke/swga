@@ -58,7 +58,7 @@ def score_set(
 
     # Abort now if it's not passing filter (and it's not a user-supplied set)
     if not interactive and max_dist > max_fg_bind_dist:
-        return False
+        return False, max_dist
 
     if not bg_ratio and not bg_genome_len:
         swga_error("Neither background length nor ratio were provided, "
@@ -99,7 +99,7 @@ def score_set(
         if interactive:
             swga.message("Set {} added successfully.".format(set_id))
 
-    return True
+    return True, max_dist 
             
                 
                 
