@@ -17,6 +17,11 @@ You can run SWGA on hardware ranging from a Mac laptop to a high-end server.
   - Low total binding to background genome
 - Score each set based on certain binding metrics and allows exploration of high-scoring sets via output to common formats.
 
-## Using SWGA
+## Installation
+Follow the installation instructions [here](https://github.com/eclarke/swga/wiki/Installation)
 
-Follow the installation instructions [here](https://github.com/eclarke/swga/wiki/Installation), then visit [Quick Start](https://github.com/eclarke/swga/wiki) to get started!
+## Using SWGA
+Follow the guide on our Wiki/[Quick Start](https://github.com/eclarke/swga/wiki) to get started!
+
+## Updates
+New features and bugfixes are released all the time. To update, simply follow steps 3-5 on the [installation instructions](https://github.com/eclarke/swga/wiki/Installation).
