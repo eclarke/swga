@@ -16,7 +16,7 @@ from swga.clint.textui import progress
 from swga.commands import Command
 from swga.commands.score import score_set
 from swga.database import Primer, Set, update_in_chunks, init_db
-
+from swga.setfinder import mp_find_sets
 
 graph_fname = "compatibility_graph.dimacs"
 
@@ -39,11 +39,21 @@ def main(argv, cfg_file):
 
     make_graph(cmd.max_hetdimer_bind, graph_fname)
 
-    setlines = find_sets(
-        cmd.min_bg_bind_dist,
-        cmd.min_size,
-        cmd.max_size,
-        cmd.bg_genome_len)
+    if cmd.workers <= 1:
+        setlines = find_sets(
+            cmd.min_bg_bind_dist,
+            cmd.min_size,
+            cmd.max_size,
+            cmd.bg_genome_len,
+            graph_fp=graph_fname)
+    else:
+        setlines = mp_find_sets(
+            nprocesses=cmd.workers,
+            graph_fp=graph_fname,
+            min_bg_bind_dist=cmd.min_bg_bind_dist,
+            min_size=cmd.min_size,
+            max_size=cmd.max_size,
+            bg_genome_len=cmd.bg_genome_len)
     
     score_sets(
         setlines,

@@ -1,0 +1,17 @@
+SWGA Changelog
+===================
+
+Version 0.3.1
+--------------------
+This update brings a few new features and a couple bugfixes. The primer database
+and parameters file have changed, so be sure to run `swga init` and `swga count`
+again on any current projects.
+What's new:
+- Search the primer compatibility graph using multiple independent workers. This
+  may allow users to find better sets faster, but since the graph coloring is
+  randomized, this is not guaranteed.  
+- Users can now score single sets using `swga score`
+- Users can now activate custom sets using `swga activate`
+- `swga init` now handles blank lines in FASTA files
+- Restored original scoring metric
+- Better unit test coverage 

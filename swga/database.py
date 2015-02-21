@@ -139,7 +139,7 @@ def create_tables(drop=True):
         db.drop_tables(tbl_list, safe=True)  
     db.create_tables(tbl_list, safe=True)
 
-
+@db.atomic()
 def add_set(_id, primers, **kwargs):
     if not primers:
         swga.swga_error("Invalid primers for set")
@@ -150,7 +150,8 @@ def add_set(_id, primers, **kwargs):
     if nprimers == 0:
         swga.swga_error("Cannot have an empty set")
     _hash = hash(frozenset([p.seq for p in primers]))
-    Set.delete().where((Set._id == _id) | (Set._hash == _hash))
+    if Set.select(pw.fn.Count(Set._id)).where(Set._hash == _hash).scalar() > 0:
+        return None
     s = Set.create(_id=_id, _hash=_hash, **kwargs)
     s.primers.add(primers)
     return s

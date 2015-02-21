@@ -164,10 +164,13 @@ find_sets:
     incfg: False
     desc: remove all previously-found sets
     opttype: flag
-  set_finder_filter:
-    default: bg
-    desc: prioritize the min background binding dist (bg, default), or foreground binding max dist
-    choices: {bg, fg}
+  workers:
+    default: 1
+    desc: >
+      number of workers to spawn. 1 worker searches graph using weighted vertex coloring;
+      > 1 workers randomizes vertex coloring to explore more area simultaneously.
+    type: int
+    
     
 
 

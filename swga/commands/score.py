@@ -90,16 +90,19 @@ def score_set(
             add_set = False
             
     if add_set:
-        swga.database.add_set(
+        s = swga.database.add_set(
             _id=set_id,
             primers=primers,
             score=set_score,
             scoring_fn=score_expression,
             **variables)
-        if interactive:
+        set_added = s is not None
+            
+        if interactive and set_added:
             swga.message("Set {} added successfully.".format(set_id))
-
-    return True, max_dist 
+        elif interactive:
+            swga.message("That primer set already exists.")
+    return set_added, max_dist 
             
                 
                 
