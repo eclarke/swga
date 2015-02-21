@@ -5,7 +5,7 @@ import swga.primers
 import swga.database as database
 from collections import defaultdict
 from swga.core import chunk_iterator
-from swga.primers import Primer
+from swga.primers import Primer, max_consecutive_binding
 from swga.commands import Command
 import click
 
@@ -52,6 +52,7 @@ def count_kmers(fg_genome_fp,
                 max_size, 
                 min_fg_bind,
                 max_bg_bind,
+                max_dimer_bp,
                 primer_db,
                 exclude_fp,
                 exclude_threshold, **kwargs):
@@ -71,8 +72,8 @@ def count_kmers(fg_genome_fp,
 
     kmers = []
     for k in xrange(min_size, max_size + 1):
-        fg = swga.primers.count_kmers(k, fg_genome_fp, output_dir, 1)
-        bg = swga.primers.count_kmers(k, bg_genome_fp, output_dir, 1)
+        fg = swga.primers.count_kmers(k, fg_genome_fp, output_dir)
+        bg = swga.primers.count_kmers(k, bg_genome_fp, output_dir)
 
         if exclude_fp:
             assert os.path.isfile(exclude_fp)
@@ -84,7 +85,7 @@ def count_kmers(fg_genome_fp,
         # Keep kmers found in foreground, merging bg binding values, and
         # excluding those found in the excluded fasta
         
-        kmers = [primer_dict(seq, fg, bg, min_fg_bind, max_bg_bind)
+        kmers = [primer_dict(seq, fg, bg, min_fg_bind, max_bg_bind, max_dimer_bp)
                  for seq in fg.viewkeys()
                  if seq not in ex.viewkeys()]
 
@@ -102,11 +103,17 @@ def count_kmers(fg_genome_fp,
     swga.message("Counted kmers in range %d-%d" % (min_size, max_size))
     
 
-def primer_dict(seq, fg, bg, min_fg_bind, max_bg_bind):
+def primer_dict(seq, fg, bg, min_fg_bind, max_bg_bind, max_dimer_bp):
     fg_freq = fg[seq]
     bg_freq = bg.get(seq, 0) 
     ratio = fg_freq / float(bg_freq) if bg_freq > 0 else float('inf')
-    if fg_freq < min_fg_bind or bg_freq > max_bg_bind:
-        return {}
-    return {'seq': seq, 'fg_freq': fg_freq, 'bg_freq': bg_freq,
+    if ((fg_freq >= min_fg_bind) and
+        (bg_freq <= max_bg_bind) and
+        (max_consecutive_binding(seq, seq) <= max_dimer_bp)):
+        return {
+            'seq': seq,
+            'fg_freq': fg_freq,
+            'bg_freq': bg_freq,
             'ratio': ratio}
+    else:
+        return {}

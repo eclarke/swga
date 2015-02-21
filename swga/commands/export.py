@@ -142,7 +142,7 @@ def validate_order_field(field, model):
 
 
 def _mk_folder_name(folder, fg_genome_fp, setstr):
-    fg_name = ".".join(os.path.basename(fg_genome_fp).split(".")[:-1])
+    fg_name = ".".join(os.path.basename(fg_genome_fp).split(".")[:-1]) + "_export"
     return os.path.join(folder, fg_name, setstr)
                                
         
@@ -228,10 +228,10 @@ def export_bedgraph(set, fg_genome_fp, outpath, opts_str, window_size, step_size
                     expected_size=int(chr_len/this_step_size),
                     label=record_name):
                 end = start + this_window_size
-                hits = [counter[i] for i in xrange(start, end)]
-                avg_binding = swga.stats.mean(hits)
+                # number of bases bound ('hit')
+                nhits = sum([counter[i] for i in xrange(start, end)])
                 linestr = "{} {} {} {}\n".format(
-                    record_name, start, end, avg_binding)
+                    record_name, start, end, nhits)
                 bedgraph_file.write(linestr)
             
                 

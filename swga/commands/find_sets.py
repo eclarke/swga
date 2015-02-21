@@ -16,7 +16,7 @@ from swga.clint.textui import progress
 from swga.commands import Command
 from swga.commands.score import score_set
 from swga.database import Primer, Set, update_in_chunks, init_db
-from swga.setfinder import mp_find_sets
+import swga.setfinder as setfinder
 
 graph_fname = "compatibility_graph.dimacs"
 
@@ -37,17 +37,18 @@ def main(argv, cfg_file):
             s.primers.clear()
             s.delete_instance()
 
-    make_graph(cmd.max_hetdimer_bind, graph_fname)
-
+    make_graph(cmd.max_dimer_bp, graph_fname)
+    
+    swga.message("Now finding sets. If nothing appears, try relaxing your parameters.")
     if cmd.workers <= 1:
-        setlines = find_sets(
+        setlines = setfinder.find_sets(
             cmd.min_bg_bind_dist,
             cmd.min_size,
             cmd.max_size,
             cmd.bg_genome_len,
             graph_fp=graph_fname)
     else:
-        setlines = mp_find_sets(
+        setlines = setfinder.mp_find_sets(
             nprocesses=cmd.workers,
             graph_fp=graph_fname,
             min_bg_bind_dist=cmd.min_bg_bind_dist,
@@ -88,35 +89,6 @@ def make_graph(max_hetdimer_bind, outfile):
 
     with open(outfile, 'wb') as out:
         graph.write_graph(primers, edges, out)
-
-        
-def find_sets(
-        min_bg_bind_dist,
-        min_size,
-        max_size,
-        bg_genome_len,
-        graph_fname=graph_fname):
-    swga.message("Now finding sets. If nothing appears, try relaxing your parameters.")
-    set_finder = resource_filename("swga", "bin/set_finder")
-    
-    find_set_cmd = [set_finder, '-q', '-q', '-B', min_bg_bind_dist,
-                    '-L', bg_genome_len, '-m', min_size, '-M',
-                    max_size, '-a', '-u', '-r', 'random',
-                    graph_fname]
-    find_set_cmd = " ".join([str(_) for _ in find_set_cmd])
-
-    # We call the set_finder command as a line-buffered subprocess that passes
-    # its output back to this process. The function then yields each line as a
-    # generator; when close() is called, it terminates the set_finder subprocess.
-    process = subprocess.Popen(find_set_cmd, shell=True, stdout=subprocess.PIPE,
-                               preexec_fn=os.setsid, bufsize=1)
-    try:
-        for line in iter(process.stdout.readline, b''):
-            (yield line)
-    finally:
-        time.sleep(0.1)
-        if process.poll() is None:
-            os.killpg(process.pid, signal.SIGKILL)
 
         
 def score_sets(
