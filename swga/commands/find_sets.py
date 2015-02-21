@@ -1,5 +1,4 @@
 import functools
-import json
 import os
 import signal
 import subprocess
@@ -15,14 +14,18 @@ import swga.locate as locate
 import swga.score as score
 from swga.clint.textui import progress
 from swga.commands import Command
+from swga.commands.score import score_set
 from swga.database import Primer, Set, update_in_chunks, init_db
-
+from swga.setfinder import mp_find_sets
 
 graph_fname = "compatibility_graph.dimacs"
 
 def main(argv, cfg_file):
     cmd = Command('find_sets', cfg_file=cfg_file)
+    score_cmd = Command('score', cfg_file=cfg_file)
     cmd.parse_args(argv)
+    score_cmd.parse_args(argv)
+
     init_db(cmd.primer_db)
 
     # We need to clear all the previously-used sets each time due to uniqueness
@@ -36,20 +39,29 @@ def main(argv, cfg_file):
 
     make_graph(cmd.max_hetdimer_bind, graph_fname)
 
-    setlines = find_sets(
-        cmd.min_bg_bind_dist,
-        cmd.min_size,
-        cmd.max_size,
-        cmd.bg_genome_len)
+    if cmd.workers <= 1:
+        setlines = find_sets(
+            cmd.min_bg_bind_dist,
+            cmd.min_size,
+            cmd.max_size,
+            cmd.bg_genome_len,
+            graph_fp=graph_fname)
+    else:
+        setlines = mp_find_sets(
+            nprocesses=cmd.workers,
+            graph_fp=graph_fname,
+            min_bg_bind_dist=cmd.min_bg_bind_dist,
+            min_size=cmd.min_size,
+            max_size=cmd.max_size,
+            bg_genome_len=cmd.bg_genome_len)
     
     score_sets(
         setlines,
         cmd.fg_genome_fp,
-        cmd.score_expression,
+        score_cmd.score_expression,
         cmd.max_fg_bind_dist,
-        cmd.max_sets,
-        cmd.plugin_score_fun)
-    
+        cmd.max_sets)
+
     
 def make_graph(max_hetdimer_bind, outfile):
     '''Selects all active primers and outputs a primer compatibility graph.'''
@@ -86,9 +98,10 @@ def find_sets(
         graph_fname=graph_fname):
     swga.message("Now finding sets. If nothing appears, try relaxing your parameters.")
     set_finder = resource_filename("swga", "bin/set_finder")
+    
     find_set_cmd = [set_finder, '-q', '-q', '-B', min_bg_bind_dist,
                     '-L', bg_genome_len, '-m', min_size, '-M',
-                    max_size, '-a', '-u', '-r', 'unweighted-coloring',
+                    max_size, '-a', '-u', '-r', 'random',
                     graph_fname]
     find_set_cmd = " ".join([str(_) for _ in find_set_cmd])
 
@@ -111,8 +124,7 @@ def score_sets(
         fg_genome_fp,
         score_expression,
         max_fg_bind_dist,
-        max_sets,
-        plugin_score_fun=None):
+        max_sets):
     '''
     Retrieves the primers and their binding locations from the output of
     find_sets and calculates the max binding distance between primers in the
@@ -127,17 +139,10 @@ def score_sets(
     if max_sets < 1:
         max_sets = float("inf")
 
-    # Find the user-defined scoring function    
-    score_fun = None
-    if score_expression and plugin_score_fun:
-        swga.warn("Warning: User or config file specified both scoring"
-                  " expression and plugin score function. Using the plugin score"
-                  " function given by %s." % plugin_score_fun)
-        score_fun = swga.get_user_fun(score_fun)
-    elif score_expression:
-        score_fun = functools.partial(
-            score.default_score_set,
-            expression=score_expression)
+    # Evaluate the user-defined scoring function    
+    score_fun = functools.partial(
+        score.default_score_set,
+        expression=score_expression)
 
     chr_ends = locate.chromosome_ends(fg_genome_fp)
 
@@ -146,7 +151,6 @@ def score_sets(
     
     status = "\rSets: {: ^5,.6g} | Passed: {: ^5,.6g} | Smallest max binding distance:{: ^12,.4G}"
 
-
     try:
         for line in setlines:
             try:
@@ -154,36 +158,28 @@ def score_sets(
             except ValueError:
                 swga.warn("Could not parse line:\n\t"+line)
                 continue
+
             primers = swga.database.get_primers_for_ids(primer_ids)
             processed += 1
-            
-            # Add chromosome ends to locations to make distances accurate
-            binding_locations = locate.linearize_binding_sites(primers, chr_ends)
-            max_dist = max(score.seq_diff(binding_locations))
 
-            # Remember the smallest max distance seen so far
-            min_max_dist = min_max_dist if max_dist > min_max_dist else max_dist
+            set_passed, max_dist = score_set(
+                set_id=passed,
+                bg_ratio=bg_ratio,
+                primers=primers,
+                chr_ends=chr_ends,
+                score_fun=score_fun,
+                score_expression=score_expression,
+                max_fg_bind_dist=max_fg_bind_dist,
+                interactive=False)
 
-            # Score the set if it passes the binding cutoff
-            if max_dist <= max_fg_bind_dist:
+            if set_passed:
                 passed += 1
-                
-                set_score, variables = score_fun(
-                    primer_set=primers,
-                    primer_locs=binding_locations,
-                    max_dist=max_dist,
-                    bg_ratio=bg_ratio,
-                    output_handle=sys.stdout)
 
-                swga.database.add_set(
-                    _id = passed,
-                    primers=primers, 
-                    score=set_score, 
-                    scoring_fn=score_expression,
-                    **variables)
-            
+            min_max_dist = max_dist if max_dist < min_max_dist else min_max_dist
+
             swga.message(
                 status.format(processed, passed, min_max_dist), newline=False)
+
             if passed >= max_sets:
                 swga.message("\nDone (scored %i sets)" % passed)
                 break

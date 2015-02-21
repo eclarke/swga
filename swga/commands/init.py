@@ -1,4 +1,5 @@
 import click
+import subprocess
 from click._compat import filename_to_ui
 import os, sys, stat
 from pyfaidx import Fasta
@@ -18,8 +19,7 @@ plain-text editor like Notepad, TextEdit, or gedit; or with command-line tools
 such as nano, vim, or emacs. 
 
 The values specified in {default_parameters_name} will be used if the
-corresponding values are not specified on the command line, or if the
-"swga autopilot" command is used.
+corresponding values are not specified on the command line.
 """
 
 fg_message = """
@@ -84,6 +84,7 @@ def main(fg_genome_fp, bg_genome_fp):
               
 
 def fasta_stats(fasta_fp):
+    check_empty_lines(fasta_fp)
     try:
         fasta = Fasta(fasta_fp)
         length = sum([len(r) for r in fasta])
@@ -95,6 +96,28 @@ def fasta_stats(fasta_fp):
         raise
 
 
+def check_empty_lines(fasta_fp):
+    '''
+    The pyfaidx module has issues with blank lines in Fasta files. This checks
+    for their presence and offers to remove them in-place.
+    '''
+    basename = os.path.basename(fasta_fp)
+    try:
+        check = subprocess.check_output(
+            "grep -n '^$' {}".format(fasta_fp), shell=True)
+    except subprocess.CalledProcessError:
+        check = None
+    if check:
+        click.confirm(
+            "`{}` has blank lines, which can interfere with SWGA."
+            " Is it okay to remove these lines from the file?"
+            .format(basename), abort=True)
+        # sed -ie gets around the fact that BSD sed -i requires a backup extension
+        # with sed, but we don't want to create a backup. Ensures linux/osx
+        # compatibility. 
+        subprocess.check_call("sed -ie '/^$/d' \"{}\"".format(fasta_fp),
+                              shell=True) 
+            
 
 def monkeypatch_method(cls):
     def decorator(func):

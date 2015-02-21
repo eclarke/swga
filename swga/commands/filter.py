@@ -18,6 +18,7 @@ import swga.locate as locate
 import swga.primers
 from swga.clint.textui import progress
 from swga.commands import Command
+from swga.commands.activate import update_tms, update_locations
 from swga.database import Primer, update_in_chunks
 from swga.melting import Tm
 
@@ -109,7 +110,7 @@ def filter_primers(
                                           (Primer.tm <= max_tm) &
                                           (Primer.tm >= min_tm))
     swga.message("{} of those primers have a melting temp within given range"
-                 .format(candidates.count()))
+                 .format(valid_primers.count()))
 
     # Sort by background binding rate (smallest -> largest) and select top `n`,
     # then sort those by ratio (highest -> lowest)
@@ -123,38 +124,3 @@ def filter_primers(
                    .order_by(Primer.ratio.desc()))
 
     return second_pass
-
-
-def update_tms(primers):
-    """
-    Calculate the primer melting temps for any primers that don't already have
-    them.
-    Updates database with results.
-    """
-    primers = list(Primer.select().where((Primer.seq << primers) &
-                                         (Primer.tm >> None)))
-    if len(primers) > 0:
-        for p in progress.bar(primers, label="Finding melting temps..."):
-            p.tm = Tm(p.seq)
-    update_in_chunks(primers, label="Updating database...")
-
-
-def update_locations(primers, fg_genome_fp):
-    """
-    Find the primer binding sites in the foreground genome for primers that
-    don't have the locations stored already.
-    Updates database with results.
-    """
-    primers = list(Primer.select()
-                   .where((Primer.seq << primers) &
-                          (Primer.locations >> None))
-                   .execute())
-    # For more than 15 primers, we find the locations in parallel for performance
-    if 0 < len(primers) < 15:
-        for p in progress.bar(primers, label="Finding binding locations... "):
-            p.locations = json.dumps(locate.binding_sites(p.seq, fg_genome_fp))
-    elif 0 < len(primers):
-        primers = locate.primers_in_parallel(primers,
-                                             fg_genome_fp)
-    update_in_chunks(primers, label = "Updating database... ")
-    

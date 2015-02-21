@@ -38,13 +38,7 @@ def summary(primer_db, fg_length, bg_length):
         .scalar(as_tuple=True))
 
     nsets = Set.select(fn.Count(Set._id)).scalar()
-    set_stat_line = "{key:.<16}: {val: >10s}"
-    num_fmt_str = "{:,G}"
 
-    def fmtkv(k, v):
-        if not isinstance(v, basestring):
-            v = num_fmt_str.format(v)
-        return set_stat_line.format(key=k, val=v)
 
     if nsets > 0:
         bs = Set.select().order_by(Set.score).limit(1).get()
@@ -82,14 +76,15 @@ def summary(primer_db, fg_length, bg_length):
     Report generated from {primer_db}
 """
 
-    ifzero_primers_msg = colored.green("Run `swga filter` to identify primers to use." 
-                                       if nactive == 0 else "")
-    melting_tmp_msg =  ("""The melting temp of the primers ranges between {min_tm:.2f}C and {max_tm:.2f}C with an average of {avg_tm:.2f}C.
-""" if nactive > 0 else "No melting temps have been calculated yet.")
-
-    
-    ifzero_sets_msg = colored.green("Run `swga find_sets` after identifying valid primers to "
-                                    "begin collecting sets.\n")
+    ifzero_primers_msg = colored.green(
+        "Run `swga filter` to identify primers to use." 
+        if nactive == 0 else "")
+    melting_tmp_msg =  (
+        """The melting temp of the primers ranges between {min_tm:.2f}C and {max_tm:.2f}C with an average of {avg_tm:.2f}C.""" 
+        if nactive > 0 and min_tm and max_tm else 
+        "No melting temps have been calculated yet.")
+    ifzero_sets_msg = colored.green(
+        "Run `swga find_sets` after identifying valid primers to begin collecting sets.\n")
 
     set_msg = ("""
     The best scoring set is #{best_set}, with {bs_size} primers and a score of {bs_score:03f}.\nVarious statistics: 
@@ -108,3 +103,10 @@ The primers in Set {best_set} are:
 
     with indent(2):
         puts(max_width(summary_msg, 80))
+
+def fmtkv(k, v):
+    set_stat_line = "{key:.<16}: {val: >10s}"
+    num_fmt_str = "{:,G}"
+    if not isinstance(v, basestring):
+        v = num_fmt_str.format(v)
+    return set_stat_line.format(key=k, val=v)
