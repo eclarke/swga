@@ -161,7 +161,7 @@ find_sets:
     desc: Max number of sets to check
     type: int
   score_expression:
-    default: "(fg_dist_mean*fg_dist_gini)/(bg_ratio)"
+    default: "(fg_dist_mean * (1 / fg_dist_gini)) / (bg_ratio)"
     desc: >
       Specify an expression to calculate the set score. Code must only use the
       following variables: set_size, fg_dist_mean, fg_dist_std, fg_dist_gini,

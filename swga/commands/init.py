@@ -92,7 +92,8 @@ def fasta_stats(fasta_fp):
     except:
         click.echo(click.style("\nError reading %s: invalid FASTA format?" %
                                fasta_fp, fg = "red"))
-        sys.exit(1)
+        raise
+
 
 
 def monkeypatch_method(cls):
