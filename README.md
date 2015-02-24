@@ -21,7 +21,7 @@ You can run SWGA on hardware ranging from a Mac laptop to a high-end server.
 Follow the installation instructions [here](https://github.com/eclarke/swga/wiki/Installation)
 
 ## Using SWGA
-Follow the guide on our Wiki/[Quick Start](https://github.com/eclarke/swga/wiki) to get started!
+Follow the guide on our Wiki/[Quick Start](https://github.com/eclarke/swga/wiki/Quick-Start) to get started!
 
 ## Updates
 New features and bugfixes are released all the time. To update, simply follow steps 3-5 on the [installation instructions](https://github.com/eclarke/swga/wiki/Installation).
