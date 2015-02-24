@@ -13,6 +13,7 @@
 INTERNAL:
   fg_genome_fp: &fg "{fg_genome_fp}"
   bg_genome_fp: &bg "{bg_genome_fp}"
+  exclude_fp: &exc "{exclude_fp}"
   fg_length: &fglen "{fg_length}"
   bg_length: &bglen "{bg_length}"
   min_fg_rate: &fgrate "{min_fg_rate}"
@@ -56,7 +57,7 @@ count:
     desc: max number of consecutive complementary bases between a primer and its rev. complement
     type: int
   exclude_fp:
-    default: null
+    default: *exc
     desc: >
       (FASTA) any primers appearing here above a threshold will be excluded
   exclude_threshold:
