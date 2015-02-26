@@ -58,7 +58,7 @@ def score_set(
 
     # Abort now if it's not passing filter (and it's not a user-supplied set)
     if not interactive and max_dist > max_fg_bind_dist:
-        return False
+        return False, max_dist
 
     if not bg_ratio and not bg_genome_len:
         swga_error("Neither background length nor ratio were provided, "
@@ -90,16 +90,19 @@ def score_set(
             add_set = False
             
     if add_set:
-        swga.database.add_set(
+        s = swga.database.add_set(
             _id=set_id,
             primers=primers,
             score=set_score,
             scoring_fn=score_expression,
             **variables)
-        if interactive:
+        set_added = s is not None
+            
+        if interactive and set_added:
             swga.message("Set {} added successfully.".format(set_id))
-
-    return True
+        elif interactive:
+            swga.message("That primer set already exists.")
+    return set_added, max_dist 
             
                 
                 

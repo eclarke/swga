@@ -164,6 +164,14 @@ find_sets:
     incfg: False
     desc: remove all previously-found sets
     opttype: flag
+  workers:
+    default: 1
+    desc: >
+      number of workers to spawn. 1 worker searches graph using weighted vertex coloring;
+      > 1 workers randomizes vertex coloring to explore more area simultaneously.
+    type: int
+    
+    
 
 
 score:
@@ -185,7 +193,6 @@ score:
     default: null
     desc: a file containing a list of primers to score, one per line
     type: File-r
-    opttype: arg
     incfg: False
   score_expression:
     default: "(fg_dist_mean * fg_dist_gini) / (bg_ratio)"

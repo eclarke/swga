@@ -16,7 +16,7 @@ from swga.clint.textui import progress
 from swga.commands import Command
 from swga.commands.score import score_set
 from swga.database import Primer, Set, update_in_chunks, init_db
-
+from swga.setfinder import mp_find_sets
 
 graph_fname = "compatibility_graph.dimacs"
 
@@ -39,11 +39,21 @@ def main(argv, cfg_file):
 
     make_graph(cmd.max_hetdimer_bind, graph_fname)
 
-    setlines = find_sets(
-        cmd.min_bg_bind_dist,
-        cmd.min_size,
-        cmd.max_size,
-        cmd.bg_genome_len)
+    if cmd.workers <= 1:
+        setlines = find_sets(
+            cmd.min_bg_bind_dist,
+            cmd.min_size,
+            cmd.max_size,
+            cmd.bg_genome_len,
+            graph_fp=graph_fname)
+    else:
+        setlines = mp_find_sets(
+            nprocesses=cmd.workers,
+            graph_fp=graph_fname,
+            min_bg_bind_dist=cmd.min_bg_bind_dist,
+            min_size=cmd.min_size,
+            max_size=cmd.max_size,
+            bg_genome_len=cmd.bg_genome_len)
     
     score_sets(
         setlines,
@@ -88,9 +98,10 @@ def find_sets(
         graph_fname=graph_fname):
     swga.message("Now finding sets. If nothing appears, try relaxing your parameters.")
     set_finder = resource_filename("swga", "bin/set_finder")
+    
     find_set_cmd = [set_finder, '-q', '-q', '-B', min_bg_bind_dist,
                     '-L', bg_genome_len, '-m', min_size, '-M',
-                    max_size, '-a', '-u', '-r', 'unweighted-coloring',
+                    max_size, '-a', '-u', '-r', 'random',
                     graph_fname]
     find_set_cmd = " ".join([str(_) for _ in find_set_cmd])
 
@@ -151,7 +162,7 @@ def score_sets(
             primers = swga.database.get_primers_for_ids(primer_ids)
             processed += 1
 
-            set_passed = score_set(
+            set_passed, max_dist = score_set(
                 set_id=passed,
                 bg_ratio=bg_ratio,
                 primers=primers,
@@ -163,6 +174,8 @@ def score_sets(
 
             if set_passed:
                 passed += 1
+
+            min_max_dist = max_dist if max_dist < min_max_dist else min_max_dist
 
             swga.message(
                 status.format(processed, passed, min_max_dist), newline=False)

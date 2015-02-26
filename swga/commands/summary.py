@@ -98,7 +98,6 @@ The primers in Set {best_set} are:
     nactive = colored.blue(nactive, bold=True)
     nsets = colored.blue(nsets, bold=True)
     set_msg = set_msg.format(**locals())
-    print min_tm, max_tm, nactive
     melting_tmp_msg = melting_tmp_msg.format(**locals())
     summary_msg = summary_msg.format(**locals())
 

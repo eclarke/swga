@@ -17,7 +17,9 @@ class Command:
         
 
     def parse_args(self, argv, quiet=False):
-        self.args = vars(self.parser.parse_args(argv))
+        args, unknown = self.parser.parse_known_args(argv)
+        self.unknown = unknown
+        self.args = vars(args)
         self.kwargs_as_args(**self.args)
         if not quiet:
             self.pprint_args()
