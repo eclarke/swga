@@ -88,6 +88,8 @@ def main(fg_genome_fp, bg_genome_fp, exclude_fp):
         else:
             click.echo(
                 click.style("No exclusionary sequences specified.", fg="green"))
+            exclude_fp = ""
+
 
     opts = get_swga_opts()
     default_parameters = cfg_from_opts(opts)
