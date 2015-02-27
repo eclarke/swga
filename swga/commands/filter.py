@@ -59,7 +59,7 @@ def main(argv, cfg_file):
     if n_active < cmd.max_primers:
     	swga.warn(
     		"Fewer than {} were selected. You may want to try less "
-    		"restrictive filtering parameters.".format(cmd.max_primers)
+    		"restrictive filtering parameters.".format(cmd.max_primers))
 
 
 def deactivate_all_primers():
