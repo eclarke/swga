@@ -46,8 +46,10 @@ def main(argv, cfg_file):
     if not cmd.skip_filtering:
         primers = filter_primers(
             primers,
-            cmd.fg_min_avg_rate,
-            cmd.bg_max_avg_rate,
+#            cmd.fg_min_avg_rate,
+#            cmd.bg_max_avg_rate,
+            cmd.min_fg_bind,
+            cmd.max_bg_bind,
             cmd.fg_length,
             cmd.bg_length,
             cmd.min_tm,
@@ -73,8 +75,10 @@ def activate_primers(primers):
 
 def filter_primers(
         primers,
-        fg_min_avg_rate,
-        bg_max_avg_rate,
+#        fg_min_avg_rate,
+#        bg_max_avg_rate,
+        min_fg_bind,
+        max_bg_bind,
         fg_length,
         bg_length,
         min_tm,
@@ -85,23 +89,27 @@ def filter_primers(
     those sequences that pass various criteria.
     """
     primers = Primer.select().where(Primer.seq << primers)
-    fg_min_freq = float(fg_min_avg_rate) * fg_length
-    bg_max_freq = float(bg_max_avg_rate) * bg_length
+#    fg_min_freq = float(fg_min_avg_rate) * fg_length
+#    bg_max_freq = float(bg_max_avg_rate) * bg_length
+    fg_min_freq = min_fg_bind
+    bg_max_freq = max_bg_bind
 
     # Find primers that pass the binding rate thresholds
     fgp = Primer.select().where((Primer.seq << primers) &
                                 (Primer.fg_freq >= fg_min_freq))
-    swga.message("{} primers bind foreground genome with avg rate >= {} sites/bp"
-                 .format(fgp.count(), fg_min_avg_rate))
+    swga.message("{} primers bind foreground genome with freq >= {} sites"
+                 .format(fgp.count(), min_fg_bind))
     
     bgp = Primer.select().where((Primer.seq << primers) &
                                 (Primer.bg_freq <= bg_max_freq))
-    swga.message("{} primers bind background genome with avg rate <= {} sites/bp"
-                 .format(bgp.count(), bg_max_avg_rate))
+    swga.message("{} primers bind background genome with freq <= {} sites"
+                 .format(bgp.count(), max_bg_bind))
 
     candidates = Primer.select().where((Primer.seq << primers) &
                                        (Primer.seq << fgp) &
                                        (Primer.seq << bgp))
+    swga.message("{} primers pass both fg and bg binding freq filters"
+                .format(candidates.count()))
 
     # Add melt temp for any primer that doesn't have it yet
     update_tms(candidates)
