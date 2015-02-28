@@ -73,6 +73,9 @@ def main(fg_genome_fp, bg_genome_fp):
         click.confirm("Existing file `%s` will be overwritten. Continue?" 
                       % default_parameters_name, abort=True)
 
+    # Calculate default binding frequencies for foreground and background
+    # Fg is based on a binding rate of 1/100000 bp/binding site
+    # Fg is based on a binding rate of 1/150000 bp/binding site
     min_fg_rate = 0.00001
     min_fg_bind = int(min_fg_rate*float(fg_length))
     max_bg_rate = 0.0000067
