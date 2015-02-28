@@ -46,8 +46,6 @@ def main(argv, cfg_file):
     if not cmd.skip_filtering:
         primers = filter_primers(
             primers,
-#            cmd.fg_min_avg_rate,
-#            cmd.bg_max_avg_rate,
             cmd.min_fg_bind,
             cmd.max_bg_bind,
             cmd.fg_length,
@@ -75,8 +73,6 @@ def activate_primers(primers):
 
 def filter_primers(
         primers,
-#        fg_min_avg_rate,
-#        bg_max_avg_rate,
         min_fg_bind,
         max_bg_bind,
         fg_length,
@@ -89,8 +85,6 @@ def filter_primers(
     those sequences that pass various criteria.
     """
     primers = Primer.select().where(Primer.seq << primers)
-#    fg_min_freq = float(fg_min_avg_rate) * fg_length
-#    bg_max_freq = float(bg_max_avg_rate) * bg_length
     fg_min_freq = min_fg_bind
     bg_max_freq = max_bg_bind
 
