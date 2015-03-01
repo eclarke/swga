@@ -56,10 +56,11 @@ def main(argv, cfg_file):
     
     update_locations(primers, cmd.fg_genome_fp)
     n_active = activate_primers(primers)
-    if n_active < cmd.max_primers:
+    if int(n_active) < int(cmd.max_primers):
     	swga.warn(
-    		"Fewer than {} were selected. You may want to try less "
-    		"restrictive filtering parameters.".format(cmd.max_primers))
+    		"Fewer than {} primers were selected. Only {} passed all "
+		"the filters You may want to try less "
+    		"restrictive filtering parameters.".format(cmd.max_primers, n_active))
 
 
 def deactivate_all_primers():
