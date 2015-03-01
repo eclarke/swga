@@ -14,4 +14,6 @@ What's new:
 - Users can now activate custom sets using `swga activate`
 - `swga init` now handles blank lines in FASTA files
 - Restored original scoring metric
+- Fixed homodimer check
+- Exporting as bedgraph uses totals instead of average for sliding window
 - Better unit test coverage 

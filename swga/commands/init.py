@@ -1,7 +1,7 @@
 import click
 import subprocess
 from click._compat import filename_to_ui
-import os, sys, stat
+import os, stat
 from pyfaidx import Fasta
 from swga.utils.resources import get_swga_opts
 from swga.utils.options import cfg_from_opts
@@ -41,14 +41,18 @@ finish_message = """Done!"""
               type=click.Path(exists=True, resolve_path=True))
 @click.option("-b", "--bg_genome_fp",
               type=click.Path(exists=True, resolve_path=True))
-def main(fg_genome_fp, bg_genome_fp):
+@click.option("-e", "--exclude_fp",
+              type=click.Path(exists=True, resolve_path=True))
+def main(fg_genome_fp, bg_genome_fp, exclude_fp):
 
     default_parameters_name = "parameters.cfg"
     cwd = os.getcwd()
 
+    # Print the welcome message ------------------------------
     click.echo(click.style(welcome_message.format(**locals()),
                            fg = "blue"))
-                                       
+
+    # Prompt for the foreground genome, if not already specified                                   
     if (not fg_genome_fp):
         fg_genome_fp = click.prompt("Enter path to foreground genome file, in "
                                     "FASTA format", 
@@ -57,6 +61,8 @@ def main(fg_genome_fp, bg_genome_fp):
     fg_length, fg_nrecords = fasta_stats(fg_genome_fp)
     click.echo(click.style(fg_message.format(**locals()), fg="green"))
 
+
+    # Prompt for background genome, if not already specified
     if (not bg_genome_fp):
         bg_genome_fp = click.prompt("Enter path to background genome file, in "
                                     "FASTA format", 
@@ -64,6 +70,26 @@ def main(fg_genome_fp, bg_genome_fp):
                                                     resolve_path=True))
     bg_length, bg_nrecords = fasta_stats(bg_genome_fp)
     click.echo(click.style(bg_message.format(**locals()), fg="green"))
+
+
+    # Prompt for a file containing sequences to exclude, if not already given
+    if (not exclude_fp):
+        if click.confirm(
+                "Do you want to add a FASTA file that will be used to exclude "
+                "primers? For instance, to avoid primers binding to the "
+                "mitochondrial genome, add the path to that sequence here."):
+            
+            exclude_fp = click.prompt(
+                "Enter path to exclusionary sequence(s), in FASTA format",
+                type=click.Path(exists=True, resolve_path=True))
+
+            click.echo(click.style(
+                "Exclusionary sequences file: {}".format(exclude_fp), fg="red"))
+        else:
+            click.echo(
+                click.style("No exclusionary sequences specified.", fg="green"))
+            exclude_fp = ""
+
 
     opts = get_swga_opts()
     default_parameters = cfg_from_opts(opts)
