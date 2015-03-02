@@ -155,7 +155,6 @@ def add_primers(primers, chunksize=199, add_revcomp=True):
         label="Updating database: ")
     
         
-
 @db.atomic()
 def add_set(_id, primers, **kwargs):
     if not primers:

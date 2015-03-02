@@ -2,7 +2,7 @@ import pytest
 import swga
 import swga.core
 import swga.database as database
-from swga.database import Primer, Set, PrimerSet
+from swga.database import Primer, Set
 
 class TestPrimersSets:
     
@@ -60,3 +60,9 @@ class TestPrimersSets:
         s.primers.add(p)
         database.db.close()
         
+    def test_add_primers(self, initdb):
+        '''Must add the reverse complement of a primer if requested.'''
+        primers = [{'seq': "AAAA"}]
+        database.add_primers(primers, add_revcomp=True)
+        assert Primer.select().where(Primer.seq == "TTTT").count() == 1
+    
