@@ -1,6 +1,25 @@
 SWGA Changelog
 ===================
 
+Version 0.3.2
+--------------------
+This update brings mostly bugfixes and a few small enhancements. The parameters 
+file has been updated, so be sure to run `swga init` again on any current 
+project.
+What's new:
+- `swga init` now prompts for an exclusionary FASTA file that will be used to
+  prevent certain primers from being used (i.e. any primer that appears in the
+  sequences given in the exclusionary file will be omitted).
+- Bugfix: DSK does not include a primer's reverse complement in its list of 
+  primers counted. We've accounted for this as per issue #17.
+- Bugfix: Locate functions now check for reverse complement, not just reverse
+  (this may have a pretty large impact on your sets, so worth re-running any
+  analyses with the update)
+- Wiki has been organized and cleaned up
+- Lots of usability enhancements from Sesh (thanks Sesh!)
+- Other code cleanups and bugfixes
+
+
 Version 0.3.1
 --------------------
 This update brings a few new features and a couple bugfixes. The primer database
