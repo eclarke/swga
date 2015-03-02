@@ -108,6 +108,7 @@ filter:
   max_primers:
     default: 200
     desc: max number of primers to keep after filtering
+    type: int
   bg_length:
     default: *bglen
     desc: length of the background genome (autofilled by swga init)
