@@ -19,6 +19,14 @@ from swga.database import Primer
 from pyfaidx import Fasta
 
 
+def revcomp(s):
+    r = {
+        'A':'T', 'T':'A',
+        'G':'C', 'C':'G'
+    }
+    return [r[i] for i in s][::-1]
+
+
 def count_kmers(k, genome_fp, cwd, threshold=1):
     assert isinstance(threshold, int)
     dsk = resources.get_dsk()

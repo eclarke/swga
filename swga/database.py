@@ -7,8 +7,9 @@ contains a litany of helper functions for adding and retrieving stored data.
 
 """
 import os
-import csv
 import swga
+from swga.core import chunk_iterator
+import swga.primers
 import peewee as pw
 from playhouse.shortcuts import ManyToManyField
 
@@ -138,6 +139,21 @@ def create_tables(drop=True):
     if drop:
         db.drop_tables(tbl_list, safe=True)  
     db.create_tables(tbl_list, safe=True)
+
+
+def add_primers(primers, chunksize=199, add_revcomp=True):
+    if add_revcomp:
+        def mkrevcomp(primer):
+            p2 = primer
+            p2['seq'] = swga.primers.revcomp(p2['seq'])
+            return p2
+        primers += [mkrevcomp(p) for p in primers]
+    chunk_iterator(
+        primers,
+        fn=lambda c: Primer.insert_many(c).execute(),
+        n=chunksize,
+        label="Updating database: ")
+        
 
 @db.atomic()
 def add_set(_id, primers, **kwargs):

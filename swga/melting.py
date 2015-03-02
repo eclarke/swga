@@ -27,6 +27,7 @@ import time
 
 
 def _is_sym(s):
+    """Returns True if s is symmetric (same as rev. complement)"""
     r = {'A':'T',
          'T':'A',
          'G':'C',

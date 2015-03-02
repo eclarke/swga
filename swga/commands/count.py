@@ -4,7 +4,6 @@ import swga
 import swga.primers
 import swga.database as database
 from collections import defaultdict
-from swga.core import chunk_iterator
 from swga.primers import Primer, max_consecutive_binding
 from swga.commands import Command
 import click
@@ -39,11 +38,10 @@ def count_specific_kmers(kmers, fg_genome_fp, bg_genome_fp):
         bg = swga.primers.count_kmers(k, bg_genome_fp, output_dir, 1)
         primers = [primer_dict(mer, fg, bg, 0, float('inf')) for mer in mers]
         chunk_size = 199
-        swga.message("Writing {n} {k}-mers into db in blocks of {cs}..."
-                     .format(n=len(primers), k=k, cs=chunk_size))
-        chunk_iterator(primers,
-                       fn=lambda c: Primer.insert_many(c).execute(),
-                       n=chunk_size, label="Updating database...")
+        swga.message(
+            "Writing {n} {k}-mers into db in blocks of {cs}..."
+            .format(n=len(primers), k=k, cs=chunk_size))
+        database.add_primers(primers, chunk_size, add_revcomp=False)
     
     
 def count_kmers(fg_genome_fp,
@@ -95,10 +93,8 @@ def count_kmers(fg_genome_fp,
 
         chunk_size = 199
         swga.message("Writing {n} {k}-mers into db in blocks of {cs}..."
-                     .format(n=nkmers, k=k, cs=chunk_size))
-        chunk_iterator(kmers,
-                       fn=lambda c: Primer.insert_many(c).execute(),
-                       n=chunk_size, label="Blocks written: ")
+                     .format(n=nkmers*2, k=k, cs=chunk_size))
+        database.add_primers(kmers, chunk_size, add_revcomp=True)
 
     swga.message("Counted kmers in range %d-%d" % (min_size, max_size))
     
