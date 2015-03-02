@@ -1,7 +1,8 @@
 import pytest
 import swga.score
+from swga.setfinder import find_sets
 from swga.database import Primer
-from swga.commands.find_sets import make_graph, find_sets
+from swga.commands.find_sets import make_graph
 
 @pytest.fixture
 def primers():
@@ -48,7 +49,7 @@ e 5 6
         min_size=3,
         max_size=3,
         bg_genome_len=10,
-        graph_fname=fp)
+        graph_fp=fp)
     output = list(sets)
     assert len(output) == 1
     ids, bg_ratio = swga.score.read_set_finder_line(output[0])

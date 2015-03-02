@@ -13,6 +13,7 @@
 INTERNAL:
   fg_genome_fp: &fg "{fg_genome_fp}"
   bg_genome_fp: &bg "{bg_genome_fp}"
+  exclude_fp: &exc "{exclude_fp}"
   fg_length: &fglen "{fg_length}"
   bg_length: &bglen "{bg_length}"
   min_fg_rate: &fgrate "{min_fg_rate}"
@@ -45,14 +46,18 @@ count:
     type: int
   min_fg_bind:
     default: *fgbind
-    desc: minimum primer binding sites (autofilled)
+    desc: minimum number of primer binding sites on fg genome (default autofilled using genome length and binding rate of 1/100000)
     type: int
   max_bg_bind:
     default: *bgbind
-    desc: maximum primer binding sites (autofilled)
+    desc: maximum primer binding sites on bg genome (default autofilled using genome length and binding rate of 1/150000)
+    type: int
+  max_dimer_bp:
+    default: 3
+    desc: max number of consecutive complementary bases between a primer and its rev. complement
     type: int
   exclude_fp:
-    default: null
+    default: *exc
     desc: >
       (FASTA) any primers appearing here above a threshold will be excluded
   exclude_threshold:
@@ -103,6 +108,7 @@ filter:
   max_primers:
     default: 200
     desc: max number of primers to keep after filtering
+    type: int
   bg_length:
     default: *bglen
     desc: length of the background genome (autofilled by swga init)
@@ -111,14 +117,14 @@ filter:
     default: *fglen
     desc: length of the foreground genome (autofilled by swga init)
     type: int
-  fg_min_avg_rate:
-    default: *fgrate
-    desc: minimum average binding frequency over the foreground genome
-    type: float
-  bg_max_avg_rate:
-    default: *bgrate
-    desc: maximum average binding frequency over the background genome
-    type: float
+  min_fg_bind:
+    default: *fgbind
+    desc: minimum number of primer binding sites on fg genome (default autofilled using genome length and binding rate of 1/100000)
+    type: int
+  max_bg_bind:
+    default: *bgbind
+    desc: maximum primer binding sites on bg genome (default autofilled using genome length and binding rate of 1/150000)
+    type: int
   min_tm:
     default: 0
     desc: minimum primer melting temperature (C)
@@ -140,9 +146,10 @@ find_sets:
   max_size:
     default: 7
     desc: max size of primer sets
-  max_hetdimer_bind:
+  max_dimer_bp:
     default: 3
-    desc: max number of consecutive complimentary bases between two primers  
+    desc: max number of consecutive complimentary bases between two primers
+    type: int
   min_bg_bind_dist:
     default: 30000
     desc: min avg distance between primers in the bg genome

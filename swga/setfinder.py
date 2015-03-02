@@ -11,9 +11,8 @@ def find_sets(
         max_size,
         bg_genome_len,
         graph_fp,
-        vertex_ordering="weighted_coloring"):
-    assert vertex_ordering in ["weighted_coloring", "random"]
-    message("Now finding sets. If nothing appears, try relaxing your parameters.")
+        vertex_ordering="weighted-coloring"):
+    assert vertex_ordering in ["weighted-coloring", "random"]
     set_finder = resources.get_setfinder()
     
     find_set_cmd = [set_finder, '-q', '-q', '-B', min_bg_bind_dist,
@@ -52,5 +51,4 @@ def mp_find_sets(nprocesses=4, **kwargs):
                 (yield setfinder.next())
     finally:
         for i, setfinder in enumerate(setfinders):
-            message("Ending sf # {}".format(i))
             setfinder.close()

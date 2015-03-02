@@ -87,3 +87,36 @@ def read_primer_list(lines, fg_genome_fp, bg_genome_fp):
 def parse_kmer_file(lines):
     seqs = [re.split(r'[ \t]+', line.strip('\n'))[0] for line in lines]
     return seqs
+
+
+def max_consecutive_binding(mer1, mer2):
+    '''
+    Return the maximum number of consecutively binding mers
+    when comparing two different mers, using the reverse compliment.
+    '''
+    binding = { 'A': 'T', 'T': 'A',
+                'C': 'G', 'G': 'C',
+                '_':  False}
+
+    # Swap variables if the second is longer than the first
+    if len(mer2) > len(mer1):
+        mer1, mer2 = mer2, mer1
+
+    # save the len because it'll change when we do a ljust
+    mer1_len = len(mer1)
+    # reverse mer2,
+    mer2 = mer2[::-1]
+    # pad mer one to avoid errors
+    mer1 = mer1.ljust(mer1_len + len(mer2), "_")
+
+    max_bind = 0
+    for offset in range(mer1_len):
+        consecutive = 0
+        for x in range(len(mer2)):
+            if binding[mer1[offset+x]] == mer2[x]:
+                consecutive += 1
+                if consecutive > max_bind:
+                    max_bind = consecutive
+            else:
+                consecutive = 0
+    return max_bind
