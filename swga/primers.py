@@ -18,12 +18,6 @@ import swga.utils.resources as resources
 from swga.database import Primer
 
 
-def revcomp(s):
-    r = {
-        'A':'T', 'T':'A',
-        'G':'C', 'C':'G'
-    }
-    return [r[i] for i in s][::-1]
 
 
 def count_kmers(k, genome_fp, cwd, threshold=1):

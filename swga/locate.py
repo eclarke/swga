@@ -16,6 +16,15 @@ import swga
 from .core import progressbar
 
 
+def revcomp(s):
+    r = {
+        'A':'T', 'T':'A',
+        'G':'C', 'C':'G'
+    }
+    rc = [r[i] for i in s][::-1]
+    return "".join(rc)
+
+
 def linearize_binding_sites(primers, chr_ends):
     '''
     Modifies the primer binding site locations as if they were positions on a
@@ -39,7 +48,7 @@ def binding_sites(kmer, genome_fp):
         seq = str(genome[record])
         locations[record] = substr_indices(kmer, seq)
         # append reversed primer locations as well
-        locations[record] += substr_indices(kmer[::-1], seq)
+        locations[record] += substr_indices(revcomp(kmer), seq)
     return locations
 
 
