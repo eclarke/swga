@@ -1,3 +1,14 @@
+# -*- coding: utf-8 -*-
+"""
+`swga init` is a special command that initializes a directory before being used
+with SWGA. In short, this reads the foreground and background FASTA files to get
+some basic stats (number of records, overall number of bases) and populates the
+generated parameters.cfg file with reasonable defaults based on these stats.
+
+For this reason, this command does not use the framework that other commands use
+(since it creates the parameters file).
+"""
+
 import click
 import subprocess
 from click._compat import filename_to_ui
@@ -6,7 +17,17 @@ from pyfaidx import Fasta
 from swga.utils.resources import get_swga_opts
 from swga.utils.options import cfg_from_opts
 
-welcome_message = """
+@click.command()
+@click.option("-f", "--fg_genome_fp",
+              type=click.Path(exists=True, resolve_path=True))
+@click.option("-b", "--bg_genome_fp",
+              type=click.Path(exists=True, resolve_path=True))
+@click.option("-e", "--exclude_fp",
+              type=click.Path(exists=True, resolve_path=True))
+
+def main(fg_genome_fp, bg_genome_fp, exclude_fp):
+
+    welcome_message = """
 ## SWGA Initialization ---------------------------
 
 This will set up a workspace for SWGA in the current directory ({cwd}).
@@ -22,28 +43,17 @@ The values specified in {default_parameters_name} will be used if the
 corresponding values are not specified on the command line.
 """
 
-fg_message = """
+    fg_message = """
 Foreground genome: {fg_genome_fp}
   Length:  {fg_length} bp
   Records: {fg_nrecords}
 """
-bg_message = """
+    bg_message = """
 Background genome: {bg_genome_fp}
   Length:  {bg_length} bp
-  Records: {bg_nrecords}
 """
 
-finish_message = """Done!"""
-
-
-@click.command()
-@click.option("-f", "--fg_genome_fp",
-              type=click.Path(exists=True, resolve_path=True))
-@click.option("-b", "--bg_genome_fp",
-              type=click.Path(exists=True, resolve_path=True))
-@click.option("-e", "--exclude_fp",
-              type=click.Path(exists=True, resolve_path=True))
-def main(fg_genome_fp, bg_genome_fp, exclude_fp):
+    finish_message = """Done!"""
 
     default_parameters_name = "parameters.cfg"
     cwd = os.getcwd()
@@ -68,7 +78,7 @@ def main(fg_genome_fp, bg_genome_fp, exclude_fp):
                                     "FASTA format", 
                                     type=click.Path(exists=True, 
                                                     resolve_path=True))
-    bg_length, bg_nrecords = fasta_stats(bg_genome_fp)
+    bg_length = fasta_len_quick(bg_genome_fp)
     click.echo(click.style(bg_message.format(**locals()), fg="green"))
 
 
@@ -101,7 +111,7 @@ def main(fg_genome_fp, bg_genome_fp, exclude_fp):
 
     # Calculate default binding frequencies for foreground and background
     # Fg is based on a binding rate of 1/100000 bp/binding site
-    # Fg is based on a binding rate of 1/150000 bp/binding site
+    # Bg is based on a binding rate of 1/150000 bp/binding site
     min_fg_rate = 0.00001
     min_fg_bind = int(min_fg_rate*float(fg_length))
     max_bg_rate = 0.0000067
@@ -110,7 +120,20 @@ def main(fg_genome_fp, bg_genome_fp, exclude_fp):
         cfg_file.write(default_parameters.format(**locals()))
     
     click.echo(finish_message)
-              
+       
+
+def fasta_len_quick(fasta_fp):
+    try:
+        length = subprocess.check_output(
+            "grep -v '>' {} | wc -c".format(fasta_fp), shell=True)
+        length = int(length.strip())
+        return length
+    except subprocess.CalledProcessError:
+        click.echo(click.style(
+            "\nError getting length of FASTA file {}".format(fasta_fp), 
+            fg="red"))
+        raise
+
 
 def fasta_stats(fasta_fp):
     check_empty_lines(fasta_fp)
