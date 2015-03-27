@@ -6,7 +6,10 @@ import swga.database as database
 from collections import defaultdict
 from swga.primers import Primer, max_consecutive_binding
 from swga.commands import Command
+from peewee import OperationalError
 import click
+
+INF = float('inf')
 
 output_dir = ".swga_tmp"
 
@@ -16,18 +19,29 @@ def main(argv, cfg_file):
     database.init_db(cmd.primer_db, create_if_missing=True)
     if cmd.input:
         kmers = swga.primers.parse_kmer_file(cmd.input)
-        count_specific_kmers(kmers, cmd.fg_genome_fp, cmd.bg_genome_fp)
+        count_specific_kmers(kmers, **cmd.args)
     else:
         count_kmers(**cmd.args)
 
 
-def count_specific_kmers(kmers, fg_genome_fp, bg_genome_fp):
-    # Skip primers that already exist and warn users
-    existing = [p.seq for p in Primer.select().where(Primer.seq << kmers)]
-    for p in existing:
-        swga.message("{} already exists in db, skipping...".format(p))
-    kmers = filter(lambda p: p not in existing, kmers)
-
+def count_specific_kmers(
+        kmers,
+        fg_genome_fp,
+        bg_genome_fp,
+        primer_db,
+        **kwargs):
+    try:
+        # Skip primers that already exist and warn users
+        existing = [p.seq for p in Primer.select().where(Primer.seq << kmers)]
+        for p in existing:
+            swga.message("{} already exists in db, skipping...".format(p))
+        kmers = filter(lambda p: p not in existing, kmers)
+    except OperationalError:
+        # If this fails due to an OperationalError, it probably means the
+        # database tables haven't been created yet
+        database.create_tables()
+        swga.mkdirp(output_dir)
+        
     # Group the kmers by length to avoid repeatedly counting kmers of the same size
     kmers_by_length = defaultdict(list)
     for kmer in kmers:
@@ -36,13 +50,32 @@ def count_specific_kmers(kmers, fg_genome_fp, bg_genome_fp):
     for k, mers in kmers_by_length.items():
         fg = swga.primers.count_kmers(k, fg_genome_fp, output_dir, 1)            
         bg = swga.primers.count_kmers(k, bg_genome_fp, output_dir, 1)
-        primers = [primer_dict(mer, fg, bg, 0, float('inf')) for mer in mers]
+        primers = []
+        for mer in mers:
+            try:
+                primers.append(primer_dict(mer, fg, bg, 0, INF, INF))
+            except KeyError:
+                swga.message(
+                    "{} does not exist in foreground genome, skipping..."
+                    .format(mer)) 
+        
+        # Omitting any primers that were returned empty
+        primers = filter(lambda p: p == {}, primers)
         chunk_size = 199
         swga.message(
             "Writing {n} {k}-mers into db in blocks of {cs}..."
             .format(n=len(primers), k=k, cs=chunk_size))
         database.add_primers(primers, chunk_size, add_revcomp=False)
-    
+
+        
+def create_new_database(primer_db_fp):
+    if os.path.isfile(primer_db_fp):
+        swga.warn("Existing database found at %s" % os.path.abspath(primer_db_fp))
+        swga.warn("Re-counting primers will reset the entire database!")
+        click.confirm("Are you sure you want to proceed?", abort=True)
+    database.init_db(primer_db_fp, create_if_missing=True)
+    database.create_tables()    
+
     
 def count_kmers(fg_genome_fp,
                 bg_genome_fp, 
@@ -57,14 +90,7 @@ def count_kmers(fg_genome_fp,
     assert os.path.isfile(fg_genome_fp)
     assert os.path.isfile(bg_genome_fp)
 
-    if os.path.isfile(primer_db):
-        swga.warn("Existing database found at %s" % os.path.abspath(primer_db))
-        swga.warn("Re-counting primers will reset the entire database!")
-        click.confirm("Are you sure you want to proceed?", abort=True)
-
-    database.init_db(primer_db, create_if_missing=True)
-    database.create_tables()
-    
+    create_new_database(primer_db)
 
     swga.mkdirp(output_dir)
 
