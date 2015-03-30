@@ -1,3 +1,4 @@
+import os
 import pytest
 import swga.database
 from swga.database import Primer, Set, PrimerSet
@@ -25,4 +26,16 @@ def tprimers(seqs):
 def tset():
     return Set.create(_id=1, score=100) 
 
+@pytest.fixture()
+def fastafile(request):
+    fastafile = os.path.join(os.path.dirname(__file__), "data", "test.fasta")
+    fastaidx = fastafile + '.fai'
+    # remove the index after each test so that it's recreated
+    def fin():
+        try:
+            os.remove(fastaidx)
+        except OSError:
+            pass
+    request.addfinalizer(fin)
+    return fastafile
 

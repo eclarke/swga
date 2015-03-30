@@ -23,13 +23,22 @@ def main(argv, cfg_file):
     else:
         count_kmers(**cmd.args)
 
+        
+def check_create_tables(primer_db):
+    if os.path.isfile(primer_db):
+        swga.warn("Existing database found at %s" % os.path.abspath(primer_db))
+        swga.warn("This will reset the entire database!")
+        click.confirm("Are you sure you want to proceed?", abort=True)
+    database.create_tables()
 
+        
 def count_specific_kmers(
         kmers,
         fg_genome_fp,
         bg_genome_fp,
         primer_db,
         **kwargs):
+    
     try:
         # Skip primers that already exist and warn users
         existing = [p.seq for p in Primer.select().where(Primer.seq << kmers)]
@@ -39,7 +48,7 @@ def count_specific_kmers(
     except OperationalError:
         # If this fails due to an OperationalError, it probably means the
         # database tables haven't been created yet
-        database.create_tables()
+        check_create_tables(primer_db)
         swga.mkdirp(output_dir)
         
     # Group the kmers by length to avoid repeatedly counting kmers of the same size
@@ -68,30 +77,22 @@ def count_specific_kmers(
         database.add_primers(primers, chunk_size, add_revcomp=False)
 
         
-def create_new_database(primer_db_fp):
-    if os.path.isfile(primer_db_fp):
-        swga.warn("Existing database found at %s" % os.path.abspath(primer_db_fp))
-        swga.warn("Re-counting primers will reset the entire database!")
-        click.confirm("Are you sure you want to proceed?", abort=True)
-    database.init_db(primer_db_fp, create_if_missing=True)
-    database.create_tables()    
-
-    
-def count_kmers(fg_genome_fp,
-                bg_genome_fp, 
-                min_size, 
-                max_size, 
-                min_fg_bind,
-                max_bg_bind,
-                max_dimer_bp,
-                primer_db,
-                exclude_fp,
-                exclude_threshold, **kwargs):
+def count_kmers(
+        fg_genome_fp,
+        bg_genome_fp, 
+        min_size, 
+        max_size, 
+        min_fg_bind,
+        max_bg_bind,
+        max_dimer_bp,
+        primer_db,
+        exclude_fp,
+        exclude_threshold,
+        **kwargs):
     assert os.path.isfile(fg_genome_fp)
     assert os.path.isfile(bg_genome_fp)
 
-    create_new_database(primer_db)
-
+    check_create_tables(primer_db)
     swga.mkdirp(output_dir)
 
     kmers = []

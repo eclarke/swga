@@ -16,9 +16,7 @@ INTERNAL:
   exclude_fp: &exc "{exclude_fp}"
   fg_length: &fglen "{fg_length}"
   bg_length: &bglen "{bg_length}"
-  min_fg_rate: &fgrate "{min_fg_rate}"
   min_fg_bind: &fgbind "{min_fg_bind}"
-  max_bg_rate: &bgrate "{max_bg_rate}"
   max_bg_bind: &bgbind "{max_bg_bind}"
   primer_db: &primerdb primers.db
 

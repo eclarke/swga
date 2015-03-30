@@ -1,26 +1,15 @@
-import os
 import json
 import pytest
-
 
 import swga.locate
 from swga.database import Primer
 
-@pytest.fixture()
-def fastafile(request):
-    fastafile = os.path.join(os.path.dirname(__file__), "data", "test.fasta")
-    fastaidx = fastafile + '.fai'
-    # remove the index after each test so that it's recreated
-    def fin():
-        os.remove(fastaidx)
-    request.addfinalizer(fin)
-    return fastafile
 
 @pytest.fixture
 def kmer():
     return "AAGG"
 
- 
+
 def test_locate_genome_positions(kmer, fastafile):
     locations = swga.locate.binding_sites(kmer, fastafile)
     assert len(locations['record1']) == 4

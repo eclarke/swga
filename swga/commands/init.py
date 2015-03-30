@@ -16,113 +16,92 @@ import os, stat
 from pyfaidx import Fasta
 from swga.utils.resources import get_swga_opts
 from swga.utils.options import cfg_from_opts
+from swga.data.messages import (
+    welcome_message,
+    fg_message,
+    bg_message,
+    exclude_prompt,
+    finished_message)
+
+DEFAULT_PARAMETERS_FNAME = "parameters.cfg"
+
+# Calculate default binding frequencies for foreground and background
+# Fg is based on a binding rate of 1/100000 bp/binding site
+# Bg is based on a binding rate of 1/150000 bp/binding site
+MIN_FG_RATE = 0.00001
+MAX_BG_RATE = 0.0000067
 
 @click.command()
-@click.option("-f", "--fg_genome_fp",
-              type=click.Path(exists=True, resolve_path=True))
-@click.option("-b", "--bg_genome_fp",
-              type=click.Path(exists=True, resolve_path=True))
-@click.option("-e", "--exclude_fp",
-              type=click.Path(exists=True, resolve_path=True))
-
+@click.option(
+    "-f", "--fg_genome_fp",
+    type=click.Path(exists=True, resolve_path=True))
+@click.option(
+    "-b", "--bg_genome_fp",
+    type=click.Path(exists=True, resolve_path=True))
+@click.option(
+    "-e", "--exclude_fp",
+    type=click.Path(exists=True, resolve_path=True))
 def main(fg_genome_fp, bg_genome_fp, exclude_fp):
-
-    welcome_message = """
-## SWGA Initialization ---------------------------
-
-This will set up a workspace for SWGA in the current directory ({cwd}).
-
-As part of this process, a default parameters file will be created that contains
-some reasonable options for each part of the pipeline. This will be
-named "{default_parameters_name}" and should be modified as appropriate for your
-particular project. Please note that you should only with edit this file with a
-plain-text editor like Notepad, TextEdit, or gedit; or with command-line tools
-such as nano, vim, or emacs. 
-
-The values specified in {default_parameters_name} will be used if the
-corresponding values are not specified on the command line.
-"""
-
-    fg_message = """
-Foreground genome: {fg_genome_fp}
-  Length:  {fg_length} bp
-  Records: {fg_nrecords}
-"""
-    bg_message = """
-Background genome: {bg_genome_fp}
-  Length:  {bg_length} bp
-"""
-
-    finish_message = """Done!"""
-
-    default_parameters_name = "parameters.cfg"
-    cwd = os.getcwd()
-
-    # Print the welcome message ------------------------------
-    click.echo(click.style(welcome_message.format(**locals()),
-                           fg = "blue"))
-
-    # Prompt for the foreground genome, if not already specified                                   
+    CWD = os.getcwd()
+    
+    ## 01. Display welcome message
+    click.secho(
+        welcome_message.format(CWD=CWD), fg = "blue")
+    
+    ## 02. Prompt for the foreground genome, if not already specified
     if (not fg_genome_fp):
-        fg_genome_fp = click.prompt("Enter path to foreground genome file, in "
-                                    "FASTA format", 
-                                    type=click.Path(exists=True,
-                                                    resolve_path=True))
+        fg_genome_fp = click.prompt(
+            "Enter path to foreground genome file, in FASTA format", 
+            type=click.Path(exists=True, resolve_path=True))
     fg_length, fg_nrecords = fasta_stats(fg_genome_fp)
-    click.echo(click.style(fg_message.format(**locals()), fg="green"))
-
-
-    # Prompt for background genome, if not already specified
+    click.secho(fg_message.format(**locals()), fg="green")
+    
+    ## 03. Prompt for background genome, if not already specified
     if (not bg_genome_fp):
-        bg_genome_fp = click.prompt("Enter path to background genome file, in "
-                                    "FASTA format", 
-                                    type=click.Path(exists=True, 
-                                                    resolve_path=True))
+        bg_genome_fp = click.prompt(
+            "Enter path to background genome file, in FASTA format", 
+            type=click.Path(exists=True, resolve_path=True))
     bg_length = fasta_len_quick(bg_genome_fp)
-    click.echo(click.style(bg_message.format(**locals()), fg="green"))
+    click.secho(bg_message.format(**locals()), fg="green")
 
-
-    # Prompt for a file containing sequences to exclude, if not already given
+    ## 04. Prompt for a file containing sequences to exclude, if not already given
     if (not exclude_fp):
-        if click.confirm(
-                "Do you want to add a FASTA file that will be used to exclude "
-                "primers? For instance, to avoid primers binding to the "
-                "mitochondrial genome, add the path to that sequence here."):
-            
+        if click.confirm(exclude_prompt):
             exclude_fp = click.prompt(
                 "Enter path to exclusionary sequence(s), in FASTA format",
                 type=click.Path(exists=True, resolve_path=True))
-
-            click.echo(click.style(
-                "Exclusionary sequences file: {}".format(exclude_fp), fg="red"))
+            click.secho(
+                "Exclusionary sequences file: {}".format(exclude_fp), fg="red")
         else:
-            click.echo(
-                click.style("No exclusionary sequences specified.", fg="green"))
+            click.secho("No exclusionary sequences specified.", fg="green")
             exclude_fp = ""
 
-
+    ## 05. Build and populate the parameters file
     opts = get_swga_opts()
     default_parameters = cfg_from_opts(opts)
-
-    cfg_fp = os.path.join(cwd, default_parameters_name)
-    if os.path.isfile(cfg_fp):
-        click.confirm("Existing file `%s` will be overwritten. Continue?" 
-                      % default_parameters_name, abort=True)
-
-    # Calculate default binding frequencies for foreground and background
-    # Fg is based on a binding rate of 1/100000 bp/binding site
-    # Bg is based on a binding rate of 1/150000 bp/binding site
-    min_fg_rate = 0.00001
-    min_fg_bind = int(min_fg_rate*float(fg_length))
-    max_bg_rate = 0.0000067
-    max_bg_bind = int(max_bg_rate*float(bg_length))
-    with open(os.path.join(cwd, default_parameters_name), "wb") as cfg_file:
-        cfg_file.write(default_parameters.format(**locals()))
+    cfg_fp = os.path.join(CWD, DEFAULT_PARAMETERS_FNAME)
+    min_fg_bind = int(MIN_FG_RATE * float(fg_length))
+    max_bg_bind = int(MAX_BG_RATE * float(bg_length))
     
-    click.echo(finish_message)
-       
+    ## 06. Write parameters file
+    if os.path.isfile(cfg_fp):
+        click.confirm(
+            "Existing file `%s` will be overwritten. Continue?"
+            % DEFAULT_PARAMETERS_FNAME, abort=True)
+
+    with open(cfg_fp, "wb") as cfg_file:
+        cfg_file.write(default_parameters.format(**locals()))
+        
+    ## Done!
+    click.secho(finished_message.format(
+        DEFAULT_PARAMETERS_FNAME=DEFAULT_PARAMETERS_FNAME), fg="green")
+
+    
 
 def fasta_len_quick(fasta_fp):
+    """
+    Fast way to get the number of bases in a FASTA file, excluding headers.
+    """ 
     try:
         length = subprocess.check_output(
             "grep -v '>' {} | wc -c".format(fasta_fp), shell=True)
@@ -136,15 +115,21 @@ def fasta_len_quick(fasta_fp):
 
 
 def fasta_stats(fasta_fp):
+    """
+    Retrieves the number of bases and number of records in a FASTA file. Also
+    creates a FASTA index (.fai) for later searching. May be slow for very large
+    files.
+    """
+    # pyfaidx can't handle blank lines within records, so we have to check :(
     check_empty_lines(fasta_fp)
     try:
         fasta = Fasta(fasta_fp)
-        length = sum([len(r) for r in fasta])
+        length = fasta_len_quick(fasta_fp)
         nrecords = len(fasta.keys())
         return length, nrecords
     except:
-        click.echo(click.style("\nError reading %s: invalid FASTA format?" %
-                               fasta_fp, fg = "red"))
+        click.secho(
+            "\nError reading %s: invalid FASTA format?" % fasta_fp, fg = "red")
         raise
 
 
@@ -161,16 +146,21 @@ def check_empty_lines(fasta_fp):
         check = None
     if check:
         click.confirm(
-            "`{}` has blank lines, which can interfere with SWGA."
+            "`{}` has blank lines, which can mess up our FASTA indexer."
             " Is it okay to remove these lines from the file?"
             .format(basename), abort=True)
         # sed -ie gets around the fact that BSD sed -i requires a backup extension
         # with sed, but we don't want to create a backup. Ensures linux/osx
         # compatibility. 
-        subprocess.check_call("sed -ie '/^$/d' \"{}\"".format(fasta_fp),
-                              shell=True) 
-            
+        subprocess.check_call(
+            "sed -ie '/^$/d' \"{}\"".format(fasta_fp), shell=True)
 
+
+## The monkeypatching going on here forces the click framework to strip
+## whitespace from the ends of filename strings passed to it. This allows users
+## to drag-and-drop files on the Mac OS X terminal (which appends a trailing
+## space); without this, click says that the file doesn't exist.
+##
 def monkeypatch_method(cls):
     def decorator(func):
         setattr(cls, func.__name__, func)
@@ -216,8 +206,6 @@ def convert(self, value, param, ctx):
         ), param, ctx)
 
     return rv
-
-    
 
 
 if __name__ == "__main__":
