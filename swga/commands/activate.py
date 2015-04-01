@@ -45,18 +45,15 @@ def update_tms(primers):
 def update_locations(primers, fg_genome_fp):
     """
     Find the primer binding sites in the foreground genome for primers that
-    don't have the locations stored already.
-    Updates database with results.
+    don't have the locations stored already, then update database with results.
     """
-    primers = list(Primer.select()
-                   .where((Primer.seq << primers) &
-                          (Primer.locations >> None))
-                   .execute())
-    # For more than 15 primers, we find the locations in parallel for performance
-    if 0 < len(primers) < 15:
-        for p in progress.bar(primers, label="Finding binding locations... "):
-            p.locations = json.dumps(locate.binding_sites(p.seq, fg_genome_fp))
-    elif 0 < len(primers):
-        primers = locate.primers_in_parallel(primers,
-                                             fg_genome_fp)
+    primers = list(
+        Primer.select()
+        .where((Primer.seq << primers) &
+               (Primer.locations >> None))
+        .execute())
+
+    for p in progress.bar(primers, label="Finding binding locations... "):
+        p.locations = json.dumps(locate.binding_sites(p.seq, fg_genome_fp))
+
     update_in_chunks(primers, label = "Updating database... ")
