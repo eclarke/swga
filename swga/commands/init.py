@@ -70,11 +70,16 @@ def main(fg_genome_fp, bg_genome_fp, exclude_fp):
             exclude_fp = click.prompt(
                 "Enter path to exclusionary sequence(s), in FASTA format",
                 type=click.Path(exists=True, resolve_path=True))
-            click.secho(
-                "Exclusionary sequences file: {}".format(exclude_fp), fg="red")
-        else:
-            click.secho("No exclusionary sequences specified.", fg="green")
-            exclude_fp = ""
+
+    if exclude_fp:
+        exclude_fp_message = click.style(
+            "Exclusionary sequences file: {}".format(exclude_fp), fg="red")
+    else:
+        exclude_fp_message = click.style(
+            "No exclusionary sequences file specified.", fg="green")
+
+    click.echo(exclude_fp_message)
+
 
     ## 05. Build and populate the parameters file
     opts = get_swga_opts()

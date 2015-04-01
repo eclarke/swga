@@ -55,7 +55,6 @@ def binding_sites(kmer, genome_fp):
         # append reversed primer locations as well
         locations[record] += substr_indices(revcomp(kmer), seq)
     if locations == {}:
-        print kmer, genome.keys()
         raise ValueError("No locations for {} found in fg genome!".format(kmer))
     return locations
 

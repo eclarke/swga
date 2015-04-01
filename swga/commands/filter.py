@@ -12,15 +12,11 @@ Since all the results of the calculations are stored in the primer db,
 the user can run this command multiple times to tune parameters and
 subsequent runs will be much faster.
 '''
-import json
 
-import swga.locate as locate
 import swga.primers
-from swga.clint.textui import progress
 from swga.commands import Command
 from swga.commands.activate import update_tms, update_locations
-from swga.database import Primer, update_in_chunks
-from swga.melting import Tm
+from swga.database import Primer
 
 
 def main(argv, cfg_file):

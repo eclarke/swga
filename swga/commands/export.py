@@ -222,7 +222,6 @@ def export_bedgraph(set, fg_genome_fp, outpath, opts_str, window_size, step_size
                     counter.update(Counter(xrange(l, l + k)))
 
             window_iter = xrange(0, int(chr_len - this_window_size), this_step_size)
-            print this_window_size, this_step_size
             for start in progress.bar(
                     window_iter,
                     expected_size=int(chr_len/this_step_size),
@@ -233,6 +232,7 @@ def export_bedgraph(set, fg_genome_fp, outpath, opts_str, window_size, step_size
                 linestr = "{} {} {} {}\n".format(
                     record_name, start, end, nhits)
                 bedgraph_file.write(linestr)
+            swga.message("Bedfile written to {}".format(bedgraph_fp))
             
                 
             
