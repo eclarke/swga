@@ -36,6 +36,11 @@ def linearize_binding_sites(primers, chr_ends):
         for rec, locs in json.loads(primer.locations).iteritems():
             chr_start, chr_end = chr_ends[rec]
             new_locs += [l + chr_start for l in locs] + [chr_start, chr_end]
+    new_locs = list(set(new_locs))
+    if new_locs == []:
+        for primer in primers:
+            print primer, json.loads(primer.locations)
+        raise ValueError("Binding sites for primers not found!")
     return list(set(new_locs))
 
 
@@ -49,6 +54,9 @@ def binding_sites(kmer, genome_fp):
         locations[record] = substr_indices(kmer, seq)
         # append reversed primer locations as well
         locations[record] += substr_indices(revcomp(kmer), seq)
+    if locations == {}:
+        print kmer, genome.keys()
+        raise ValueError("No locations for {} found in fg genome!".format(kmer))
     return locations
 
 
