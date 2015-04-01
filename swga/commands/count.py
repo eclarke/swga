@@ -130,6 +130,10 @@ def primer_dict(seq, fg, bg, min_fg_bind, max_bg_bind, max_dimer_bp):
     fg_freq = fg[seq]
     bg_freq = bg.get(seq, 0) 
     ratio = fg_freq / float(bg_freq) if bg_freq > 0 else float('inf')
+
+    # Setting to -1 disables the background binding frequency check
+    max_bg_bind = INF if max_bg_bind < 0 else max_bg_bind
+
     if ((fg_freq >= min_fg_bind) and
         (bg_freq <= max_bg_bind) and
         (max_consecutive_binding(seq, seq) <= max_dimer_bp)):
