@@ -22,7 +22,7 @@ def test_get_user_fun():
 
 
 def test_default_score_set():
-    expression = "fg_dist_mean/bg_ratio"
+    expression = "fg_dist_mean/bg_dist_mean"
     primer_set = [1,2,3,4]
     primer_locs = [1,3,5,7]
     score, namespace = swga.score.default_score_set(
@@ -30,7 +30,7 @@ def test_default_score_set():
         primer_set=primer_set,
         primer_locs=primer_locs,
         max_dist=2,
-        bg_ratio=3.0)
+        bg_dist_mean=3.0)
     assert score == 2.0/3.0
     assert '__builtins__' not in namespace.keys()
 
