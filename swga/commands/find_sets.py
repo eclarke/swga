@@ -126,7 +126,7 @@ def score_sets(
     try:
         for line in setlines:
             try:
-                primer_ids, bg_ratio = score.read_set_finder_line(line)
+                primer_ids, bg_dist_mean = score.read_set_finder_line(line)
             except ValueError:
                 swga.warn("Could not parse line:\n\t"+line)
                 continue
@@ -136,7 +136,7 @@ def score_sets(
 
             set_passed, max_dist = score_set(
                 set_id=passed,
-                bg_ratio=bg_ratio,
+                bg_dist_mean=bg_dist_mean,
                 primers=primers,
                 chr_ends=chr_ends,
                 score_fun=score_fun,

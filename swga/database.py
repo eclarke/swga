@@ -81,7 +81,7 @@ class Set(SwgaBase):
     primers = ManyToManyField(Primer, related_name='sets')
     score = pw.FloatField()
     set_size = pw.IntegerField(null=True)
-    bg_ratio = pw.FloatField(null=True)
+    bg_dist_mean = pw.FloatField(null=True)
     fg_dist_std = pw.FloatField(null=True)
     fg_dist_gini = pw.FloatField(null=True)
     fg_max_dist = pw.IntegerField(null=True)
@@ -97,7 +97,7 @@ class Set(SwgaBase):
         fields = [
             'score',
             'set_size',
-            'bg_ratio',
+            'bg_dist_mean',
             'fg_max_dist',
             'fg_dist_mean',
             'fg_dist_std',

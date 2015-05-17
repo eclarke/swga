@@ -47,7 +47,7 @@ def get_user_fun(spec_str):
     return getattr(module, fun)
 
 
-def default_score_set(expression, primer_set, primer_locs, max_dist, bg_ratio):
+def default_score_set(expression, primer_set, primer_locs, max_dist, bg_dist_mean):
     # Calculate various metrics
     binding_distances = seq_diff(primer_locs)
     namespace = {
@@ -55,7 +55,7 @@ def default_score_set(expression, primer_set, primer_locs, max_dist, bg_ratio):
         'fg_dist_mean': stats.mean(binding_distances),
         'fg_dist_std': stats.stdev(binding_distances),
         'fg_dist_gini': stats.gini(binding_distances),
-        'bg_ratio': bg_ratio,
+        'bg_dist_mean': bg_dist_mean,
         'fg_max_dist': max_dist,
         '__builtins__': None}
     permitted_var_str = ", ".join([key for key in namespace.keys() if key is not "__builtins__"])
