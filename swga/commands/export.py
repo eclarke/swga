@@ -227,10 +227,11 @@ def export_bedgraph(set, fg_genome_fp, outpath, opts_str, window_size, step_size
                     expected_size=int(chr_len/this_step_size),
                     label=record_name):
                 end = start + this_window_size
+		midpoint = (end + start)/2
                 # number of bases bound ('hit')
                 nhits = sum([counter[i] for i in xrange(start, end)])
                 linestr = "{} {} {} {}\n".format(
-                    record_name, start, end, nhits)
+                    record_name, midpoint, midpoint, nhits)
                 bedgraph_file.write(linestr)
             swga.message("Bedfile written to {}".format(bedgraph_fp))
             

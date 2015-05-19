@@ -200,11 +200,11 @@ score:
     type: File-r
     incfg: False
   score_expression:
-    default: "(fg_dist_mean * fg_dist_gini) / (bg_ratio)"
+    default: "(fg_dist_mean * fg_dist_gini) / (bg_dist_mean)"
     desc: >
       Specify an expression to calculate the set score. Code must only use the
       following variables: set_size, fg_dist_mean, fg_dist_std, fg_dist_gini,
-      fg_dist_max, bg_ratio. Expression must have valid Python syntax.
+      fg_dist_max, bg_dist_mean. Expression must have valid Python syntax.
 
 
 

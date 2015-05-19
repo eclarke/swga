@@ -52,8 +52,8 @@ e 5 6
         graph_fp=fp)
     output = list(sets)
     assert len(output) == 1
-    ids, bg_ratio = swga.score.read_set_finder_line(output[0])
+    ids, bg_dist_mean = swga.score.read_set_finder_line(output[0])
     assert ids == [1, 2, 3]
-    assert bg_ratio == 2.5
+    assert bg_dist_mean == 2.5
 
 
