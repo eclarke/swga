@@ -167,9 +167,9 @@ def export_bedfiles(set, fg_genome_fp, outpath):
             primer_fp = os.path.join(output_folder, seq)
             with open(primer_fp, 'wb') as primer_file:
                 primer_file.write("track name={}\n".format(seq))
-                for record in json.loads(primer.locations):
+                for record, locations in json.loads(primer.locations).iteritems():
                     record_name = record.split('|')[0].strip()
-                    for location in primer.locations[record]:
+                    for location in locations:
                         record_string = "{} {} {}\n".format(
                             record_name, location, location+len(primer.seq))
                         primer_file.write(record_string)
