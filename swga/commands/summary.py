@@ -25,6 +25,10 @@ def summary(primer_db, fg_length, bg_length):
                 fn.Count(Primer.seq))
         .scalar(as_tuple=True))
 
+    if (avg_fg_bind is None) or (avg_bg_bind is None):
+        raise swga.swga_error(
+            "Could not calculate summary statistics; database may be corrupt")
+    
     fg_bind_ratio = avg_fg_bind / float(fg_length)
     bg_bind_ratio = avg_bg_bind / float(bg_length)
     nactive = Primer.select().where(Primer.active==True).count()

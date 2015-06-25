@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 """
 database.py
@@ -95,6 +96,7 @@ class Set(SwgaBase):
     @staticmethod
     def exported_fields():
         fields = [
+            '_id',
             'score',
             'set_size',
             'bg_dist_mean',

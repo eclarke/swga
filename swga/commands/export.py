@@ -25,7 +25,7 @@ import collections
 import csv
 import json
 import os
-from collections import defaultdict, Counter
+from collections import Counter
 
 import swga.database as database
 import swga.locate
@@ -204,7 +204,7 @@ def export_bedgraph(set, fg_genome_fp, outpath, opts_str, window_size, step_size
             this_step_size = step_size
             if this_step_size > this_window_size:
                 this_step_size = this_window_size / 5    
-                swga.warn("Step size larger than window; set to {}"
+                swga.warn("in [{}]: step size larger than window; set to {}"
                           .format(record_name, this_step_size))
 
             this_window_size = int(this_window_size)
