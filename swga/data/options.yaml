@@ -258,6 +258,7 @@ export:
     type: float
   step_size:
     incfg: False
+    type: int
     desc: "(bedgraph export only) the step size used to move the sliding window (default: window_size/5)"
   output_folder:
     incfg: False

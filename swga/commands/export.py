@@ -192,7 +192,7 @@ def export_bedgraph(set, fg_genome_fp, outpath, opts_str, window_size, step_size
         typestr = "track type=bedGraph {}\n".format(opts_str)
         bedgraph_file.write(typestr)
         for record in records:
-            record_name = record.split('|')[0].strip()
+            record_name = record
             chr_len = chr_lengths[record]
 
             this_window_size = window_size
@@ -203,9 +203,10 @@ def export_bedgraph(set, fg_genome_fp, outpath, opts_str, window_size, step_size
 
             this_step_size = step_size
             if this_step_size > this_window_size:
-                this_step_size = this_window_size / 5    
-                swga.warn("in [{}]: step size larger than window; set to {}"
-                          .format(record_name, this_step_size))
+                this_step_size = this_window_size / 5
+                swga.warn(
+                    "in [{}]: \n\tstep size ({}) larger than window size ({}); step size set to {}"
+                    .format(record_name, step_size, this_window_size, this_step_size))
 
             this_window_size = int(this_window_size)
             this_step_size = int(this_step_size)
