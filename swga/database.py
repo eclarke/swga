@@ -8,6 +8,7 @@ contains a litany of helper functions for adding and retrieving stored data.
 
 """
 import os
+import json
 import swga
 from swga.core import chunk_iterator
 from swga.locate import revcomp
@@ -24,8 +25,8 @@ class SwgaBase(pw.Model):
     @classmethod
     def fieldnames(cls):
         '''Returns the fields defined in the model as a list of strings.'''
-        return [name for name, attr in cls.__dict__.items() 
-                if isinstance(attr, pw.FieldDescriptor)] 
+        return [name for name, attr in cls.__dict__.items()
+                if isinstance(attr, pw.FieldDescriptor)]
 
     @classmethod
     def fields(cls):
@@ -34,10 +35,10 @@ class SwgaBase(pw.Model):
 
     def to_dict(self):
         return self.__dict__['_data']
-    
+
     class Meta:
         database = db
-    
+
 
 class Primer(SwgaBase):
     '''
@@ -59,6 +60,9 @@ class Primer(SwgaBase):
         return rep_str.format(
             self.id, self.seq, self.fg_freq, self.bg_freq, self.ratio)
 
+    def locations_dict(self):
+        return json.loads(self.locations)
+
     @staticmethod
     def exported_fields():
         fields = [
@@ -70,8 +74,8 @@ class Primer(SwgaBase):
         ]
         return fields
 
-    
-    
+
+
 class Set(SwgaBase):
     '''
     The sets table contains each set's metadata. The actual primers that belong
@@ -108,14 +112,14 @@ class Set(SwgaBase):
             'primers'
         ]
         return fields
-            
+
 
 PrimerSet = Set.primers.get_through_model()
-    
+
 
 def init_db(db_fname, create_if_missing=False):
     '''
-    Initializes the database at the file path specified. 
+    Initializes the database at the file path specified.
     If `create_if_missing` is True, it will create the database if it can't be
     found. Otherwise, it throws an error.
     '''
@@ -139,7 +143,7 @@ def create_tables(drop=True):
     '''
     tbl_list = [Primer, Set, PrimerSet]
     if drop:
-        db.drop_tables(tbl_list, safe=True)  
+        db.drop_tables(tbl_list, safe=True)
     db.create_tables(tbl_list, safe=True)
 
 
@@ -155,8 +159,8 @@ def add_primers(primers, chunksize=199, add_revcomp=True):
         fn=lambda c: Primer.insert_many(c).execute(),
         n=chunksize,
         label="Updating database: ")
-    
-        
+
+
 @db.atomic()
 def add_set(_id, primers, **kwargs):
     if not primers:
@@ -206,5 +210,5 @@ def update_in_chunks(itr, chunksize=100, show_progress=True,
                              show_progress=show_progress,
                              label=label)
 
-    
+
 

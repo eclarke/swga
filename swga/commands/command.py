@@ -3,10 +3,12 @@ from swga.utils.resources import get_swga_opts
 from swga import parse_config, message, warn
 from swga.clint.textui import indent, colored
 
+
 class Command:
     args = None
     name = ""
     cfg_file = None
+
     def __init__(self, name, description=None, cfg_file=None):
         opts = get_swga_opts()
         self.name = name
@@ -14,7 +16,6 @@ class Command:
 
         defaults = parse_config(cfg_file, name) if cfg_file else {}
         self.parser.set_defaults(**defaults)
-        
 
     def parse_args(self, argv, quiet=False):
         args, unknown = self.parser.parse_known_args(argv)
@@ -26,7 +27,7 @@ class Command:
         if len(self.args) > 0 and all(v is None for k, v in self.args.items()):
             warn("[swga %s]: All parameters are missing- this may indicate a corrupt or "
                  "missing parameters file." % self.name)
-        
+
     def kwargs_as_args(self, **kwargs):
         '''
         Another interface to the command besides command-line arguments:
@@ -38,7 +39,7 @@ class Command:
             setattr(self, k, v)
 
     def pprint_args(self):
-        if not self.args: 
+        if not self.args:
             return
         else:
             message(colored.green("Command: " + self.name))

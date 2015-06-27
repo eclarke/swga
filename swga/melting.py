@@ -28,10 +28,10 @@ import time
 
 def _is_sym(s):
     """Returns True if s is symmetric (same as rev. complement)"""
-    r = {'A':'T',
-         'T':'A',
-         'G':'C',
-         'C':'G'}
+    r = {'A': 'T',
+         'T': 'A',
+         'G': 'C',
+         'C': 'G'}
     return s == ''.join([r[i] for i in s][::-1])
 
 
@@ -70,7 +70,7 @@ def _tercorr(st):
     return _dh, _ds
 
 
-def Tm(s, DNA_c = 5000.0, Na_c = 10.0, Mg_c = 20.0, dNTPs_c = 10.0, correction=True):
+def Tm(s, DNA_c=5000.0, Na_c=10.0, Mg_c=20.0, dNTPs_c=10.0, correction=True):
     '''
     Returns the DNA/DNA melting temp using nearest-neighbor thermodynamics.
 
@@ -88,15 +88,12 @@ def Tm(s, DNA_c = 5000.0, Na_c = 10.0, Mg_c = 20.0, dNTPs_c = 10.0, correction=T
     - correction: correct for cation concentration?
     '''
 
-
-    
     R = 1.987    # Universal gas constant (cal/(K*mol))
     s = s.upper()
     dh, ds = _tercorr(s)
     k = DNA_c * 1e-9
 
-
-    ## Adapted from Table 1 in Allawi and SantaLucia (1997).
+    # Adapted from Table 1 in Allawi and SantaLucia (1997).
     # delta H (kcal/mol)
     dh_coeffs = {"AA": -7.9,  "TT": -7.9,
                  "AT": -7.2,
@@ -108,7 +105,7 @@ def Tm(s, DNA_c = 5000.0, Na_c = 10.0, Mg_c = 20.0, dNTPs_c = 10.0, correction=T
                  "CG": -10.6,
                  "GC": -9.8,
                  "GG": -8.0,  "CC": -8.0}
-    
+
     # delta S (eu)
     ds_coeffs = {"AA": -22.2,  "TT": -22.2,
                  "AT": -20.4,
@@ -123,26 +120,28 @@ def Tm(s, DNA_c = 5000.0, Na_c = 10.0, Mg_c = 20.0, dNTPs_c = 10.0, correction=T
 
     # Multiplies the number of times each nuc pair is in the sequence by the
     # appropriate coefficient, then returns the sum of all the pairs
-    dh = dh + sum(_overcount(s, pair) * coeff for pair, coeff in dh_coeffs.items())
-    ds = ds + sum(_overcount(s, pair) * coeff for pair, coeff in ds_coeffs.items())
+    dh = dh + \
+        sum(_overcount(s, pair) * coeff for pair, coeff in dh_coeffs.items())
+    ds = ds + \
+        sum(_overcount(s, pair) * coeff for pair, coeff in ds_coeffs.items())
 
     fgc = len(filter(lambda x: x == 'G' or x == 'C', s)) / float(len(s))
 
-    ## Melting temperature
+    # Melting temperature
     tm = (1000 * dh) / (ds + (R * log(k)))
 
     if not correction:
         return tm - 273.15
-    
+
     MNa = Na_c * 1e-3
     MMg = Mg_c * 1e-3
     MdNTPs = dNTPs_c * 1e-3
 
-    ## Free magnesium concentration
-    Ka = 3e4  # association constant in biological buffers    
+    # Free magnesium concentration
+    Ka = 3e4  # association constant in biological buffers
     D = (Ka * MdNTPs - Ka * MMg + 1)**2 + (4 * Ka * MMg)
     Fmg = (-(Ka * MdNTPs - Ka * MMg + 1) + sqrt(D)) / (2 * Ka)
-    
+
     cation_ratio = sqrt(Fmg) / MNa if MNa > 0 else 7.0
 
     if cation_ratio < 0.22:
@@ -156,14 +155,14 @@ def Tm(s, DNA_c = 5000.0, Na_c = 10.0, Mg_c = 20.0, dNTPs_c = 10.0, correction=T
         Fmg = MMg
         if cation_ratio < 6.0:
             a = a * (0.843 - 0.352 * sqrt(MNa) * log(MNa))
-            d = d * (1.279 - 4.03 * log(MNa) * 1e-3 - 8.03 * log(MNa)**2 * 1e-3)
+            d = d * \
+                (1.279 - 4.03 * log(MNa) * 1e-3 - 8.03 * log(MNa)**2 * 1e-3)
             g = g * (0.486 - 0.258 * log(MNa) + 5.25 * log(MNa)**3 * 1e-3)
         tm = 1 / (
             (1 / tm) +
             (a - 0.911 * log(Fmg) + fgc * (6.26 + d * log(Fmg)) +
-             1/(2 * (len(s)-1)) * (-48.2 + 52.5 * log(Fmg) +
-                                     g * log(Fmg)**2)) * 1e-5)
-
+             1 / (2 * (len(s) - 1)) * (-48.2 + 52.5 * log(Fmg) +
+                                       g * log(Fmg)**2)) * 1e-5)
 
     return tm - 273.15
 
@@ -175,9 +174,9 @@ def _init_worker():
 def _Tm(primer, **kwargs):
     primer.tm = Tm(primer.seq, **kwargs)
     return primer
-    
 
-def Tm_parallel(primers, cores = multiprocessing.cpu_count()):
+
+def Tm_parallel(primers, cores=multiprocessing.cpu_count()):
     updated_primers = []
     progressbar(0, len(primers))
 
@@ -189,7 +188,7 @@ def Tm_parallel(primers, cores = multiprocessing.cpu_count()):
     for primer in primers:
         pool.apply_async(_Tm, args=(primer,),
                          callback=update_temps)
-        
+
     try:
         time.sleep(5)
     except KeyboardInterrupt as k:
@@ -201,7 +200,7 @@ def Tm_parallel(primers, cores = multiprocessing.cpu_count()):
         pool.join()
 
     return updated_primers
-            
+
 
 @click.command()
 @click.argument("sequence")
@@ -215,6 +214,4 @@ def main(sequence, dna, na, mg, dntp, correction):
 
 
 if __name__ == "__main__":
-    main()    
-        
-                                
+    main()
