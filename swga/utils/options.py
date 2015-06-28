@@ -1,7 +1,5 @@
 import sys
-import yaml
 import argparse
-from collections import OrderedDict
 from swga.clint.textui import puts, max_width, indent
 from StringIO import StringIO
 
@@ -10,7 +8,7 @@ def cfg_from_opts(opts):
     '''
     Takes a dictionary of options (with desc and default fields) and creates a
     config file from them, parseable by ConfigParser.
-    
+
     Returns: the contents of the config file, as a string.
     '''
     out_str = ""
@@ -30,10 +28,10 @@ def cfg_from_opts(opts):
         for opt in opts[section].keys():
             if opt == "META":
                 continue
-            if opt == "desc": 
+            if opt == "desc":
                 continue
             if opt == "incfg":
-                continue    
+                continue
             option = opts[section][opt]
             if not option.get("incfg", True):
                 continue
@@ -42,7 +40,7 @@ def cfg_from_opts(opts):
             if default == "None" or default is None:
                 default = ""
             out_str += desc + opt_str.format(opt=opt, default=default)
-    
+
     return(out_str)
 
 
@@ -60,13 +58,13 @@ def argparser_from_opts(opts, cmd_name, description=None):
     def make_parser(name, description=None):
         description = description if description else ""
         parser = argparse.ArgumentParser(
-            prog = 'swga ' + name,
-            description = description)
+            prog='swga ' + name,
+            description=description)
         return parser
 
     if cmd_name not in opts:
         return make_parser(cmd_name, description)
-    
+
     section = opts[cmd_name]
     meta = opts[cmd_name]['META']
     # Use passed description if provided, else use the one from the opts
@@ -76,10 +74,10 @@ def argparser_from_opts(opts, cmd_name, description=None):
     for argname in section:
         if argname == "META":
             continue
-        
+
         argvals = section[argname]
 
-        # Setting some defaults 
+        # Setting some defaults
         opttype = argvals.get('opttype', 'opt')
         action = argvals.get('action', 'store')
         prefix = "--"
@@ -110,34 +108,33 @@ def argparser_from_opts(opts, cmd_name, description=None):
             prefix = ""
 
         # Flag-type options cannot have a type (even if None) specified in the
-        # constructor 
+        # constructor
         if opttype == 'flag':
             parser.add_argument(
                 prefix + argname,
-                action = 'store_true',
-                help = help)
+                action='store_true',
+                help=help)
         # We only use a non-False default value for stdin/stdout options- all
         # the other options use defaults from the config file for clarity
         elif default:
             parser.add_argument(
                 prefix + argname,
-                action = action,
-                nargs = nargs,
-                choices = choices,
-                default = default,
-                type = _type,
-                help = help)
+                action=action,
+                nargs=nargs,
+                choices=choices,
+                default=default,
+                type=_type,
+                help=help)
         # No default specified (annoyingly, specifying None conflicts with
         # specifying a type, so we must omit it from the constructor)
         else:
             parser.add_argument(
                 prefix + argname,
-                action = action,
-                nargs = nargs,
-                choices = choices,
-                type = _type,
-                help = help)
-
+                action=action,
+                nargs=nargs,
+                choices=choices,
+                type=_type,
+                help=help)
 
     return parser
 

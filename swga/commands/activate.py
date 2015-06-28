@@ -7,6 +7,7 @@ import swga.locate as locate
 import swga.primers
 from swga.commands import Command
 
+
 def main(argv, cfg_file):
     cmd = Command('activate', cfg_file=cfg_file)
     cmd.parse_args(argv)
@@ -24,9 +25,10 @@ def main(argv, cfg_file):
 def activate_primers(primers, fg_genome_fp):
     update_tms(primers)
     update_locations(primers, fg_genome_fp)
-    n_active = Primer.update(active=True).where(Primer.seq << primers).execute()
+    n_active = Primer.update(active=True).where(
+        Primer.seq << primers).execute()
     swga.message("Marked {} primers as active.".format(n_active))
-        
+
 
 def update_tms(primers):
     """
@@ -56,4 +58,4 @@ def update_locations(primers, fg_genome_fp):
     for p in progress.bar(primers, label="Finding binding locations... "):
         p.locations = json.dumps(locate.binding_sites(p.seq, fg_genome_fp))
 
-    update_in_chunks(primers, label = "Updating database... ")
+    update_in_chunks(primers, label="Updating database... ")

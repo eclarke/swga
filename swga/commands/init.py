@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
 """
 `swga init` is a special command that initializes a directory before being used
-with SWGA. In short, this reads the foreground and background FASTA files to get
-some basic stats (number of records, overall number of bases) and populates the
-generated parameters.cfg file with reasonable defaults based on these stats.
+with SWGA. In short, this reads the foreground and background FASTA files to
+get some basic stats (number of records, overall number of bases) and
+populates the generated parameters.cfg file with reasonable defaults based on
+these stats.
 
-For this reason, this command does not use the framework that other commands use
-(since it creates the parameters file).
+For this reason, this command does not use the framework that other commands
+use (since it creates the parameters file).
 """
 
 import click
 import subprocess
 from click._compat import filename_to_ui
-import os, stat
+import os
+import stat
 from pyfaidx import Fasta
 from swga.utils.resources import get_swga_opts
 from swga.utils.options import cfg_from_opts
@@ -31,6 +33,7 @@ DEFAULT_PARAMETERS_FNAME = "parameters.cfg"
 MIN_FG_RATE = 0.00001
 MAX_BG_RATE = 0.0000067
 
+
 @click.command()
 @click.option(
     "-f", "--fg_genome_fp",
@@ -43,28 +46,29 @@ MAX_BG_RATE = 0.0000067
     type=click.Path(exists=True, resolve_path=True))
 def main(fg_genome_fp, bg_genome_fp, exclude_fp):
     CWD = os.getcwd()
-    
-    ## 01. Display welcome message
+
+    # 01. Display welcome message
     click.secho(
-        welcome_message.format(CWD=CWD), fg = "blue")
-    
-    ## 02. Prompt for the foreground genome, if not already specified
+        welcome_message.format(CWD=CWD), fg="blue")
+
+    # 02. Prompt for the foreground genome, if not already specified
     if (not fg_genome_fp):
         fg_genome_fp = click.prompt(
-            "Enter path to foreground genome file, in FASTA format", 
+            "Enter path to foreground genome file, in FASTA format",
             type=click.Path(exists=True, resolve_path=True))
     fg_length, fg_nrecords = fasta_stats(fg_genome_fp)
     click.secho(fg_message.format(**locals()), fg="green")
-    
-    ## 03. Prompt for background genome, if not already specified
+
+    # 03. Prompt for background genome, if not already specified
     if (not bg_genome_fp):
         bg_genome_fp = click.prompt(
-            "Enter path to background genome file, in FASTA format", 
+            "Enter path to background genome file, in FASTA format",
             type=click.Path(exists=True, resolve_path=True))
     bg_length = fasta_len_quick(bg_genome_fp)
     click.secho(bg_message.format(**locals()), fg="green")
 
-    ## 04. Prompt for a file containing sequences to exclude, if not already given
+    # 04. Prompt for a file containing sequences to exclude, if not already
+    # given
     if (not exclude_fp):
         if click.confirm(exclude_prompt):
             exclude_fp = click.prompt(
@@ -80,15 +84,14 @@ def main(fg_genome_fp, bg_genome_fp, exclude_fp):
 
     click.echo(exclude_fp_message)
 
-
-    ## 05. Build and populate the parameters file
+    # 05. Build and populate the parameters file
     opts = get_swga_opts()
     default_parameters = cfg_from_opts(opts)
     cfg_fp = os.path.join(CWD, DEFAULT_PARAMETERS_FNAME)
     min_fg_bind = int(MIN_FG_RATE * float(fg_length))
     max_bg_bind = int(MAX_BG_RATE * float(bg_length))
-    
-    ## 06. Write parameters file
+
+    # 06. Write parameters file
     if os.path.isfile(cfg_fp):
         click.confirm(
             "Existing file `%s` will be overwritten. Continue?"
@@ -96,17 +99,16 @@ def main(fg_genome_fp, bg_genome_fp, exclude_fp):
 
     with open(cfg_fp, "wb") as cfg_file:
         cfg_file.write(default_parameters.format(**locals()))
-        
-    ## Done!
+
+    # Done!
     click.secho(finished_message.format(
         DEFAULT_PARAMETERS_FNAME=DEFAULT_PARAMETERS_FNAME), fg="green")
 
-    
 
 def fasta_len_quick(fasta_fp):
     """
     Fast way to get the number of bases in a FASTA file, excluding headers.
-    """ 
+    """
     try:
         length = subprocess.check_output(
             "grep -v '>' {} | wc -c".format(fasta_fp), shell=True)
@@ -114,7 +116,7 @@ def fasta_len_quick(fasta_fp):
         return length
     except subprocess.CalledProcessError:
         click.echo(click.style(
-            "\nError getting length of FASTA file {}".format(fasta_fp), 
+            "\nError getting length of FASTA file {}".format(fasta_fp),
             fg="red"))
         raise
 
@@ -134,7 +136,7 @@ def fasta_stats(fasta_fp):
         return length, nrecords
     except:
         click.secho(
-            "\nError reading %s: invalid FASTA format?" % fasta_fp, fg = "red")
+            "\nError reading %s: invalid FASTA format?" % fasta_fp, fg="red")
         raise
 
 
@@ -156,21 +158,22 @@ def check_empty_lines(fasta_fp):
             .format(basename), abort=True)
         # sed -ie gets around the fact that BSD sed -i requires a backup extension
         # with sed, but we don't want to create a backup. Ensures linux/osx
-        # compatibility. 
+        # compatibility.
         subprocess.check_call(
             "sed -ie '/^$/d' \"{}\"".format(fasta_fp), shell=True)
 
 
-## The monkeypatching going on here forces the click framework to strip
-## whitespace from the ends of filename strings passed to it. This allows users
-## to drag-and-drop files on the Mac OS X terminal (which appends a trailing
-## space); without this, click says that the file doesn't exist.
+# The monkeypatching going on here forces the click framework to strip
+# whitespace from the ends of filename strings passed to it. This allows users
+# to drag-and-drop files on the Mac OS X terminal (which appends a trailing
+# space); without this, click says that the file doesn't exist.
 ##
 def monkeypatch_method(cls):
     def decorator(func):
         setattr(cls, func.__name__, func)
         return func
     return decorator
+
 
 @monkeypatch_method(click.Path)
 def convert(self, value, param, ctx):

@@ -6,6 +6,7 @@ from swga.database import Primer, Set
 from swga.clint.textui import puts, indent, colored, max_width
 from peewee import fn
 
+
 def main(argv, cfg_file):
     cmd = Command('summary', cfg_file=cfg_file)
     cmd.parse_args(argv, quiet=True)
@@ -13,7 +14,7 @@ def main(argv, cfg_file):
 
 
 def summary(primer_db, fg_length, bg_length):
-    
+
     db = swga.database.init_db(primer_db)
     db.connect()
     swga.database.create_tables(drop=False)
@@ -26,9 +27,9 @@ def summary(primer_db, fg_length, bg_length):
         .scalar(as_tuple=True))
 
     if (avg_fg_bind is None) or (avg_bg_bind is None):
-        raise swga.swga_error(
+        raise swga.error(
             "Could not calculate summary statistics; database may be corrupt")
-    
+
     fg_bind_ratio = avg_fg_bind / float(fg_length)
     bg_bind_ratio = avg_bg_bind / float(bg_length)
     nactive = Primer.select().where(Primer.active==True).count()
@@ -42,7 +43,6 @@ def summary(primer_db, fg_length, bg_length):
         .scalar(as_tuple=True))
 
     nsets = Set.select(fn.Count(Set._id)).scalar()
-
 
     if nsets > 0:
         bs = Set.select().order_by(Set.score).limit(1).get()
@@ -60,8 +60,8 @@ def summary(primer_db, fg_length, bg_length):
 
     PRIMER SUMMARY
     ---------------
-    There are {nprimers} primers in the database. 
-    
+    There are {nprimers} primers in the database.
+
     {nactive} are marked as active (i.e., they passed filter steps and will be used to find sets of compatible primers.) {ifzero_primers_msg}
 
     The average number of foreground genome binding sites is {avg_fg_bind:.0f}.
@@ -81,17 +81,17 @@ def summary(primer_db, fg_length, bg_length):
 """
 
     ifzero_primers_msg = colored.green(
-        "Run `swga filter` to identify primers to use." 
+        "Run `swga filter` to identify primers to use."
         if nactive == 0 else "")
-    melting_tmp_msg =  (
-        """The melting temp of the primers ranges between {min_tm:.2f}C and {max_tm:.2f}C with an average of {avg_tm:.2f}C.""" 
-        if nactive > 0 and min_tm and max_tm else 
+    melting_tmp_msg = (
+        """The melting temp of the primers ranges between {min_tm:.2f}C and {max_tm:.2f}C with an average of {avg_tm:.2f}C."""
+        if nactive > 0 and min_tm and max_tm else
         "No melting temps have been calculated yet.")
     ifzero_sets_msg = colored.green(
         "Run `swga find_sets` after identifying valid primers to begin collecting sets.\n")
 
     set_msg = ("""
-    The best scoring set is #{best_set}, with {bs_size} primers and a score of {bs_score:03f}.\nVarious statistics: 
+    The best scoring set is #{best_set}, with {bs_size} primers and a score of {bs_score:03f}.\nVarious statistics:
     {bs_stats}
 The primers in Set {best_set} are:
     {bs_primers}
@@ -107,6 +107,7 @@ The primers in Set {best_set} are:
 
     with indent(2):
         puts(max_width(summary_msg, 80))
+
 
 def fmtkv(k, v):
     set_stat_line = "{key:.<16}: {val: >10s}"

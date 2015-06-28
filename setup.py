@@ -1,21 +1,11 @@
-from setuptools import setup, Command, find_packages
-from subprocess import call
-import sys
+from setuptools import setup, find_packages
 
-import swga
-
-class test_swga(Command):
-    user_options = []
-    def initialize_options(self): pass
-    def finalize_options(self): pass
-
-    def run(self):
-        errno = call([sys.executable, 'test_swga.py'])
-        raise SystemExit(errno)
+with open("VERSION") as version_file:
+    version = version_file.read().strip()
 
 setup(
     name='swga',
-    version=swga.__version__,
+    version=version,
     author='Erik Clarke',
     author_email='ecl@mail.med.upenn.edu',
     packages=find_packages(),
@@ -38,8 +28,5 @@ setup(
     license='LICENSE.txt',
     description='Pipeline to select compatible primer sets for selective whole-genome amplification.',
     long_description=open('README.md').read(),
-    entry_points = {'console_scripts': ['swga = swga.commands.swga_entry:main']},
-    cmdclass={
-        'test': test_swga
-    }
+    entry_points = {'console_scripts': ['swga = swga.commands.swga_entry:main']}
 )

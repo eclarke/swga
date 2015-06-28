@@ -6,10 +6,11 @@ Functions used to score primer sets.
 
 from math import sqrt
 
+
 def mean(values):
     '''Returns the arithmetic mean.'''
     return float(sum(values))/len(values) if len(values) > 0 else float('nan')
-    
+
 
 def stdev(values):
     '''

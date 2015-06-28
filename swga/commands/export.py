@@ -28,7 +28,6 @@ import os
 import swga.database as database
 import swga.locate
 import swga.stats
-from swga import warn, swga_error
 from swga.commands import Command
 from swga.database import Primer, Set
 from swga.export import BedGraph, BedFile
@@ -79,7 +78,7 @@ def get_items(model, ids=None, order_by=None, limit=None, descending=False):
     '''
 
     if ids and (order_by or limit):
-        warn("ID(s) specified: ignoring --order_by and --limit options.")
+        swga.warn("ID(s) specified: ignoring --order_by and --limit options.")
         order_by = limit = None
 
     validate_order_field(order_by, model)
@@ -136,6 +135,6 @@ def export(model, rows, outfile, header=True):
 def validate_order_field(field, model):
     '''Ensures the given field exists in the model.'''
     if field and field not in model.fields():
-        swga_error(
+        swga.error(
             "Cannot order by '{}'. Valid choices are {}"
             .format(field, ", ".join(Primer.fields())))

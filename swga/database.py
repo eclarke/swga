@@ -10,7 +10,7 @@ contains a litany of helper functions for adding and retrieving stored data.
 import os
 import json
 import swga
-from swga.core import chunk_iterator
+from swga.utils import chunk_iterator
 from swga.locate import revcomp
 import peewee as pw
 from playhouse.shortcuts import ManyToManyField
@@ -19,7 +19,9 @@ from playhouse.shortcuts import ManyToManyField
 # ex: `db.init(db_fname)`
 db = pw.SqliteDatabase(None)
 
+
 class SwgaBase(pw.Model):
+
     '''Specifies what database the inheriting models will use.'''
 
     @classmethod
@@ -41,6 +43,7 @@ class SwgaBase(pw.Model):
 
 
 class Primer(SwgaBase):
+
     '''
     The primers table contains the sequence and metadata for each primer. Once
     set composition is determined, the sets that each primer belongs to can be
@@ -75,8 +78,8 @@ class Primer(SwgaBase):
         return fields
 
 
-
 class Set(SwgaBase):
+
     '''
     The sets table contains each set's metadata. The actual primers that belong
     in the set are found using the PrimerSet intermediate table.
@@ -94,8 +97,10 @@ class Set(SwgaBase):
     scoring_fn = pw.TextField(null=True)
 
     def __repr__(self):
-        return "Set: "+"; ".join("{}:{}".format(k,v)
-                                 for k,v in self.__dict__['_data'].items())
+        attr_str = "; ".join(
+            "{}:{}".format(k, v) for k, v
+            in self.__dict__['_data'].items())
+        return "Set: " + attr_str
 
     @staticmethod
     def exported_fields():
@@ -124,14 +129,14 @@ def init_db(db_fname, create_if_missing=False):
     found. Otherwise, it throws an error.
     '''
     if not db_fname:
-        swga.swga_error("Primer database name unspecified.")
+        swga.error("Primer database name unspecified.")
     if db_fname == ":memory:":
         db.init(db_fname)
     elif create_if_missing and not os.path.isfile(db_fname):
         db.init(db_fname)
     elif not os.path.isfile(db_fname):
-        swga.swga_error("Primer db not found at %s: specify different path or "
-                        "re-run `swga count`" % db_fname)
+        swga.error("Primer db not found at %s: specify different path or "
+                   "re-run `swga count`" % db_fname)
     db.init(db_fname)
     return db
 
@@ -164,13 +169,13 @@ def add_primers(primers, chunksize=199, add_revcomp=True):
 @db.atomic()
 def add_set(_id, primers, **kwargs):
     if not primers:
-        swga.swga_error("Invalid primers for set")
+        swga.error("Invalid primers for set")
     if isinstance(primers, pw.SelectQuery):
         nprimers = primers.count()
     else:
         nprimers = len(primers)
     if nprimers == 0:
-        swga.swga_error("Cannot have an empty set")
+        swga.error("Cannot have an empty set")
     _hash = hash(frozenset([p.seq for p in primers]))
     if Set.select(pw.fn.Count(Set._id)).where(Set._hash == _hash).scalar() > 0:
         return None
@@ -196,7 +201,8 @@ def update_in_chunks(itr, chunksize=100, show_progress=True,
     Arguments:
     - itr: a list or other iterable containing records in the primer db that
            have a to_dict() method
-    - chunksize: the size of the chunk. Usually has to be 999/(number of fields)
+    - chunksize: the size of the chunk. Usually has to be
+           999/(number of fields)
     - model: the table in the db to update
     - show_progress, label: passed to progress.bar
     '''
@@ -209,6 +215,3 @@ def update_in_chunks(itr, chunksize=100, show_progress=True,
     swga.core.chunk_iterator(itr, upsert_chunk, n=chunksize,
                              show_progress=show_progress,
                              label=label)
-
-
-

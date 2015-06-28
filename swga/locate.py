@@ -13,13 +13,12 @@ import time
 from pyfaidx import Fasta
 
 import swga
-from .core import progressbar
 
 
 def revcomp(s):
     r = {
-        'A':'T', 'T':'A',
-        'G':'C', 'C':'G'
+        'A': 'T', 'T': 'A',
+        'G': 'C', 'C': 'G'
     }
     rc = [r[i] for i in s][::-1]
     return "".join(rc)
@@ -44,7 +43,6 @@ def linearize_binding_sites(primers, chr_ends):
     return list(set(new_locs))
 
 
-
 def binding_sites(kmer, genome_fp):
     genome = Fasta(genome_fp)
     locations = {}
@@ -55,7 +53,8 @@ def binding_sites(kmer, genome_fp):
         # append reversed primer locations as well
         locations[record] += substr_indices(revcomp(kmer), seq)
     if locations == {}:
-        raise ValueError("No locations for {} found in fg genome!".format(kmer))
+        raise ValueError(
+            "No locations for {} found in fg genome!".format(kmer))
     return locations
 
 
@@ -73,14 +72,14 @@ def primers_in_parallel(primers, genome_fp,
     updated_primers = []
     swga.message("Finding binding sites for {} primers: ".format(len(primers)))
 
-    progressbar(0, len(primers))
+    swga.utils.progressbar(0, len(primers))
 
     def _init_worker():
         signal.signal(signal.SIGINT, signal.SIG_IGN)
 
     def update(_primer):
         updated_primers.append(_primer)
-        progressbar(len(updated_primers), len(primers))
+        swga.utils.progressbar(len(updated_primers), len(primers))
 
     pool = multiprocessing.Pool(cores, _init_worker)
     for p in primers:
@@ -88,8 +87,8 @@ def primers_in_parallel(primers, genome_fp,
                          args=(p, genome_fp),
                          callback=update)
 
-    # Allows a keyboard interrupt to be caught whereas normally interrupts cause
-    # it to hang 
+    # Allows a keyboard interrupt to be caught whereas normally interrupts
+    # cause it to hang
     try:
         time.sleep(10)
     except KeyboardInterrupt as k:
@@ -135,7 +134,8 @@ def substr_indices(substring, string):
             locations.append(start-1)
         else:
             return locations
-        
+
+
 def count(substring, string):
     n = start = 0
     substring = substring.upper()
@@ -145,5 +145,3 @@ def count(substring, string):
             n += 1
         else:
             return n
-
-            

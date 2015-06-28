@@ -2,7 +2,6 @@ import click
 import functools
 from peewee import fn
 
-from swga import message, swga_error
 import swga.primers
 import swga.locate
 import swga.score
@@ -20,18 +19,18 @@ def main(argv, cfg_file):
         cmd.fg_genome_fp,
         cmd.bg_genome_fp)
     if len(primers) == 0:
-        swga_error("No primers specified exist in database, aborting.", 
+        swga.error("No primers specified exist in database, aborting.",
                    exception=False)
     chr_ends = swga.locate.chromosome_ends(cmd.fg_genome_fp)
-    
-    # Evaluate the user-defined scoring function    
+
+    # Evaluate the user-defined scoring function
     score_fun = functools.partial(
         swga.score.default_score_set,
         expression=cmd.score_expression)
 
     score_set(
         set_id=0,
-        primers=primers, 
+        primers=primers,
         chr_ends=chr_ends,
         score_fun=score_fun,
         score_expression=cmd.score_expression,
@@ -48,10 +47,9 @@ def score_set(
         chr_ends,
         score_fun,
         score_expression,
-        max_fg_bind_dist, 
+        max_fg_bind_dist,
         bg_genome_len=None,
         interactive=False):
-    
 
     binding_locations = swga.locate.linearize_binding_sites(primers, chr_ends)
     max_dist = max(swga.score.seq_diff(binding_locations))
@@ -61,8 +59,8 @@ def score_set(
         return False, max_dist
 
     if not bg_dist_mean and not bg_genome_len:
-        swga_error("Neither background length nor ratio were provided, "
-                   "cannot calculate bg_dist_mean")    
+        swga.error("Neither background length nor ratio were provided, "
+                   "cannot calculate bg_dist_mean")
     elif not bg_dist_mean:
         bg_dist_mean = float(bg_genome_len)/sum(p.bg_freq for p in primers)
 
@@ -72,13 +70,12 @@ def score_set(
         max_dist=max_dist,
         bg_dist_mean=bg_dist_mean)
 
-
     add_set = True
     # If it's user-supplied, they have the option of not adding it to db
     if interactive:
         set_dict = dict(
-            {'score':set_score, 'scoring_fn':score_expression}.items() 
-            + variables.items())
+            {'score': set_score,
+             'scoring_fn': score_expression}.items() + variables.items())
         swga.message("Set statistics:\n - " + "\n - ".join(
             fmtkv(k, v) for k, v in set_dict.items()))
 
@@ -88,7 +85,7 @@ def score_set(
             set_id = Set.select(fn.Min(Set._id)).scalar() - 1
         else:
             add_set = False
-            
+
     if add_set:
         s = swga.database.add_set(
             _id=set_id,
@@ -97,13 +94,10 @@ def score_set(
             scoring_fn=score_expression,
             **variables)
         set_added = s is not None
-            
+
         if interactive and set_added:
             swga.message("Set {} added successfully.".format(set_id))
         elif interactive:
             swga.message("That primer set already exists.")
-    return set_added, max_dist 
-            
-                
-                
-    
+    return set_added, max_dist
+

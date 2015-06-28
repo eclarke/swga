@@ -5,7 +5,7 @@ import swga.database as database
 from swga.database import Primer, Set
 
 class TestPrimersSets:
-    
+
     def test_create_primers_sets(self, initdb, tprimers, tset):
         '''
         Create primers and sets, and find which primers belong to which sets.
@@ -37,9 +37,9 @@ class TestPrimersSets:
 
     def test_bad_add_set_function(self, initdb, tprimers):
         '''Should raise errors if invalid primers supplied.'''
-        with pytest.raises(swga.core.SWGAError):
+        with pytest.raises(swga.SWGAError):
             database.add_set(_id=2, primers=None, score=100)
-        with pytest.raises(swga.core.SWGAError):
+        with pytest.raises(swga.SWGAError):
             invalid_primers = Primer.select().where(Primer.seq == "XX")
             database.add_set(_id=3, primers=invalid_primers, score=100)
 
@@ -59,10 +59,10 @@ class TestPrimersSets:
         s = Set.create(_id=1, score=1)
         s.primers.add(p)
         database.db.close()
-        
+
     def test_add_primers(self, initdb):
         '''Must add the reverse complement of a primer if requested.'''
         primers = [{'seq': "AAAA"}]
         database.add_primers(primers, add_revcomp=True)
         assert Primer.select().where(Primer.seq == "TTTT").count() == 1
-    
+

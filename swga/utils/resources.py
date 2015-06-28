@@ -12,7 +12,7 @@ from pkg_resources import (
 def _get_resource_file(fp):
     resource_path = resource_filename("swga", fp)
     if not resource_exists("swga", fp):
-        swga.swga_error("Resource does not exist: {}".format(resource_path))    
+        swga.error("Resource does not exist: {}".format(resource_path))
     return resource_path
 
 

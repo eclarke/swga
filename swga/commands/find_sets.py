@@ -1,12 +1,6 @@
 import functools
-import os
-import signal
-import subprocess
-import sys
-import time
 
 import click
-from pkg_resources import resource_filename
 
 import swga.database
 import swga.graph as graph
@@ -19,6 +13,7 @@ from swga.database import Primer, Set, update_in_chunks, init_db
 import swga.setfinder as setfinder
 
 graph_fname = "compatibility_graph.dimacs"
+
 
 def main(argv, cfg_file):
     cmd = Command('find_sets', cfg_file=cfg_file)
@@ -38,7 +33,7 @@ def main(argv, cfg_file):
             s.delete_instance()
 
     make_graph(cmd.max_dimer_bp, graph_fname)
-    
+
     swga.message("Now finding sets. If nothing appears, try relaxing your parameters.")
     if cmd.workers <= 1:
         setlines = setfinder.find_sets(
@@ -55,7 +50,7 @@ def main(argv, cfg_file):
             min_size=cmd.min_size,
             max_size=cmd.max_size,
             bg_genome_len=cmd.bg_genome_len)
-    
+
     score_sets(
         setlines,
         cmd.fg_genome_fp,
@@ -63,18 +58,18 @@ def main(argv, cfg_file):
         cmd.max_fg_bind_dist,
         cmd.max_sets)
 
-    
+
 def make_graph(max_hetdimer_bind, outfile):
     '''Selects all active primers and outputs a primer compatibility graph.'''
 
     # Reset all the primer IDs (as ids are only used for set_finder)
     Primer.update(_id = -1).execute()
 
-    primers = list(Primer.select().where(Primer.active==True)
+    primers = list(Primer.select().where(Primer.active == True)
                    .order_by(Primer.ratio.desc()).execute())
-    
+
     if len(primers) == 0:
-       swga.swga_error("No active sets found. Run `swga filter` first.")
+        swga.error("No active sets found. Run `swga filter` first.")
 
     for i, p in enumerate(primers):
         p._id = i + 1
@@ -90,9 +85,9 @@ def make_graph(max_hetdimer_bind, outfile):
     with open(outfile, 'wb') as out:
         graph.write_graph(primers, edges, out)
 
-        
+
 def score_sets(
-        setlines, 
+        setlines,
         fg_genome_fp,
         score_expression,
         max_fg_bind_dist,
@@ -111,7 +106,7 @@ def score_sets(
     if max_sets < 1:
         max_sets = float("inf")
 
-    # Evaluate the user-defined scoring function    
+    # Evaluate the user-defined scoring function
     score_fun = functools.partial(
         score.default_score_set,
         expression=score_expression)
@@ -120,7 +115,7 @@ def score_sets(
 
     passed = processed = 0
     min_max_dist = float('inf')
-    
+
     status = "\rSets: {: ^5,.6g} | Passed: {: ^5,.6g} | Smallest max binding distance:{: ^12,.4G}"
 
     try:
@@ -159,4 +154,4 @@ def score_sets(
         # Raises a GeneratorExit inside the find_sets command, prompting it to quit
         # the subprocess
         setlines.close()
-    
+

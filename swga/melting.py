@@ -4,7 +4,7 @@ melting.py
 Calculates the melting temperatures of a given nucleotide sequence.
 
 The melting temperature equations, including correction for salt concentrations,
-derives from information found on this page: 
+derives from information found on this page:
   https://www.idtdna.com/Calc/Analyzer/Home/Definitions#MeltTemp
 
 The values for the delta H (dH) and delta S (dS) of each nucleotide pair, and
@@ -20,10 +20,7 @@ Based heavily on code by the following authors:
 from __future__ import division
 from math import sqrt, log
 import click
-import multiprocessing
 import signal
-from swga.core import progressbar
-import time
 
 
 def _is_sym(s):
@@ -174,32 +171,6 @@ def _init_worker():
 def _Tm(primer, **kwargs):
     primer.tm = Tm(primer.seq, **kwargs)
     return primer
-
-
-def Tm_parallel(primers, cores=multiprocessing.cpu_count()):
-    updated_primers = []
-    progressbar(0, len(primers))
-
-    def update_temps(updated_primer):
-        updated_primers.append(updated_primer)
-        progressbar(len(updated_primers), len(primers))
-
-    pool = multiprocessing.Pool(cores, _init_worker)
-    for primer in primers:
-        pool.apply_async(_Tm, args=(primer,),
-                         callback=update_temps)
-
-    try:
-        time.sleep(5)
-    except KeyboardInterrupt as k:
-        pool.terminate()
-        pool.join()
-        raise k
-    else:
-        pool.close()
-        pool.join()
-
-    return updated_primers
 
 
 @click.command()
