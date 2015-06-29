@@ -9,7 +9,8 @@ import swga.score as score
 from swga.clint.textui import progress
 from swga.commands import Command
 from swga.commands.score import score_set
-from swga.database import Primer, Set, update_in_chunks, init_db
+from swga.database import Set, init_db
+from swga.primers import Primer, update_in_chunks
 import swga.setfinder as setfinder
 
 graph_fname = "compatibility_graph.dimacs"

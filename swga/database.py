@@ -8,7 +8,6 @@ contains a litany of helper functions for adding and retrieving stored data.
 
 """
 import os
-import json
 import swga
 from swga.utils import chunk_iterator
 from swga.locate import revcomp
@@ -40,42 +39,6 @@ class SwgaBase(pw.Model):
 
     class Meta:
         database = db
-
-
-class Primer(SwgaBase):
-
-    '''
-    The primers table contains the sequence and metadata for each primer. Once
-    set composition is determined, the sets that each primer belongs to can be
-    found by using the Primer_Set intermediate table.
-    '''
-    _id = pw.IntegerField(null=True)
-    seq = pw.CharField(primary_key=True)
-    fg_freq = pw.IntegerField(default=0)
-    bg_freq = pw.IntegerField(default=0)
-    ratio = pw.FloatField(default=0.0)
-    tm = pw.FloatField(null=True)
-    locations = pw.TextField(null=True)
-    active = pw.BooleanField(default=False)
-
-    def __repr__(self):
-        rep_str = "Primer {0}:{1} (fg_freq:{2}, bg_freq:{3}, ratio:{4})"
-        return rep_str.format(
-            self.id, self.seq, self.fg_freq, self.bg_freq, self.ratio)
-
-    def locations_dict(self):
-        return json.loads(self.locations)
-
-    @staticmethod
-    def exported_fields():
-        fields = [
-            'seq',
-            'fg_freq',
-            'bg_freq',
-            'ratio',
-            'tm'
-        ]
-        return fields
 
 
 class Set(SwgaBase):
@@ -193,25 +156,4 @@ def get_primers_for_ids(pids):
     return list(Primer.select().where(Primer._id << pids).execute())
 
 
-def update_in_chunks(itr, chunksize=100, show_progress=True,
-                     label=None):
-    '''
-    Inserts or updates records in database in chunks of a given size.
 
-    Arguments:
-    - itr: a list or other iterable containing records in the primer db that
-           have a to_dict() method
-    - chunksize: the size of the chunk. Usually has to be
-           999/(number of fields)
-    - model: the table in the db to update
-    - show_progress, label: passed to progress.bar
-    '''
-    def upsert_chunk(chunk):
-        seqs = [p.seq for p in chunk]
-        Primer.delete().where(Primer.seq << seqs).execute()
-        Primer.insert_many(p.to_dict() for p in chunk).execute()
-    if isinstance(itr, pw.SelectQuery):
-        itr = list(itr)
-    swga.core.chunk_iterator(itr, upsert_chunk, n=chunksize,
-                             show_progress=show_progress,
-                             label=label)

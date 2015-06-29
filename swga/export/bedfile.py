@@ -24,9 +24,9 @@ class BedFile(object):
 
     def write(self, output_fp):
         '''
-        Writes n+1 BED-formatted files to a folder, where n is the number of primers
-        in a set. One file is written for each primer, and then one file is written
-        that combines all the primers together into one set.
+        Writes n+1 BED-formatted files to a folder, where n is the number of
+        primers in a set. One file is written for each primer, and then one
+        file is written that combines all the primers together into one set.
         '''
         # Create the output folder if it doesn't exist already
         output_folder = swga.export._mk_folder(
