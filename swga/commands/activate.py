@@ -1,5 +1,4 @@
 import swga.database
-from swga.primer import Primer
 import swga.primers
 from swga.commands import Command
 
@@ -15,7 +14,7 @@ def main(argv, cfg_file):
         cmd.fg_genome_fp,
         cmd.bg_genome_fp)
 
-    Primer.update_Tms(primers)
-    Primer.update_locations(primers, cmd.fg_genome_fp)
-    n_activated = Primer.activate(primers)
+    swga.database.Primer.update_Tms(primers)
+    swga.database.Primer.update_locations(primers, cmd.fg_genome_fp)
+    n_activated = swga.database.Primer.activate(primers)
     swga.message("Marked {} primers as active.".format(n_activated))

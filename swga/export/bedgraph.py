@@ -66,7 +66,8 @@ class BedGraph(object):
             counter = Counter()
             for primer in self.set.primers:
                 k = len(primer.seq)
-                for l in json.loads(primer.locations)[record_name]:
+                locations = primer.locations()
+                for l in locations[record_name]:
                     counter.update(Counter(xrange(l, l + k)))
 
             starting_positions = xrange(

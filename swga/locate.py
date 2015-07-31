@@ -32,13 +32,13 @@ def linearize_binding_sites(primers, chr_ends):
     '''
     new_locs = []
     for primer in primers:
-        for rec, locs in json.loads(primer.locations).iteritems():
+        for rec, locs in primer.locations().iteritems():
             chr_start, chr_end = chr_ends[rec]
             new_locs += [l + chr_start for l in locs] + [chr_start, chr_end]
     new_locs = list(set(new_locs))
     if new_locs == []:
         for primer in primers:
-            print primer, json.loads(primer.locations)
+            print primer, primer.locations()
         raise ValueError("Binding sites for primers not found!")
     return list(set(new_locs))
 
@@ -69,6 +69,7 @@ def primers_in_parallel(primers, genome_fp,
     Uses multiple processes to find the locations of all primer
     sequences in the target genome.
     '''
+    return
     updated_primers = []
     swga.message("Finding binding sites for {} primers: ".format(len(primers)))
 

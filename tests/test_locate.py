@@ -1,6 +1,5 @@
-import json
 import pytest
-
+import swga.primers
 import swga.locate
 from swga.database import Primer
 
@@ -25,7 +24,7 @@ def test_locate_chromosome_ends(fastafile):
     
 def test_linearize_binding_sites(kmer, initdb, fastafile):
     p = Primer.create(seq=kmer)
-    p.locations = json.dumps(swga.locate.binding_sites(p.seq, fastafile))
+    p._update_locations(fastafile)
     chr_ends = swga.locate.chromosome_ends(fastafile)
     linear_bind_sites = swga.locate.linearize_binding_sites([p], chr_ends)
     # (number of sites + (2*number of chromosomes) - (any overlaps))
@@ -34,7 +33,7 @@ def test_linearize_binding_sites(kmer, initdb, fastafile):
         start, end = ends
         assert start in linear_bind_sites
         assert end in linear_bind_sites
-        for site in json.loads(p.locations)[record]:
+        for site in p.locations()[record]:
             assert site in linear_bind_sites
         
 def test_revcomp():

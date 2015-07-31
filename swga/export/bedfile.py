@@ -18,7 +18,7 @@ class BedFile(object):
 
     def _primer_sites(self, primer):
         seq = primer.seq
-        for record_name, locations in primer.locations_dict().iteritems():
+        for record_name, locations in primer.locations().iteritems():
             for location in locations:
                 yield record_name, location, location + len(seq)
 
