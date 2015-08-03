@@ -14,7 +14,10 @@ from swga.utils import chunk_iterator
 from swga.locate import revcomp
 import swga.utils
 import peewee as pw
-from playhouse.shortcuts import ManyToManyField
+try:
+    from playhouse.shortcuts import ManyToManyField
+except ImportError:
+    from playhouse.fields import ManyToManyField
 
 # The primer database must be initialized before use
 # ex: `db.init(db_fname)`
