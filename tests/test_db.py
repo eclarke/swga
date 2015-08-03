@@ -1,6 +1,5 @@
 import pytest
 import swga
-import swga.core
 import swga.database as database
 from swga.database import Primer, Set
 
