@@ -1,5 +1,5 @@
 import pytest
-from swga.core import parse_config
+from swga.utils.configure import parse_config
 
 
 class TestParseConfig:
