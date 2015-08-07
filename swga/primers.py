@@ -60,11 +60,11 @@ def count_kmers(k, genome_fp, cwd, threshold=1):
         swga.message("Binary kmer file already exists at %s; parsing..."
                      % outfile)
     else:
-        cmdstr = ("{dsk} {genome_fp} {k} -o {out} -t {threshold}"
-                  .format(**locals()))
+        cmdarr = [dsk, genome_fp, str(k), '-o', out, '-t', str(threshold)]
+        cmdstr = " ".join(cmdarr)
         swga.message("In {cwd}:\n> {cmdstr}".format(**locals()))
         try:
-            subprocess.check_call(cmdstr, shell=True, cwd=cwd)
+            subprocess.check_call(cmdarr, cwd=cwd)
         except:
             if os.path.isfile(outfile):
                 os.remove(outfile)
