@@ -1,7 +1,7 @@
 #### Messages used during `swga init`
 
 welcome_message = """
-## SWGA Initialization ---------------------------
+## SWGA Initialization ({SWGA_VERSION}) ----------------------
 This will set up a workspace for SWGA in the current directory ({CWD}).
 """
 

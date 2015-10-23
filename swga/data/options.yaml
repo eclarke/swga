@@ -20,6 +20,12 @@ INTERNAL:
   max_bg_bind: &bgbind "{max_bg_bind}"
   primer_db: &primerdb primers.db
 
+__WORKSPACE__:
+  META:
+    desc: Information about the workspace. Do not edit by hand.
+  version: "{SWGA_VERSION}"
+  primer_db: *primerdb
+    
 count:
   META:
     desc: >

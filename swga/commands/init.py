@@ -15,15 +15,19 @@ import subprocess
 from click._compat import filename_to_ui
 import os
 import stat
+import swga
 from pyfaidx import Fasta
-from swga.utils.resources import get_swga_opts
-from swga.utils.options import cfg_from_opts
+from swga.utils import (resources, options)
+#from swga.utils.resources import get_swga_opts
+#from swga.utils.options import cfg_from_opts
 from swga.data.messages import (
     welcome_message,
     fg_message,
     bg_message,
     exclude_prompt,
     finished_message)
+
+SWGA_VERSION = swga.__version__
 
 DEFAULT_PARAMETERS_FNAME = "parameters.cfg"
 
@@ -49,7 +53,8 @@ def main(fg_genome_fp, bg_genome_fp, exclude_fp):
 
     # 01. Display welcome message
     click.secho(
-        welcome_message.format(CWD=CWD), fg="blue")
+        welcome_message.format(
+            CWD=CWD, SWGA_VERSION=SWGA_VERSION), fg="blue")
 
     # 02. Prompt for the foreground genome, if not already specified
     if (not fg_genome_fp):
@@ -79,14 +84,15 @@ def main(fg_genome_fp, bg_genome_fp, exclude_fp):
         exclude_fp_message = click.style(
             "Exclusionary sequences file: {}".format(exclude_fp), fg="red")
     else:
+        exclude_fp = ""
         exclude_fp_message = click.style(
             "No exclusionary sequences file specified.", fg="green")
 
     click.echo(exclude_fp_message)
 
     # 05. Build and populate the parameters file
-    opts = get_swga_opts()
-    default_parameters = cfg_from_opts(opts)
+    opts = resources.get_swga_opts()
+    default_parameters = options.cfg_from_opts(opts)
     cfg_fp = os.path.join(CWD, DEFAULT_PARAMETERS_FNAME)
     min_fg_bind = int(MIN_FG_RATE * float(fg_length))
     max_bg_bind = int(MAX_BG_RATE * float(bg_length))
@@ -98,7 +104,7 @@ def main(fg_genome_fp, bg_genome_fp, exclude_fp):
             % DEFAULT_PARAMETERS_FNAME, abort=True)
 
     with open(cfg_fp, "wb") as cfg_file:
-        cfg_file.write(default_parameters.format(**locals()))
+        cfg_file.write(default_parameters.format(SWGA_VERSION=SWGA_VERSION, **locals()))
 
     # Done!
     click.secho(finished_message.format(

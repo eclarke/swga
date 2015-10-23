@@ -1,8 +1,24 @@
 import sys
 import argparse
+import swga
 from swga.clint.textui import puts, max_width, indent
 from StringIO import StringIO
 
+class ExcludeOptionFlag(Exception):
+    pass
+
+def _parse_meta(opts, section):
+    section_str = "[{section}]\n"
+    try:
+        meta = opts[section]["META"]
+        if not meta.get('incfg', True):
+            raise ExcludeOptionFlag
+        desc = meta.get('desc', '')
+        desc = "\n" + _format_comment(desc, quote='##')
+        return desc + section_str.format(section=section)
+    except KeyError:
+        raise swga.error("Malformed options file: try re-installing SWGA")
+        
 
 def cfg_from_opts(opts):
     '''
@@ -12,18 +28,28 @@ def cfg_from_opts(opts):
     Returns: the contents of the config file, as a string.
     '''
     out_str = ""
-    section_str = "[{section}]\n"
+
     opt_str = "{opt} = {default}\n"
 
     for section in opts.keys():
         if section == "INTERNAL":
             continue
-        meta = opts[section]["META"]
-        if not meta.get('incfg', True):
+        # __WORKSPACE__ is a special section that holds metadata
+        if section == "__WORKSPACE__":
+            out_str += _parse_meta(opts, section)
+            for key in opts[section].keys():
+                if key == "META":
+                    continue
+                metavalue = opts[section][key]
+                out_str += opt_str.format(opt=key, default=metavalue)
             continue
-        desc = meta.get('desc', '')
-        desc = "\n" + _format_comment(desc, quote='##')
-        out_str += desc + section_str.format(section=section)
+
+        # Default case
+        try:
+            out_str += _parse_meta(opts, section)
+        except ExcludeOptionFlag:
+            continue
+                
 
         for opt in opts[section].keys():
             if opt == "META":
