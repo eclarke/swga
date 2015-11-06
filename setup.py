@@ -2,18 +2,26 @@ import os
 import re
 import platform
 import subprocess
-from setuptools import setup, find_packages, Command
+from setuptools import setup, find_packages, Command, dist
 from distutils.command.build import build as _build
 from distutils.spawn import find_executable
 from setuptools.command.bdist_egg import bdist_egg as _bdist_egg
+
+class BinaryDistribution(dist.Distribution):
+    def is_pure(self):
+        return False
+
 
 with open("VERSION") as version_file:
     version = version_file.read().strip()
 
 class bdist_egg(_bdist_egg):
     def run(self):
+        print "HELLO"
+        print os.listdir("swga")
         self.run_command('build_contrib')
         _bdist_egg.run(self)
+
 
 class build_contrib(Command):
     description = "Build extras"
@@ -128,10 +136,11 @@ setup(
         'License :: OSI Approved :: GNU General Public License (GPL)'
     ],
     package_data={
-        'swga': ['data/*', 'bin/*']
+        'swga': ['data/*', 'bin/set_finder', 'bin/dsk']
     },
     eager_resources=["bin/set_finder", "bin/dsk"],
     include_package_data=True,
+    distclass=BinaryDistribution,
     url='https://github.com/eclarke/swga',
     license='LICENSE.txt',
     description='Pipeline to select compatible primer sets for selective whole-genome amplification.',
