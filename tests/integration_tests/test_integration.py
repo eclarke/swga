@@ -52,3 +52,17 @@ def test_export_bedgraph(isolated_filesystem):
         command = "swga export bedgraph --id 3"
         retcode = call(command, shell=True)
         assert retcode == 0
+
+def test_count_manual(isolated_filesystem):
+    with isolated_filesystem:
+        with open('primers.txt', 'w') as out:
+            out.write("ATGCATGC\nATTTATTT\n")
+        command = "swga count --input primers.txt"
+        retcode = call(command, shell=True)
+        assert retcode == 0
+
+def test_activate(isolated_filesystem):
+    with isolated_filesystem:
+        command = "swga activate primers.txt"
+        retcode = call(command, shell=True)
+        assert retcode == 0

@@ -12,9 +12,21 @@ def main(argv, cfg_file):
     primers = swga.primers.read_primer_list(
         cmd.input,
         cmd.fg_genome_fp,
-        cmd.bg_genome_fp)
+        cmd.bg_genome_fp
+    )
+    
+    try:
+        swga.primers.update_Tms(primers)
+        swga.primers.update_locations(primers, cmd.fg_genome_fp)
+        n_activated = swga.primers.activate2(primers)
+        swga.message("Marked {} primers as active.".format(n_activated))
+    except AttributeError as e:
+        swga.warn("Error updating database: '{}'".format(e.message))
+        swga.warn(
+            "Sometimes this happens if you're using a database created with "
+            "an older version of swga. Please try creating a new workspace "
+            "with `swga init` in another folder and adding these primers to "
+            "that database instead."
+        )
 
-    swga.database.Primer.update_Tms(primers)
-    swga.database.Primer.update_locations(primers, cmd.fg_genome_fp)
-    n_activated = swga.database.Primer.activate(primers)
-    swga.message("Marked {} primers as active.".format(n_activated))
+

@@ -69,7 +69,7 @@ def count_specific_kmers(
                     .format(mer))
 
         # Omitting any primers that were returned empty
-        primers = filter(lambda p: p == {}, primers)
+        # primers = filter(lambda p: p == {}, primers)
         chunk_size = 199
         swga.message(
             "Writing {n} {k}-mers into db in blocks of {cs}..."

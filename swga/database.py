@@ -148,8 +148,10 @@ def init_db(db_fname, create_if_missing=False):
     elif create_if_missing and not os.path.isfile(db_fname):
         db.init(db_fname)
     elif not os.path.isfile(db_fname):
-        swga.error("Primer db not found at %s: specify different path or "
-                   "re-run `swga count`" % db_fname)
+        swga.error(
+            "Primer db not found at '%s': specify different filename or "
+            "re-run `swga count`" % db_fname, exception=False
+        )
     db.init(db_fname)
     return db
 

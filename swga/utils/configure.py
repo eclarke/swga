@@ -18,9 +18,9 @@ def parse_config(cfg_file, section):
     config = ConfigParser.SafeConfigParser()
     defaults = {}
     if not os.path.isfile(cfg_file):
-        swga.warn(
+        swga.error(
             "Cannot find parameters file. Run `swga init` or specify options "+
-            "manually.")
+            "manually.", exception=False)
         return {}
     with open(cfg_file) as cfg_file_fp:
         config.readfp(cfg_file_fp)
