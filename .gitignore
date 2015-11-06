@@ -37,13 +37,10 @@ lib/cl
 lib/set_finder
 selected-mers
 
-swga/bin/set_finder
-
+swga/bin
 swga/valid_sets
 
 build/*
 
 .DS_Store
-/PrimerSets.egg-info/
-/testing_dir/
-/PrimerSets/primersets.py
+*.egg-info
