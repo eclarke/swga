@@ -54,17 +54,17 @@ all: compile
 pip:
 	pip --version > /dev/null
 
-compile: pip
+compile:
 	make -C contrib/cliquer
-	make -C contrib/dsk CC=$(dsk_gcc) osx=$(osx)
+	make -C contrib/dsk CC=$(dsk-cc) osx=$(osx)
 	mkdir -p swga/bin
 	cp contrib/cliquer/set_finder swga/bin/
 	cp contrib/dsk/dsk swga/bin/
 	cp contrib/dsk/parse_results swga/bin/
-	pip install $(pip_flags) .
-ifneq ($(swga_cmd_path),)
-	python swga/data/finished_message.py "$(swga_cmd_path)"
-endif
+#	pip install $(pip_flags) .
+#ifneq ($(swga_cmd_path),)
+#	python swga/data/finished_message.py "$(swga_cmd_path)"
+#endif
 
 
 prebuilt: pip
