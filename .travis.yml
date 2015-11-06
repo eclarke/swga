@@ -2,7 +2,7 @@ language: python
 python:
   - "2.7"
 install:
-  - "make editable=1 omp=1"
+  - "pip install ."
 before_script:
   - pip install python-coveralls pytest-cov
 script: py.test --cov=swga --cov-config tests/.coveragerc
