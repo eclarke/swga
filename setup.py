@@ -82,21 +82,26 @@ class build_contrib(Command):
                     )
                     omp=0
 
-        cliquer_make_cmd = ('make', '-C', 'contrib/cliquer')
+        cliquer_make_cmd = ('make')
         dsk_make_cmd = (
-            'make', '-C', 'contrib/dsk',
+            'make',
             'CC='+CC,
             'omp='+str(omp),
             'osx='+str(osx)
         )
 
         print(" ".join(cliquer_make_cmd))
-        subprocess.check_call(cliquer_make_cmd)
+        subprocess.check_call(cliquer_make_cmd, cwd="contrib/cliquer")
         print(" ".join(dsk_make_cmd))
-        subprocess.check_call(dsk_make_cmd)
-        os.rename("contrib/cliquer/set_finder", "swga/bin/set_finder")
-        os.rename("contrib/dsk/dsk", "swga/bin/dsk")
-        os.rename("contrib/dsk/parse_results", "swga/bin/parse_results")
+        subprocess.check_call(dsk_make_cmd, cwd="contrib/dsk")
+        try:
+            subprocess.check_call(["mkdir", "-p", "swga/bin"])
+            print("Moving set_finder")
+            os.rename("contrib/cliquer/set_finder", "swga/bin/set_finder")
+            print("Moving dsk")
+            os.rename("contrib/dsk/dsk", "swga/bin/dsk")
+        except OSError:
+            raise
 
 class build(_build):
     sub_commands = _build.sub_commands + [('build_contrib', None)]
