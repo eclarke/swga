@@ -90,7 +90,9 @@ class build_contrib(Command):
             'osx='+str(osx)
         )
 
+        print(" ".join(cliquer_make_cmd))
         subprocess.check_call(cliquer_make_cmd)
+        print(" ".join(dsk_make_cmd))
         subprocess.check_call(dsk_make_cmd)
         os.rename("contrib/cliquer/set_finder", "swga/bin/set_finder")
         os.rename("contrib/dsk/dsk", "swga/bin/dsk")
