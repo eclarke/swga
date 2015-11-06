@@ -1,2 +1,2 @@
 [run]
-omit = swga/clint/*
+omit = ../swga/clint/*
