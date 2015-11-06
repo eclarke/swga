@@ -1,5 +1,6 @@
 # Selective whole genome amplification
 [![Build Status](https://travis-ci.org/eclarke/swga.svg?branch=master)](https://travis-ci.org/eclarke/swga)
+[![Coverage Status](https://coveralls.io/repos/eclarke/swga/badge.svg?branch=dev&service=github)](https://coveralls.io/github/eclarke/swga)
 ## Introduction 
 This is an easy-to-use, start-to-end package for finding sets of primers that selectively amplify a particular genome (the "foreground" genome) over a background genome. For instance, we can design a set of primers that amplify a parasite's genome in a sample that is overwhelmingly composed of host DNA.
 
