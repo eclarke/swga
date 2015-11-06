@@ -138,6 +138,9 @@ setup(
     package_data={
         'swga': ['data/*', 'bin/set_finder', 'bin/dsk']
     },
+    data_files=[ 
+        ('bin', ['swga/bin/set_finder', 'swga/bin/dsk'])
+    ],
     eager_resources=["bin/set_finder", "bin/dsk"],
     include_package_data=True,
     distclass=BinaryDistribution,

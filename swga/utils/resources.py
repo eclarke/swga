@@ -1,6 +1,8 @@
 '''
 Provides methods for retrieving SWGA resources
 '''
+import os
+import sys
 import yaml
 import swga
 from collections import OrderedDict
@@ -17,18 +19,26 @@ def _get_resource_file(fp):
 
 
 def get_dsk():
-    return _get_resource_file("bin/dsk")
+    dsk = os.path.join(sys.prefix, 'bin', 'dsk')
+    if not os.path.isfile(dsk):
+        swga.error("Cannot find `dsk' in `{}'; try reinstalling swga."
+                   .format(dsk))
+    return dsk
 
 
 def get_setfinder():
-    return _get_resource_file("bin/set_finder")
+    setfinder = os.path.join(sys.prefix, 'bin', 'set_finder')
+    if not os.path.isfile(setfinder):
+        swga.error("Cannot find `set_finder' in `{}'; try reinstalling swga."
+                   .format(setfinder))
+    return setfinder
 
 
 def get_swga_opts():
     with resource_stream("swga", "data/options.yaml") as opts_stream:
         opts = yaml.load(opts_stream)
         if opts == {}:
-            swga.swga_error("Empty options.yaml file- reinstall SWGA.")
+            swga.swga_error("Empty options.yaml file: try reinstalling swga.")
         return opts
 
 # This ensures that the options we get back from the yaml file are in order by
