@@ -14,13 +14,6 @@ def mkdirp(path):
             raise
 
 
-def progressbar(i, length):
-    if i >= 1:
-        i = i/(length*1.0)
-    sys.stderr.write('\r[%-20s] %-3d%%' % ('='*int(round(i*20)), i*100))
-    sys.stderr.flush()
-
-
 def chunks(l, n):
     for i in xrange(0, len(l), n):
         yield l[i:i+n]

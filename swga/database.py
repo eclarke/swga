@@ -139,15 +139,14 @@ def init_db(db_fname, create_if_missing=False):
     '''
     Initializes the database at the file path specified.
     If `create_if_missing` is True, it will create the database if it can't be
-    found. Otherwise, it throws an error.
+    found. Otherwise, it exits with an error (SystemExit).
     '''
-    if not db_fname:
-        swga.error("Primer database name unspecified.")
-    if db_fname == ":memory:":
-        db.init(db_fname)
-    elif create_if_missing and not os.path.isfile(db_fname):
-        db.init(db_fname)
-    elif not os.path.isfile(db_fname):
+    if db_fname is None:
+        swga.error("Primer db name cannot be `None`: corrupt preferences.cfg?")
+    elif db_fname == ":memory:":
+        swga.warn("Creating in-memory primer database; this may not work.")
+    elif not os.path.isfile(db_fname) and not create_if_missing:
+        # Exits here
         swga.error(
             "Primer db not found at '%s': specify different filename or "
             "re-run `swga count`" % db_fname, exception=False

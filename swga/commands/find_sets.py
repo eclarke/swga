@@ -27,7 +27,8 @@ def main(argv, cfg_file):
     # constraints
     allsets = Set.select()
     if allsets.count() > 0:
-        click.confirm("Remove all previously-found sets?", abort=True)
+        if not cmd.force:
+            click.confirm("Remove all previously-found sets?", abort=True)
         for s in progress.bar(allsets, expected_size=allsets.count()):
             s.primers.clear()
             s.delete_instance()
@@ -80,7 +81,7 @@ def make_graph(max_hetdimer_bind, outfile):
     edges = graph.test_pairs(primers, max_hetdimer_bind)
 
     if len(edges) == 0:
-        swga.swga_error("No compatible primers. Try relaxing your parameters.")
+        swga.error("No compatible primers. Try relaxing your parameters.", exception=False)
 
     with open(outfile, 'wb') as out:
         graph.write_graph(primers, edges, out)

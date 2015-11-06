@@ -63,46 +63,6 @@ def _primer_bind_sites(primer, genome_fp):
     return primer
 
 
-def primers_in_parallel(primers, genome_fp,
-                        cores=multiprocessing.cpu_count()):
-    '''
-    Uses multiple processes to find the locations of all primer
-    sequences in the target genome.
-    '''
-    return
-    updated_primers = []
-    swga.message("Finding binding sites for {} primers: ".format(len(primers)))
-
-    swga.utils.progressbar(0, len(primers))
-
-    def _init_worker():
-        signal.signal(signal.SIGINT, signal.SIG_IGN)
-
-    def update(_primer):
-        updated_primers.append(_primer)
-        swga.utils.progressbar(len(updated_primers), len(primers))
-
-    pool = multiprocessing.Pool(cores, _init_worker)
-    for p in primers:
-        pool.apply_async(_primer_bind_sites,
-                         args=(p, genome_fp),
-                         callback=update)
-
-    # Allows a keyboard interrupt to be caught whereas normally interrupts
-    # cause it to hang
-    try:
-        time.sleep(10)
-    except KeyboardInterrupt as k:
-        pool.terminate()
-        pool.join()
-        raise k
-    else:
-        pool.close()
-        pool.join()
-    swga.message("\n")
-    return updated_primers
-
-
 def chromosome_ends(genome_fp):
     '''
     Returns the locations of the starts/ends of each chromosome (record) in a
@@ -135,14 +95,3 @@ def substr_indices(substring, string):
             locations.append(start-1)
         else:
             return locations
-
-
-def count(substring, string):
-    n = start = 0
-    substring = substring.upper()
-    while True:
-        start = string.find(substring, start)
-        if start > 0:
-            n += 1
-        else:
-            return n

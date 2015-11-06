@@ -48,6 +48,8 @@ class ColoredString(object):
         self.bold = bold
         if os.environ.get('CLINT_FORCE_COLOR'):
             self.always_color = True
+        if os.environ.get('CLINT_DISABLE_COLOR'):
+            disable() 
 
     def __getattr__(self, att):
         def func_help(*args, **kwargs):
@@ -96,7 +98,10 @@ class ColoredString(object):
             value = self.color_str
             if isinstance(value, bytes):
                 return value
-            return value.encode('utf8')
+            try:
+                return value.encode('utf8')
+            except AttributeError as e:
+                return str(value)
 
     def __iter__(self):
         return iter(self.color_str)

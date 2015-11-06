@@ -56,7 +56,15 @@ def summary(primer_db, fg_length, bg_length):
             if k not in ["_id", "pids", "score"]
         )
 
+    version_header = (
+        "---------------------\n"
+        "==== SWGA v{version} ====\n"
+        "---------------------\n"
+        .format(version=swga.__version__)
+    )
+
     summary_msg = """
+    {version_header}
 
     PRIMER SUMMARY
     ---------------
@@ -97,12 +105,15 @@ The primers in Set {best_set} are:
     {bs_primers}
     """ if nsets > 0 else ifzero_sets_msg)
 
+
+
     primer_db = os.path.abspath(primer_db)
     nprimers = colored.blue(nprimers, bold=True)
     nactive = colored.blue(nactive, bold=True)
     nsets = colored.blue(nsets, bold=True)
     set_msg = set_msg.format(**locals())
     melting_tmp_msg = melting_tmp_msg.format(**locals())
+    version_header = colored.green(version_header)
     summary_msg = summary_msg.format(**locals())
 
     with indent(2):

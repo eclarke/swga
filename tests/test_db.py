@@ -65,3 +65,12 @@ class TestPrimersSets:
         database.add_primers(primers, add_revcomp=True)
         assert Primer.select().where(Primer.seq == "TTTT").count() == 1
 
+    def test_init_db(self):
+        with pytest.raises(swga.SWGAError):
+            swga.database.init_db(None)
+        with pytest.raises(SystemExit):
+            swga.database.init_db("some_missing_db")
+
+    
+
+

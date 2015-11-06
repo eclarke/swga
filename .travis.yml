@@ -3,4 +3,8 @@ python:
   - "2.7"
 install:
   - "make"
-script: py.test
+before_script:
+  - pip install python-coveralls pytest-cov
+script: py.test --cov=swga --cov-config tests/.coveragerc
+after_success:
+  - coveralls

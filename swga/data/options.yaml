@@ -181,6 +181,9 @@ find_sets:
       number of workers to spawn. 1 worker searches graph using weighted vertex coloring;
       > 1 workers randomizes vertex coloring to explore more area simultaneously.
     type: int
+  force:
+    opttype: flag
+    desc: clear any previous sets without prompting
     
     
 

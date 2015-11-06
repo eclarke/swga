@@ -2,6 +2,11 @@ import os
 from subprocess import call
 
 
+def test_finished_message(isolated_filesystem):
+    from swga.data import finished_message
+    finished_message.main()
+
+
 def test_init(isolated_filesystem, fg_fasta, bg_fasta, ex_fasta):
     with isolated_filesystem:
         command = "swga init -f {} -b {} -e {}".format(
@@ -33,6 +38,13 @@ def test_find_sets(isolated_filesystem):
         assert retcode == 0
 
 
+def test_find_sets_randomized(isolated_filesystem):
+    with isolated_filesystem:
+        command = "swga find_sets --workers=2 --force"
+        retcode = call(command, shell=True)
+        assert retcode == 0
+
+
 def test_export_sets(isolated_filesystem):
     with isolated_filesystem:
         command = "swga export sets --limit 1 --order_by score"
@@ -53,16 +65,28 @@ def test_export_bedgraph(isolated_filesystem):
         retcode = call(command, shell=True)
         assert retcode == 0
 
+
 def test_count_manual(isolated_filesystem):
     with isolated_filesystem:
         with open('primers.txt', 'w') as out:
-            out.write("ATGCATGC\nATTTATTT\n")
+            out.write("ATGCAT\nATTTAT\n")
         command = "swga count --input primers.txt"
         retcode = call(command, shell=True)
         assert retcode == 0
+
 
 def test_activate(isolated_filesystem):
     with isolated_filesystem:
         command = "swga activate primers.txt"
         retcode = call(command, shell=True)
         assert retcode == 0
+
+
+def test_summary(isolated_filesystem):
+    with isolated_filesystem:
+        command = "swga summary"
+        retcode = call(command, shell=True)
+        assert retcode == 0
+
+
+

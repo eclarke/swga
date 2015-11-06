@@ -18,7 +18,6 @@ Pipeline commands:
 Other commands:
   activate:         activate a list of primers, calculating Tm and locations
   score:            score a set specified by a list of primers in a file
-  setopt:           set an option's default value in the parameters file
 
 Options:
   --config FILE     path to config file (default %s)
@@ -34,8 +33,7 @@ def main():
         'find_sets': commands.find_sets.main,
         'score': commands.score.main,
         'activate': commands.activate.main,
-        'export': commands.export.main,
-        'setopt': commands.setopt.main}
+        'export': commands.export.main}
 
     cfg_file = swga.utils.configure.default_config_file
 
@@ -61,7 +59,3 @@ def main():
         command_opts[args.command](remaining, args.config)
     except KeyboardInterrupt:
         swga.error("\n-- Stopped by user --", exception=False)
-
-
-if __name__ == '__main__':
-    main()
