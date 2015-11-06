@@ -131,6 +131,7 @@ setup(
         'swga': ['data/*', 'bin/*']
     },
     eager_resources=["bin/set_finder", "bin/dsk"],
+    include_package_data=True,
     url='https://github.com/eclarke/swga',
     license='LICENSE.txt',
     description='Pipeline to select compatible primer sets for selective whole-genome amplification.',
