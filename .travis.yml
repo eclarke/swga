@@ -2,7 +2,7 @@ language: python
 python:
   - "2.7"
 install:
-  - "pip install ."
+  - "python setup.py build; python setup.py develop"
 before_script:
   - pip install python-coveralls pytest-cov
 script: py.test --cov=swga --cov-config tests/.coveragerc

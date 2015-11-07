@@ -41,6 +41,8 @@ swga/bin
 swga/valid_sets
 
 build/*
+dist/*
+.cache/*
 
 .DS_Store
 *.egg-info

@@ -11,34 +11,30 @@ from pkg_resources import (
 )
 
 
-def _get_resource_file(fp):
-    resource_path = resource_filename("swga", fp)
-    if not resource_exists("swga", fp):
-        swga.error("Resource does not exist: {}".format(resource_path))
-    return resource_path
+def _get_resource_file(rs):
+    _rs = os.path.join('bin', rs)
+    res_path = os.path.join(sys.prefix, _rs)
+    if not os.path.isfile(res_path) and resource_exists("swga", _rs):
+        res_path = resource_filename("swga", _rs)
+    else:
+        swga.error("Could not find `{}': try re-installing swga.".format(rs))
+    return res_path
 
 
 def get_dsk():
-    dsk = os.path.join(sys.prefix, 'bin', 'dsk')
-    if not os.path.isfile(dsk):
-        swga.error("Cannot find `dsk' in `{}'; try reinstalling swga."
-                   .format(dsk))
-    return dsk
-
+    """Returns a path to the dsk executable."""
+    return _get_resource_file('dsk')
 
 def get_setfinder():
-    setfinder = os.path.join(sys.prefix, 'bin', 'set_finder')
-    if not os.path.isfile(setfinder):
-        swga.error("Cannot find `set_finder' in `{}'; try reinstalling swga."
-                   .format(setfinder))
-    return setfinder
+    """Returns a path to the set_finder executable."""
+    return _get_resource_file('set_finder')
 
 
 def get_swga_opts():
     with resource_stream("swga", "data/options.yaml") as opts_stream:
         opts = yaml.load(opts_stream)
         if opts == {}:
-            swga.swga_error("Empty options.yaml file: try reinstalling swga.")
+            swga.error("Empty options.yaml file: try reinstalling swga.")
         return opts
 
 # This ensures that the options we get back from the yaml file are in order by
