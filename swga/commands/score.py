@@ -37,7 +37,8 @@ def main(argv, cfg_file):
         bg_genome_len=cmd.bg_genome_len,
         bg_dist_mean=None,
         max_fg_bind_dist=0,
-        interactive=True)
+        interactive=True,
+        force=cmd.force)
 
 
 def score_set(
@@ -49,7 +50,8 @@ def score_set(
         score_expression,
         max_fg_bind_dist,
         bg_genome_len=None,
-        interactive=False):
+        interactive=False,
+        force=False):
 
     binding_locations = swga.locate.linearize_binding_sites(primers, chr_ends)
     max_dist = max(swga.score.seq_diff(binding_locations))
@@ -62,7 +64,14 @@ def score_set(
         swga.error("Neither background length nor ratio were provided, "
                    "cannot calculate bg_dist_mean")
     elif not bg_dist_mean:
-        bg_dist_mean = float(bg_genome_len)/sum(p.bg_freq for p in primers)
+        total_bg_freq = sum(p.bg_freq for p in primers)
+        if total_bg_freq == 0:
+            swga.warn(
+                "No primers appear in the background genome: bg_dist_mean set "
+                "as infinite")
+            bg_dist_mean = float('Inf')
+        else:
+            bg_dist_mean = float(bg_genome_len)/sum(p.bg_freq for p in primers)
 
     set_score, variables = score_fun(
         primer_set=primers,
@@ -79,10 +88,14 @@ def score_set(
         swga.message("Set statistics:\n - " + "\n - ".join(
             fmtkv(k, v) for k, v in set_dict.items()))
 
-        if click.confirm("Add set to database?"):
+        if force or (not force and click.confirm("Add set to database?", default=True)):
             # User-provided sets have negative numbers, so we find the smallest
             # and decrement by 1
-            set_id = Set.select(fn.Min(Set._id)).scalar() - 1
+            min_set_id = Set.select(fn.Min(Set._id)).scalar()
+            # This is None if there are no other sets yet
+            if min_set_id is None:
+                min_set_id = 0
+            set_id = min_set_id - 1
         else:
             add_set = False
 

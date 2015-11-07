@@ -24,8 +24,8 @@ def main(argv, cfg_file):
         count_kmers(**cmd.args)
 
 
-def check_create_tables(primer_db):
-    if os.path.isfile(primer_db):
+def check_create_tables(primer_db, skip_check=False):
+    if os.path.isfile(primer_db) and not skip_check:
         swga.warn("Existing database found at %s" % os.path.abspath(primer_db))
         swga.warn("This will reset the entire database!")
         click.confirm("Are you sure you want to proceed?", abort=True)
@@ -44,11 +44,11 @@ def count_specific_kmers(
         existing = [p.seq for p in Primer.select().where(Primer.seq << kmers)]
         for p in existing:
             swga.message("{} already exists in db, skipping...".format(p))
-        kmers = filter(lambda p: p not in existing, kmers)
+        kmers = [p for p in kmers if p not in existing] 
     except OperationalError:
         # If this fails due to an OperationalError, it probably means the
         # database tables haven't been created yet
-        check_create_tables(primer_db)
+        check_create_tables(primer_db, skip_check=True)
         swga.utils.mkdirp(output_dir)
 
     # Group the kmers by length to avoid repeatedly counting kmers of the same size

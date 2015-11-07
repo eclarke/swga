@@ -75,6 +75,17 @@ def ex_fasta(request, testdata_fp):
     return _fastafile(request, testdata_fp, "bburgdorferi_plasmid_lp28-4.fa")
 
 
+@pytest.fixture
+def simple_fastas(request, testdata_fp):
+    from collections import namedtuple
+    Files = namedtuple('Files', ['fg', 'bg', 'ex', 'primers'])
+    fg = _fastafile(request, testdata_fp, "simple_fg_genome.fa")
+    bg = _fastafile(request, testdata_fp, "simple_bg_genome.fa")
+    ex = _fastafile(request, testdata_fp, "simple_ex_seqs.fa")
+    primers = _fastafile(request, testdata_fp, "simple_primers.txt")
+    return Files(fg, bg, ex, primers)
+
+
 @pytest.fixture(scope="module")
 def module_scoped_tmpdir(request):
     tmpdir = tempfile.mkdtemp()

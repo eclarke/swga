@@ -61,14 +61,11 @@ class BedGraph(object):
                     "In [{}]: step size larger than window size ({}), set to {}"
                     .format(record_name, this_window_size, this_step_size))
 
-            # Count the number of primers that bind to any given nucleotide
-            # in the current record
+            # Count the number of primers that bind in the current record
             counter = Counter()
             for primer in self.set.primers:
-                k = len(primer.seq)
                 locations = primer.locations()
-                for l in locations[record_name]:
-                    counter.update(Counter(xrange(l, l + k)))
+                counter.update(Counter(locations[record_name]))
 
             starting_positions = xrange(
                 0, int(record_length - this_window_size), this_step_size)
@@ -78,6 +75,7 @@ class BedGraph(object):
                 midpoint = (end + start) / 2
                 # Add each base's count to get the number of bases covered
                 hits = sum([counter[i] for i in xrange(start, end)])
+
                 yield record_name, midpoint, hits
 
     def write(self, output_fp):
@@ -100,4 +98,4 @@ class BedGraph(object):
                     record_name, midpoint, midpoint, hits)
                 bedgraph_file.write(linestr)
 
-        swga.message("Bedfile written to {}".format(bedgraph_fp))
+        swga.message("Bedgraph written to {}".format(bedgraph_fp))

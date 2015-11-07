@@ -18,7 +18,7 @@ def main(argv, cfg_file):
     try:
         swga.primers.update_Tms(primers)
         swga.primers.update_locations(primers, cmd.fg_genome_fp)
-        n_activated = swga.primers.activate2(primers)
+        n_activated = swga.primers.activate(primers)
         swga.message("Marked {} primers as active.".format(n_activated))
     except AttributeError as e:
         swga.warn("Error updating database: '{}'".format(e.message))
@@ -28,5 +28,6 @@ def main(argv, cfg_file):
             "with `swga init` in another folder and adding these primers to "
             "that database instead."
         )
+        raise e
 
 

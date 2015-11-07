@@ -48,3 +48,4 @@ class BedFile(object):
                             record_name, start, end)
                         primer_file.write(recordstr)
                         whole_set_file.write(recordstr)
+        swga.message("Bedfiles written to "+output_folder)

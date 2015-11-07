@@ -208,6 +208,9 @@ score:
     desc: a file containing a list of primers to score, one per line
     type: File-r
     incfg: False
+  force:
+    desc: do not prompt for confirmation before adding a set manually
+    opttype: flag
   score_expression:
     default: "(fg_dist_mean * fg_dist_gini) / (bg_dist_mean)"
     desc: >
