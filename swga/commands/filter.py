@@ -14,6 +14,7 @@ subsequent runs will be much faster.
 '''
 
 import swga.primers
+from swga.filters import Filter
 from swga.commands import Command
 from swga.database import Primer
 
@@ -39,18 +40,18 @@ def main(argv, cfg_file):
     deactivate_all_primers()
 
     if not cmd.skip_filtering:
-        primers = filter_primers(
-            primers,
-            cmd.min_fg_bind,
-            cmd.max_bg_bind,
-            cmd.fg_length,
-            cmd.bg_length,
-            cmd.min_tm,
-            cmd.max_tm,
-            cmd.max_primers)
+        primers = (Filter(primers)
+            .min_fg_rate(cmd.min_fg_bind)
+            .max_bg_rate(cmd.max_bg_bind)
+            .summarize()
+            .tm_range(cmd.min_tm, cmd.max_tm)
+            .limit_ratio(cmd.max_primers)
+            .max_gini(cmd.max_gini, cmd.fg_genome_fp)
+            .primers
+        )
 
-    swga.primers.update_locations(primers, cmd.fg_genome_fp)
     n_active = activate_primers(primers)
+
     if n_active < cmd.max_primers:
         swga.warn(
             "Fewer than {} primers were selected ({} passed all the filters). "
@@ -70,61 +71,3 @@ def activate_primers(primers):
     n_active = swga.primers.activate(primers)
     swga.message("Marked {} primers as active.".format(n_active))
     return n_active
-
-
-def filter_primers(
-        primers,
-        min_fg_bind,
-        max_bg_bind,
-        fg_length,
-        bg_length,
-        min_tm,
-        max_tm,
-        max_primers):
-    """
-    Takes a list of sequences and retrieves them in the database, then returns
-    those sequences that pass various criteria.
-    """
-    primers = Primer.select().where(Primer.seq << primers)
-    fg_min_freq = min_fg_bind
-    bg_max_freq = max_bg_bind
-
-    # Find primers that pass the binding rate thresholds
-    fgp = Primer.select().where((Primer.seq << primers) &
-                                (Primer.fg_freq >= fg_min_freq))
-    swga.message("{} primers bind foreground genome with freq >= {} sites"
-                 .format(fgp.count(), min_fg_bind))
-
-    bgp = Primer.select().where((Primer.seq << primers) &
-                                (Primer.bg_freq <= bg_max_freq))
-    swga.message("{} primers bind background genome with freq <= {} sites"
-                 .format(bgp.count(), max_bg_bind))
-
-    candidates = Primer.select().where((Primer.seq << primers) &
-                                       (Primer.seq << fgp) &
-                                       (Primer.seq << bgp))
-    swga.message(
-        "{} primers pass both fg and bg binding freq filters"
-        .format(candidates.count()))
-
-    # Add melt temp for any primer that doesn't have it yet
-    swga.primers.update_Tms(candidates)
-
-    valid_primers = Primer.select().where((Primer.seq << candidates) &
-                                          (Primer.tm <= max_tm) &
-                                          (Primer.tm >= min_tm))
-    swga.message("{} of those primers have a melting temp within given range"
-                 .format(valid_primers.count()))
-
-    # Sort by background binding rate (smallest -> largest) and select top `n`,
-    # then sort those by ratio (highest -> lowest)
-    first_pass = (Primer.select()
-                  .where(Primer.seq << valid_primers)
-                  .order_by(Primer.bg_freq)
-                  .limit(max_primers))
-
-    second_pass = (Primer.select()
-                   .where(Primer.seq << first_pass)
-                   .order_by(Primer.ratio.desc()))
-
-    return second_pass

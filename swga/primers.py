@@ -39,6 +39,20 @@ def update_locations(primers, fg_genome_fp):
     swga.database.update_in_chunks(targets, label="Updating primer db... ")
 
 
+def update_gini(primers, fg_genome_fp):
+    '''
+    Updates the individual primer Gini coefficient for the evenness of binding
+    on the foreground genome.
+    '''
+    targets = list(
+        Primer.select()
+        .where(
+            (Primer.seq << primers) &
+            (Primer.gini >> None)))
+    for primer in targets:
+        primer._update_gini(fg_genome_fp)
+    swga.database.update_in_chunks(targets, label="Updating primer db...")
+
 def update_Tms(primers):
     targets = list(
         Primer.select()
@@ -48,6 +62,7 @@ def update_Tms(primers):
     for primer in targets:
             primer.update_tm()
     swga.database.update_in_chunks(targets, label="Updating primer db... ")
+
 
 
 def count_kmers(k, genome_fp, cwd, threshold=1):

@@ -13,6 +13,7 @@ import json
 from swga.utils import chunk_iterator
 from swga.locate import revcomp
 import swga.utils
+import swga.score
 import peewee as pw
 try:
     from playhouse.shortcuts import ManyToManyField
@@ -59,6 +60,7 @@ class Primer(SwgaBase):
     ratio = pw.FloatField(default=0.0)
     tm = pw.FloatField(null=True)
     _locations = pw.TextField(null=True)
+    gini = pw.FloatField(null=True)
     active = pw.BooleanField(default=False)
 
     @staticmethod
@@ -68,6 +70,7 @@ class Primer(SwgaBase):
             'fg_freq',
             'bg_freq',
             'ratio',
+            'gini',
             'tm']
         return fields
 
@@ -76,7 +79,7 @@ class Primer(SwgaBase):
         return rep_str.format(
             self.id, self.seq, self.fg_freq, self.bg_freq, self.ratio)
 
-    def locations(self, fg_genome_fp=None):
+    def locations(self):
         if self._locations:
             return json.loads(self._locations)
         else:
@@ -85,6 +88,14 @@ class Primer(SwgaBase):
     def _update_locations(self, genome_fp):
         self._locations = json.dumps(
             swga.locate.binding_sites(self.seq, genome_fp))
+
+    def _update_gini(self, genome_fp):
+        assert self._locations is not None
+        chr_ends = swga.locate.chromosome_ends(genome_fp)
+        locs = swga.locate.linearize_binding_sites([self], chr_ends)
+        dists = swga.score.seq_diff(locs)
+        self.gini = swga.stats.gini(dists)
+
 
     def update_tm(self):
         self.tm = swga.melting.Tm(self.seq)

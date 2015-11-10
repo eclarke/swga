@@ -130,13 +130,18 @@ filter:
     desc: maximum primer binding sites on bg genome (default autofilled using genome length and binding rate of 1/150000)
     type: int
   min_tm:
-    default: 0
+    default: 25
     desc: minimum primer melting temperature (C)
     type: float
   max_tm:
-    default: 100
+    default: 75
     desc: maximum primer melting temperature (C)
     type: float
+  max_gini:
+    default: 0.6
+    desc: maximum Gini coefficient for an individual primer on the foreground genome
+    type: float
+
 
 find_sets:
   META:
