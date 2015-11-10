@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 '''
-Exports primers or sets from the database.
-Basically a thin wrapper around a bunch of SQLite commands, and some export
-formatting.
+Exports primers or sets from the database in a variety of formats.
 
 Examples:
 
@@ -20,6 +18,9 @@ $ swga export primers --seq ATGGGCCA GCCATT
 
 Get a set as a BED file for IGV
 $ swga export bed_file --set_id 5
+
+Get the Lorenz curve for a set (a visualization of the Gini index)
+$ swga export lorenz --set_id 5
 '''
 import collections
 import csv
@@ -48,6 +49,10 @@ def main(argv, cfg_file):
         primers = get_items(
             Primer, cmd.ids, cmd.order_by, cmd.limit, cmd.descending)
         export(Primer, primers, cmd.output, header)
+
+    if what == 'lorenz':
+        sets = get_items(Set, cmd.ids, cmd.order_by, cmd.limit, cmd.descending)
+        export_lorenz(sets, cmd.output, cmd.fg_genome_fp, header)
 
     if "bed" in what:
         outpath = cmd.output_folder if cmd.output_folder else os.getcwd()
@@ -113,7 +118,9 @@ def export(model, rows, outfile, header=True):
         outfile,
         exported_fields,
         delimiter="\t",
-        extrasaction='ignore')
+        extrasaction='ignore',
+        lineterminator='\n'
+    )
 
     if header:
         writer.writeheader()
@@ -130,6 +137,31 @@ def export(model, rows, outfile, header=True):
                     field = ",".join([s._id for s in field])
             d[field_name] = field
         writer.writerow(d)
+
+
+def export_lorenz(sets, outfile, fg_genome_fp, header=True):
+    '''Exports the empirical Lorenz curve used for the given sets.'''
+    writer = csv.DictWriter(
+        outfile,
+        fieldnames=["SetID", "CDF"],
+        delimiter="\t",
+        lineterminator='\n'
+    )
+
+    if header:
+        writer.writeheader()
+
+    for set in sets:
+        # Get the distances between each primer binding site
+        primer_seqs = database.get_primers_for_set(set._id)
+        primers = list(Primer.select().where(Primer.seq << primer_seqs).execute())
+        chr_ends = swga.locate.chromosome_ends(fg_genome_fp)
+        binding_sites = swga.locate.linearize_binding_sites(primers, chr_ends)
+        distances = swga.score.seq_diff(binding_sites)
+
+        lorenz = swga.stats.lorenz(distances)
+        lorenz_str = ",".join(str(d) for d in lorenz)
+        writer.writerow({'SetID': set._id, 'CDF':lorenz_str})
 
 
 def validate_order_field(field, model):

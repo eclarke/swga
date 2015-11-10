@@ -37,8 +37,6 @@ def linearize_binding_sites(primers, chr_ends):
             new_locs += [l + chr_start for l in locs] + [chr_start, chr_end]
     new_locs = list(set(new_locs))
     if new_locs == []:
-        for primer in primers:
-            print primer, primer.locations()
         raise ValueError("Binding sites for primers not found!")
     return list(set(new_locs))
 

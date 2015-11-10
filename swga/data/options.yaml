@@ -226,9 +226,9 @@ export:
   what:
     incfg: False
     default: sets
-    desc: what to export (sets, primers, bedfile)
+    desc: what to export (sets, primers, bedfile, bedgraph)
     opttype: arg
-    choices: {set, sets, primer, primers, bedfile, bedgraph}
+    choices: {set, sets, primer, primers, bedfile, bedgraph, lorenz}
   primer_db:
     default: *primerdb
     desc: primer database name

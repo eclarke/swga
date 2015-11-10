@@ -1,5 +1,6 @@
 import os
-from subprocess import check_call
+from subprocess import check_call, check_output
+
 
 def test_setup(isolated_filesystem, simple_fastas):
     """Initialize the workspace for later export tests."""
@@ -12,6 +13,25 @@ def test_setup(isolated_filesystem, simple_fastas):
         check_call("swga activate {primers}".format(**files), shell=True)
         check_call("swga score --force --input {primers}".format(**files), shell=True)
 
+
+def test_lorenz(isolated_filesystem):
+    with isolated_filesystem:
+        
+        lorenz = check_output(
+            "swga export lorenz --id -1 --no_header", 
+            shell=True
+        )
+        
+        # Retrieve the first line of the output and parse the results
+        line = lorenz.split("\n")[0].split("\t")
+        assert line[0] == "-1"
+        
+        # The results should all be floats and normalized to 0-1
+        lz = [float(i) for i in line[1].split(",")]
+        assert max(lz) == 1
+
+
+
 def test_bedgraph(isolated_filesystem):
     """Bedgraphs should reflect binding sites, not nucleotides bound."""
     with isolated_filesystem:
@@ -20,7 +40,6 @@ def test_bedgraph(isolated_filesystem):
             shell=True)
         bedgraph = "simple_fg_genome_export/set_-1/set_-1.bedgraph"
         assert os.path.isfile(bedgraph)
-        print open(bedgraph).read()
         with open(bedgraph, 'r') as bed:
             bed.readline()
             line2 = bed.readline()

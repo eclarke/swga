@@ -41,3 +41,22 @@ def gini(distances):
         area += height - value / 2.
     fair_area = height * len(distances) / 2
     return (fair_area - area) / fair_area
+
+
+def lorenz(distances):
+    '''Returns the Lorenz curve of the inter-primer distances'''
+
+    distances.sort()
+    height = 0
+    lz = []
+    for dist in distances:
+        height += dist
+        lz.append(height)
+
+    # Normalize output
+    _max = float(max(lz))
+    lz = [l/_max for l in lz]
+
+    return lz
+
+
