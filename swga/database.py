@@ -228,7 +228,6 @@ def update_in_chunks(itr, chunksize=100, show_progress=True,
            have a to_dict() method
     - chunksize: the size of the chunk. Usually has to be
            999/(number of fields)
-    - model: the table in the db to update
     - show_progress, label: passed to progress.bar
     '''
     def upsert_chunk(chunk):

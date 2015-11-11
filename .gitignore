@@ -42,7 +42,10 @@ swga/valid_sets
 
 build/*
 dist/*
-.cache/*
+.cache
+*.fai
+.coverage
+
 
 .DS_Store
 *.egg-info

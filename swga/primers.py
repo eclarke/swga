@@ -16,8 +16,6 @@ import swga.melting
 import peewee as pw
 
 
-
-
 def activate(primers):
     '''Marks a list of primers as active.'''
     n = Primer.update(active=True).where(
@@ -116,9 +114,7 @@ def _parse_kmer_binary(fp):
 def read_primer_list(lines, fg_genome_fp, bg_genome_fp):
     '''
     Reads in a list of primers, one per line, and returns the corresponding
-    records from the primer database. If the primer doesn't exist in the db,
-    tries to create it manually. If the primer doesn't appear in the fg genome,
-    it skips it with a warning.
+    records from the primer database.
     '''
     seqs = [re.split(r'[ \t]+', line.strip('\n'))[0] for line in lines]
     primers = list(Primer.select().where(Primer.seq << seqs).execute())
@@ -126,8 +122,9 @@ def read_primer_list(lines, fg_genome_fp, bg_genome_fp):
         primer_seqs = [p.seq for p in primers]
         missing = [_ for _ in seqs if _ not in primer_seqs]
         for seq in missing:
-            swga.message(seq + " not in the database; skipping. Add it "
-                         "manually with `swga count --input <file>` ")
+            swga.warn(
+                seq + " not in the database; skipping. Add it manually with "
+                "`swga count --input <file>` ")
     return primers
 
 
