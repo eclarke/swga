@@ -59,11 +59,13 @@ class Primers(object):
         '''
         if primers is None:
             self.primers = Primer.select()
+            self.n = self.primers.count()
         elif isinstance(primers, file):
             self.primers = read_primer_list(primers)
+            self.n = len(self.primers)
         else:
             self.primers = Primer.select().where(Primer.seq << primers)
-        self.n = self.primers.count()
+            self.n = self.primers.count()
 
     def __len__(self):
         return self.n
@@ -72,7 +74,9 @@ class Primers(object):
         return self.primers[key]
 
     def __iter__(self):
-        return iter(self.primers)
+        return iter(
+                Primer.select().where(Primer.seq << self.primers)
+                .order_by(Primer._id).execute())
 
     @_filter
     def filter_min_fg_rate(self, min_bind):
@@ -266,7 +270,7 @@ class Primers(object):
             label=label)
 
 
-def read_primer_list(lines, fg_genome_fp, bg_genome_fp):
+def read_primer_list(lines):
     '''
     Reads in a list of primers, one per line, and returns the corresponding
     records from the primer database.

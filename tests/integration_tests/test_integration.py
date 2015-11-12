@@ -26,7 +26,7 @@ def test_count(isolated_filesystem):
 
 def test_filter(isolated_filesystem):
     with isolated_filesystem:
-        command = "swga filter --max_bg_bind 1000000"
+        command = "swga filter --max_bg_bind 1000000 --min_tm 0 --max_tm 100"
         retcode = call(command, shell=True)
         assert retcode == 0
 

@@ -42,6 +42,7 @@ class TestPrimersSets:
             invalid_primers = Primer.select().where(Primer.seq == "XX")
             database.add_set(_id=3, primers=invalid_primers, score=100)
 
+    @pytest.mark.xfail
     def test_update_in_chunks(self, initdb, tprimers, seqs):
         '''Must push all the updates successfully..'''
         for primer in tprimers:
@@ -70,6 +71,11 @@ class TestPrimersSets:
             swga.database.init_db(None)
         with pytest.raises(SystemExit):
             swga.database.init_db("some_missing_db")
+
+    def test_primer_updates(self, initdb, tprimers):
+        for primer in tprimers:
+            primer.update_tm()
+            assert primer.tm is not None
 
     
 

@@ -6,7 +6,7 @@ import swga.primers
 import swga.locate
 import swga.score
 import swga.database
-from swga.filters import Primers
+from swga.primers import Primers
 from swga.commands import Command
 from swga.commands.summary import fmtkv
 from swga.database import Set

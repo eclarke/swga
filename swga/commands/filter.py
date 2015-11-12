@@ -13,10 +13,9 @@ the user can run this command multiple times to tune parameters and
 subsequent runs will be much faster.
 '''
 
-import swga.primers
-from swga.filters import Primers
+from swga.primers import Primers
 from swga.commands import Command
-from swga.database import Primer
+import swga.database
 
 
 def main(argv, cfg_file):
@@ -36,7 +35,7 @@ def main(argv, cfg_file):
     assert isinstance(primers, Primers)
 
     # Undo all active marks, if any
-    Primer.update(active=False).execute()
+    swga.database.Primer.update(active=False).execute()
 
     if not cmd.skip_filtering:
         (

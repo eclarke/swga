@@ -125,7 +125,7 @@ setup(
         'click',
         'pyyaml',
         'peewee',
-        'data_hacks',
+        'melt',
         'pytest'
     ],
     classifiers = [

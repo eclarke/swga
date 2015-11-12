@@ -14,6 +14,7 @@ from swga.utils import chunk_iterator
 from swga.locate import revcomp
 import swga.utils
 import swga.score
+import melting
 import peewee as pw
 try:
     from playhouse.shortcuts import ManyToManyField
@@ -86,7 +87,8 @@ class Primer(SwgaBase):
             swga.error("No locations stored for " + str(self))
 
     def update_tm(self):
-        self.tm = swga.melting.Tm(self.seq)
+        self.tm = melting.temp(
+            self.seq, dNTPs_c=1, Mg_c=0.8, Na_c=50, DNA_c=200)
 
     def _update_locations(self, genome_fp):
         self._locations = json.dumps(
@@ -202,7 +204,11 @@ def add_set(_id, primers, **kwargs):
     if Set.select(pw.fn.Count(Set._id)).where(Set._hash == _hash).scalar() > 0:
         return None
     s = Set.create(_id=_id, _hash=_hash, **kwargs)
-    s.primers.add(primers)
+    try:
+        s.primers.add(primers)
+    # If this is a Primers object, return the actual primers in it
+    except AttributeError:
+        s.primers.add(primers.primers)
     return s
 
 

@@ -5,7 +5,7 @@ import swga.database
 import swga.graph as graph
 import swga.locate as locate
 import swga.score as score
-from swga.filters import Primers
+from swga.primers import Primers
 from swga.clint.textui import progress
 from swga.commands import Command
 from swga.commands.score import score_set
@@ -68,9 +68,10 @@ def make_graph(max_hetdimer_bind, outfile):
 
     # Reset all the primer IDs (as ids are only used for set_finder)
     primers = Primers.select_active().assign_ids()
-
+    print [(p._id, p.ratio) for p in primers]
     swga.message("Composing primer compatibility graph...")
     edges = graph.test_pairs(primers, max_hetdimer_bind)
+    print edges
 
     if len(edges) == 0:
         swga.error(

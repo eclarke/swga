@@ -1,7 +1,7 @@
 import swga.database
 import swga.primers
 from swga import warn
-from swga.filters import Primers
+from swga.primers import Primers
 from swga.commands import Command
 
 
@@ -14,12 +14,10 @@ def main(argv, cfg_file):
     primers = Primers(cmd.input)
 
     try:
-        (
-            primers
-            .update_melt_temps(primers)
-            .update_locations(primers, cmd.fg_genome_fp)
-            .activate(primers)
-        )
+        (primers
+            .update_melt_temps()
+            .update_locations(cmd.fg_genome_fp)
+            .activate())
     except AttributeError as e:
         warn("Error updating database: '{}'".format(e.message))
         warn(
