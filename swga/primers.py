@@ -84,9 +84,9 @@ class Primers(object):
         Removes primers that bind less than the given rate to the foreground
         genome.
         '''
-        self.primers = Primer.select().where(
+        self.primers = list(Primer.select().where(
             (Primer.seq << self.primers) &
-            (Primer.fg_freq >= min_bind))
+            (Primer.fg_freq >= min_bind)).execute())
 
         message(
             '{}/{} primers bind the foreground genome >= {} times'
@@ -98,9 +98,9 @@ class Primers(object):
         Removes primers that bind more than the given number of times to
         the background genome.
         '''
-        self.primers = Primer.select().where(
+        self.primers = list(Primer.select().where(
             (Primer.seq << self.primers) &
-            (Primer.bg_freq <= rate))
+            (Primer.bg_freq <= rate)).execute())
 
         message(
             '{}/{} primers bind the background genome <= {} times'
@@ -113,10 +113,10 @@ class Primers(object):
         Finds melting temperatures if not already present.
         '''
         self.update_melt_temps()
-        self.primers = Primer.select().where(
+        self.primers = list(Primer.select().where(
             (Primer.seq << self.primers) &
             (Primer.tm <= max_tm) &
-            (Primer.tm >= min_tm))
+            (Primer.tm >= min_tm)).execute())
         message(
             '{}/{} primers have a melting temp between {} and {} C'
             .format(self.primers.count(), self.n, min_tm, max_tm))
@@ -135,9 +135,9 @@ class Primers(object):
             .order_by(Primer.bg_freq)
             .limit(n))
 
-        self.primers = (
+        self.primers = list(
             Primer.select().where(Primer.seq << first_pass)
-            .order_by(Primer.ratio.desc()))
+            .order_by(Primer.ratio.desc()).execute())
 
     @_filter
     def filter_max_gini(self, gini_max, fg_genome_fp):
@@ -155,9 +155,9 @@ class Primers(object):
          .update_locations(fg_genome_fp)
          .update_gini(fg_genome_fp))
 
-        self.primers = Primer.select().where(
+        self.primers = list(Primer.select().where(
             (Primer.seq << self.primers) &
-            (Primer.gini <= gini_max))
+            (Primer.gini <= gini_max)).execute())
 
         message(
             '{}/{} primers have a Gini coefficient <= {}'
