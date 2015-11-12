@@ -98,44 +98,6 @@ class Primer(SwgaBase):
         dists = swga.score.seq_diff(locs)
         self.gini = swga.stats.gini(dists)
 
-    def max_consecutive_binding(self, other):
-        '''
-        The maximum number of consecutively-binding nucleotides between this
-        primer sequence and another sequence.
-        '''
-        mer1 = self.seq
-        mer2 = other.seq
-        binding = {
-            'A': 'T', 
-            'T': 'A',
-            'C': 'G', 
-            'G': 'C',
-            '_':  False
-        }
-
-        # Swap variables if the second is longer than the first
-        if len(mer2) > len(mer1):
-            mer1, mer2 = mer2, mer1
-
-        # save the len because it'll change when we do a ljust
-        mer1_len = len(mer1)
-        # reverse mer2,
-        mer2 = mer2[::-1]
-        # pad mer one to avoid errors
-        mer1 = mer1.ljust(mer1_len + len(mer2), "_")
-
-        max_bind = 0
-        for offset in range(mer1_len):
-            consecutive = 0
-            for x in range(len(mer2)):
-                if binding[mer1[offset+x]] == mer2[x]:
-                    consecutive += 1
-                    if consecutive > max_bind:
-                        max_bind = consecutive
-                else:
-                    consecutive = 0
-    return max_bind
-
 
 class Set(SwgaBase):
 
