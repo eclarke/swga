@@ -51,7 +51,8 @@ def count_specific_kmers(
         check_create_tables(primer_db, skip_check=True)
         swga.utils.mkdirp(output_dir)
 
-    # Group the kmers by length to avoid repeatedly counting kmers of the same size
+    # Group the kmers by length to avoid repeatedly counting kmers of the same
+    # size
     kmers_by_length = defaultdict(list)
     for kmer in kmers:
         kmers_by_length[len(kmer)].append(kmer)

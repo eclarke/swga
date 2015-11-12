@@ -6,13 +6,7 @@ small substrings in larger strings).
 
 """
 import json
-import multiprocessing
-import signal
-import time
-
 from pyfaidx import Fasta
-
-import swga
 
 
 def revcomp(s):

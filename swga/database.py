@@ -85,23 +85,58 @@ class Primer(SwgaBase):
         else:
             swga.error("No locations stored for " + str(self))
 
+    def update_tm(self):
+        self.tm = swga.melting.Tm(self.seq)
+
     def _update_locations(self, genome_fp):
         self._locations = json.dumps(
             swga.locate.binding_sites(self.seq, genome_fp))
 
     def _update_gini(self, genome_fp):
-        assert self._locations is not None
         chr_ends = swga.locate.chromosome_ends(genome_fp)
         locs = swga.locate.linearize_binding_sites([self], chr_ends)
         dists = swga.score.seq_diff(locs)
         self.gini = swga.stats.gini(dists)
 
+    def max_consecutive_binding(self, other):
+        '''
+        The maximum number of consecutively-binding nucleotides between this
+        primer sequence and another sequence.
+        '''
+        mer1 = self.seq
+        mer2 = other.seq
+        binding = {
+            'A': 'T', 
+            'T': 'A',
+            'C': 'G', 
+            'G': 'C',
+            '_':  False
+        }
 
-    def update_tm(self):
-        self.tm = swga.melting.Tm(self.seq)
+        # Swap variables if the second is longer than the first
+        if len(mer2) > len(mer1):
+            mer1, mer2 = mer2, mer1
+
+        # save the len because it'll change when we do a ljust
+        mer1_len = len(mer1)
+        # reverse mer2,
+        mer2 = mer2[::-1]
+        # pad mer one to avoid errors
+        mer1 = mer1.ljust(mer1_len + len(mer2), "_")
+
+        max_bind = 0
+        for offset in range(mer1_len):
+            consecutive = 0
+            for x in range(len(mer2)):
+                if binding[mer1[offset+x]] == mer2[x]:
+                    consecutive += 1
+                    if consecutive > max_bind:
+                        max_bind = consecutive
+                else:
+                    consecutive = 0
+    return max_bind
 
 
-        
 class Set(SwgaBase):
 
     '''
@@ -216,27 +251,3 @@ def get_primers_for_set(set_id):
 
 def get_primers_for_ids(pids):
     return list(Primer.select().where(Primer._id << pids).execute())
-
-
-def update_in_chunks(itr, chunksize=100, show_progress=True,
-                     label=None):
-    '''
-    Inserts or updates records in database in chunks of a given size.
-
-    Arguments:
-    - itr: a list or other iterable containing records in the primer db that
-           have a to_dict() method
-    - chunksize: the size of the chunk. Usually has to be
-           999/(number of fields)
-    - show_progress, label: passed to progress.bar
-    '''
-    def upsert_chunk(chunk):
-        seqs = [p.seq for p in chunk]
-        Primer.delete().where(Primer.seq << seqs).execute()
-        Primer.insert_many(p.to_dict() for p in chunk).execute()
-    if isinstance(itr, pw.SelectQuery):
-        itr = list(itr)
-    swga.utils.chunk_iterator(itr, upsert_chunk, n=chunksize,
-                             show_progress=show_progress,
-                             label=label)
-

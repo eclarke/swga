@@ -28,15 +28,12 @@ def main(argv, cfg_file):
     # If we have an input file, use that. Otherwise pull from db
     if cmd.input:
         with open(cmd.input, 'rb') as infile:
-            primers = Primers(swga.primers.read_primer_list(
-                infile,
-                cmd.fg_genome_fp,
-                cmd.bg_genome_fp))
+            primers = Primers(infile)
     else:
         cmd.skip_filtering = False
         primers = Primers()
 
-    assert isinstance(primers, Filter)
+    assert isinstance(primers, Primers)
 
     # Undo all active marks, if any
     Primer.update(active=False).execute()
@@ -53,5 +50,3 @@ def main(argv, cfg_file):
         )
 
     primers.activate(cmd.max_primers)
-
-

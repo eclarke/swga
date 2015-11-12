@@ -6,6 +6,7 @@ import swga.primers
 import swga.locate
 import swga.score
 import swga.database
+from swga.filters import Primers
 from swga.commands import Command
 from swga.commands.summary import fmtkv
 from swga.database import Set
@@ -14,10 +15,7 @@ def main(argv, cfg_file):
     cmd = Command('score', cfg_file=cfg_file)
     cmd.parse_args(argv)
     swga.database.init_db(cmd.primer_db)
-    primers = swga.primers.read_primer_list(
-        cmd.input,
-        cmd.fg_genome_fp,
-        cmd.bg_genome_fp)
+    primers = Primers(cmd.input)
     if len(primers) == 0:
         swga.error("No primers specified exist in database, aborting.",
                    exception=False)

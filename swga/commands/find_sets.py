@@ -1,15 +1,15 @@
 import functools
 
 import click
-
 import swga.database
 import swga.graph as graph
 import swga.locate as locate
 import swga.score as score
+from swga.filters import Primers
 from swga.clint.textui import progress
 from swga.commands import Command
 from swga.commands.score import score_set
-from swga.database import Primer, Set, init_db, update_in_chunks
+from swga.database import Set, init_db
 import swga.setfinder as setfinder
 
 graph_fname = "compatibility_graph.dimacs"
@@ -35,7 +35,10 @@ def main(argv, cfg_file):
 
     make_graph(cmd.max_dimer_bp, graph_fname)
 
-    swga.message("Now finding sets. If nothing appears, try relaxing your parameters.")
+    swga.message(
+        "Now finding sets. If nothing appears, try relaxing your parameters."
+    )
+
     if cmd.workers <= 1:
         setlines = setfinder.find_sets(
             cmd.min_bg_bind_dist,
@@ -64,24 +67,15 @@ def make_graph(max_hetdimer_bind, outfile):
     '''Selects all active primers and outputs a primer compatibility graph.'''
 
     # Reset all the primer IDs (as ids are only used for set_finder)
-    Primer.update(_id = -1).execute()
-
-    primers = list(Primer.select().where(Primer.active == True)
-                   .order_by(Primer.ratio.desc()).execute())
-
-    if len(primers) == 0:
-        swga.error("No active sets found. Run `swga filter` first.")
-
-    for i, p in enumerate(primers):
-        p._id = i + 1
-
-    update_in_chunks(primers, show_progress=False)
+    primers = Primers.select_active().assign_ids()
 
     swga.message("Composing primer compatibility graph...")
     edges = graph.test_pairs(primers, max_hetdimer_bind)
 
     if len(edges) == 0:
-        swga.error("No compatible primers. Try relaxing your parameters.", exception=False)
+        swga.error(
+            "No compatible primers. Try relaxing your parameters.",
+            exception=False)
 
     with open(outfile, 'wb') as out:
         graph.write_graph(primers, edges, out)
@@ -124,7 +118,7 @@ def score_sets(
             try:
                 primer_ids, bg_dist_mean = score.read_set_finder_line(line)
             except ValueError:
-                swga.warn("Could not parse line:\n\t"+line)
+                swga.warn("Could not parse line:\n\t" + line)
                 continue
 
             primers = swga.database.get_primers_for_ids(primer_ids)
@@ -155,4 +149,3 @@ def score_sets(
         # Raises a GeneratorExit inside the find_sets command, prompting it to quit
         # the subprocess
         setlines.close()
-

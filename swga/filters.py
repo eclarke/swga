@@ -1,9 +1,10 @@
-"""Provides filters for the `swga filter` step."""
+"""Operations on lists of primers."""
+import re
 from functools import wraps
-import swga
-import swga.primers
-
+from swga import (error, warn, message)
+from swga.utils import chunk_iterator
 from swga.database import Primer
+
 
 def _filter(fn):
     """Wrapper for filter methods.
@@ -28,14 +29,24 @@ def _update(fn):
     """
     @wraps(fn)
     def func(self, *args, **kwargs):
-        fn(self, *args, **kwargs)
-        self.update_in_chunks
+        targets = fn(self, *args, **kwargs)
+        show_progress = len(targets) > 300
+        Primers._update_in_chunks(targets, show_progress=show_progress)
         return self
     return func
 
 
 class Primers(object):
-    """A list of primers with methods that operate on them."""
+    """A list of primers and associated methods."""
+
+    @staticmethod
+    def select_active():
+        active = Primer.select().where(Primer.active == True)
+        if active.count() == 0:
+            error(
+                "No active primers found. Run `swga filter` first.",
+                exception=False)
+        return Primers(active)
 
     def __init__(self, primers=None):
         """Create a new list of primers.
@@ -45,22 +56,32 @@ class Primers(object):
         """
         if primers is None:
             self.primers = Primer.select()
+        elif isinstance(primers, file):
+            self.primers = read_primer_list(primers)
         else:
             self.primers = Primer.select().where(Primer.seq << primers)
-    
         self.n = self.primers.count()
+
+    def __len__(self):
+        return self.n
+
+    def __getitem__(self, key):
+        return self.primers[key]
+
+    def __iter__(self):
+        return iter(self.primers)
 
     @_filter
     def filter_min_fg_rate(self, min_bind):
         """
-        Removes primers that bind less than the given rate to the foreground 
+        Removes primers that bind less than the given rate to the foreground
         genome.
         """
         self.primers = Primer.select().where(
             (Primer.seq << self.primers) &
             (Primer.fg_freq >= min_bind))
 
-        swga.message(
+        message(
             "{}/{} primers bind the foreground genome >= {} times"
             .format(self.primers.count(), self.n, min_bind))
 
@@ -74,10 +95,9 @@ class Primers(object):
             (Primer.seq << self.primers) &
             (Primer.bg_freq <= rate))
 
-        swga.message(
+        message(
             "{}/{} primers bind the background genome <= {} times"
             .format(self.primers.count(), self.n, rate))
-
 
     @_filter
     def filter_tm_range(self, min_tm, max_tm):
@@ -85,17 +105,14 @@ class Primers(object):
         Removes primers outside the given melting temp range.
         Finds melting temperatures if not already present.
         """
-        swga.primers.update_Tms(self.primers)
-
+        self.update_melt_temps()
         self.primers = Primer.select().where(
             (Primer.seq << self.primers) &
             (Primer.tm <= max_tm) &
             (Primer.tm >= min_tm))
-
-        swga.message(
+        message(
             "{}/{} primers have a melting temp between {} and {} C"
             .format(self.primers.count(), self.n, min_tm, max_tm))
-
 
     @_filter
     def limit_to(self, n):
@@ -115,12 +132,11 @@ class Primers(object):
             Primer.select().where(Primer.seq << first_pass)
             .order_by(Primer.ratio.desc()))
 
-
     @_filter
     def filter_max_gini(self, gini_max, fg_genome_fp):
         """
-        Filters out primers with Gini coefficients greater than the 
-        max provided. Finds binding locations and Gini coefficients for primers 
+        Filters out primers with Gini coefficients greater than the max
+        provided. Finds binding locations and Gini coefficients for primers
         that do not have them already.
 
         :param gini_max: max Gini coefficient (0-1)
@@ -136,36 +152,9 @@ class Primers(object):
             (Primer.seq << self.primers) &
             (Primer.gini <= gini_max))
 
-        swga.message(
+        message(
             "{}/{} primers have a Gini coefficient <= {}"
             .format(self.primers.count(), self.n, gini_max))
-
-
-    def summarize(self):
-        """Output the number of primers currently in list."""
-        swga.message("{} primers satisfy all filters so far.".format(self.n))
-        return self
-
-
-    def activate(self, max_active=0):
-        """Activates all the primers in the list.
-
-        :param max_active: The maximum number expected to activate. Warns if
-        fewer than this number.
-        """
-#        self.primers = self.primers.execute()
-        n = (Primer.update(active=True)
-            .where(Primer.seq << self.primers)
-            .execute())
-
-        swga.message("Marked {} primers as active.".format(n))
-        if n < max_active:
-            swga.warn(
-                "Fewer than {} primers were selected ({} passed all the "
-                "filters). You may want to try less restrictive filtering "
-                "parameters.".format(max_active, n))
-        return self
-
 
     @_update
     def update_locations(self, fg_genome_fp):
@@ -173,10 +162,13 @@ class Primers(object):
         targets = list(Primer.select().where(
             (Primer.seq << self.primers) &
             (Primer._locations >> None)))
-
+        if len(targets) > 0:
+            message(
+                "Finding binding locations for {} primers..."
+                .format(len(targets)))
         for primer in targets:
             primer._update_locations(fg_genome_fp)
-
+        return targets
 
     @_update
     def update_gini(self, fg_genome_fp):
@@ -184,10 +176,13 @@ class Primers(object):
         targets = list(Primer.select().where(
             (Primer.seq << self.primers) &
             (Primer.gini >> None)))
-
+        if len(targets) > 0:
+            message(
+                "Finding Gini coefficients for {} primers..."
+                .format(len(targets)))
         for primer in targets:
             primer._update_gini(fg_genome_fp)
-
+        return targets
 
     @_update
     def update_melt_temps(self):
@@ -195,54 +190,91 @@ class Primers(object):
         targets = list(Primer.select().where(
             (Primer.seq << self.primers) &
             (Primer.tm >> None)))
-
+        if len(targets) > 0:
+            message(
+                "Finding melting temps for {} primers..."
+                .format(len(targets)))
         for primer in targets:
             primer.update_tm()
-
+        return targets
 
     @_update
     def assign_ids(self):
-        """Assigns sequential ids to active primers. 
+        """Assigns sequential ids to active primers.
 
         Resets any ids previously set.
         """
-        # Reset all the primer IDs
-        Primer.update(_id = -1).execute()
-        
+        Primer.update(_id=-1).execute()
         primers = list(
             Primer.select()
             .where(Primer.seq << self.primers)
             .order_by(Primer.ratio.desc()).execute())
-
         for i, primer in enumerate(primers):
             primer._id = i + 1
+        return primers
 
+    def summarize(self):
+        """Output the number of primers currently in list."""
+        message("{} primers satisfy all filters so far.".format(self.n))
+        return self
 
-    def _update_in_chunks(self, chunksize=100, show_progress=True, label="Updating primer db..."):
+    def activate(self, min_active=1):
+        """Activates all the primers in the list.
+
+        :param min_active: The maximum number expected to activate. Warns if
+        fewer than this number.
+        """
+        n = (Primer.update(active=True)
+             .where(Primer.seq << self.primers)
+             .execute())
+        message("Marked {} primers as active.".format(n))
+        if n < min_active:
+            warn(
+                "Fewer than {} primers were selected ({} passed all the "
+                "filters). You may want to try less restrictive filtering "
+                "parameters.".format(min_active, n))
+        return self
+
+    def _update_n(self):
+        n = self.primers.count()
+        if n == 0:
+            error("No primers left.", exception=False)
+        else:
+            self.n = n
+
+    @staticmethod
+    def _update_in_chunks(targets, chunksize=100, show_progress=True,
+                          label="Updating primer db..."):
         """Updates the records for the list of primers in chunks.
 
-        Technically, this performs an upsert, where primer records are updated 
-        or inserted as needed. This is faster than updating the records for each
-        primer individually.
+        Technically, this performs an upsert, where primer records are updated
+        or inserted as needed. This is faster than updating the records for
+        each primer individually.
         """
-
         def upsert_chunk(chunk):
             Primer.delete().where(Primer.seq << chunk).execute()
             Primer.insert_many(p.to_dict() for p in chunk).execute()
 
-        swga.utils.chunk_iterator(
-            itr=self.primers, 
-            fn=upsert_chunk, 
+        chunk_iterator(
+            itr=targets,
+            fn=upsert_chunk,
             n=chunksize,
             show_progress=show_progress,
             label=label)
 
 
-    def _update_n(self):
-        n = self.primers.count()
-        if n == 0:
-            swga.error("No primers meet the given criteria.", exception=False)
-        else:
-            self.n = n
-        
-
+def read_primer_list(lines, fg_genome_fp, bg_genome_fp):
+    '''
+    Reads in a list of primers, one per line, and returns the corresponding
+    records from the primer database.
+    '''
+    seqs = [re.split(r'[ \t]+', line.strip('\n'))[0] for line in lines]
+    primers = list(Primer.select().where(Primer.seq << seqs).execute())
+    if len(primers) < len(seqs):
+        primer_seqs = [p.seq for p in primers]
+        missing = [_ for _ in seqs if _ not in primer_seqs]
+        for seq in missing:
+            warn(
+                seq + " not in the database; skipping. Add it manually with "
+                "`swga count --input <file>` ")
+    return primers
