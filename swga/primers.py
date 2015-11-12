@@ -47,7 +47,7 @@ class Primers(object):
         active = Primer.select().where(Primer.active == True)
         if active.count() == 0:
             error(
-                'No active primers found. Run `swga filter` first.',
+                'No active primers found. Run `swga filter` or `swga activate` first.',
                 exception=False)
         return Primers(active)
 
@@ -58,13 +58,13 @@ class Primers(object):
         If None, selects all primers.
         '''
         if primers is None:
-            self.primers = Primer.select()
+            self.primers = Primer.select().execute()
             self.n = self.primers.count()
         elif isinstance(primers, file):
             self.primers = read_primer_list(primers)
             self.n = len(self.primers)
         else:
-            self.primers = Primer.select().where(Primer.seq << primers)
+            self.primers = Primer.select().where(Primer.seq << primers).execute()
             self.n = self.primers.count()
 
     def __len__(self):
@@ -90,7 +90,7 @@ class Primers(object):
 
         message(
             '{}/{} primers bind the foreground genome >= {} times'
-            .format(self.primers.count(), self.n, min_bind))
+            .format(len(self.primers), self.n, min_bind))
 
     @_filter
     def filter_max_bg_rate(self, rate):
@@ -104,7 +104,7 @@ class Primers(object):
 
         message(
             '{}/{} primers bind the background genome <= {} times'
-            .format(self.primers.count(), self.n, rate))
+            .format(len(self.primers), self.n, rate))
 
     @_filter
     def filter_tm_range(self, min_tm, max_tm):
@@ -119,7 +119,7 @@ class Primers(object):
             (Primer.tm >= min_tm)).execute())
         message(
             '{}/{} primers have a melting temp between {} and {} C'
-            .format(self.primers.count(), self.n, min_tm, max_tm))
+            .format(len(self.primers), self.n, min_tm, max_tm))
 
     @_filter
     def limit_to(self, n):
@@ -161,7 +161,7 @@ class Primers(object):
 
         message(
             '{}/{} primers have a Gini coefficient <= {}'
-            .format(self.primers.count(), self.n, gini_max))
+            .format(len(self.primers), self.n, gini_max))
 
     @_update
     def update_locations(self, fg_genome_fp):
@@ -243,7 +243,7 @@ class Primers(object):
         return self
 
     def _update_n(self):
-        n = self.primers.count()
+        n = len(self.primers)
         if n == 0:
             error('No primers left.', exception=False)
         else:
