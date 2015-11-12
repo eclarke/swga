@@ -138,7 +138,7 @@ def primer_dict(seq, fg, bg, min_fg_bind, max_bg_bind, max_dimer_bp):
 
     if ((fg_freq >= min_fg_bind) and
         (bg_freq <= max_bg_bind) and
-        (max_consecutive_binding(seq, seq) <= max_dimer_bp)):
+        (seq.max_consecutive_binding(seq) <= max_dimer_bp)):
         return {
             'seq': seq,
             'fg_freq': fg_freq,
