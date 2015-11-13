@@ -72,9 +72,9 @@ class Primers(object):
         return self.primers[key]
 
     def __iter__(self):
-        return iter(
-                Primer.select().where(Primer.seq << self.primers)
-                .order_by(Primer._id).execute())
+        return iter(self.primers)
+#                Primer.select().where(Primer.seq << self.primers)
+#                .order_by(Primer._id).execute())
 
     @_filter
     def filter_min_fg_rate(self, min_bind):
