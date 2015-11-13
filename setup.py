@@ -126,7 +126,8 @@ setup(
         'pyyaml',
         'peewee',
         'melt',
-        'pytest'
+        'pytest',
+        'argutils'
     ],
     classifiers = [
         'Programming Language :: Python',
@@ -136,7 +137,7 @@ setup(
         'License :: OSI Approved :: GNU General Public License (GPL)'
     ],
     package_data={
-        'swga': ['data/*', 'bin/set_finder', 'bin/dsk']
+        'swga': ['commands/specfiles/*', 'bin/set_finder', 'bin/dsk']
     },
     data_files=[ 
         ('bin', ['swga/bin/set_finder', 'swga/bin/dsk'])

@@ -1,0 +1,59 @@
+export:
+  _meta:
+    help: retrieve or export primers or sets from the database
+  what:
+    _exclude: True
+    default: sets
+    help: what to export (sets, primers, bedfile, bedgraph)
+    argtype: arg
+    choices: {set, sets, primer, primers, bedfile, bedgraph, lorenz}
+  primer_db:
+    default: "{primer_db}"
+    help: primer database name
+  output:
+    default: stdout
+    help: where to write results
+    type: File-w
+    _exclude: True
+  order_by:
+    _exclude: True
+    default: null
+    help: order the results (before any limits imposed)
+  descending:
+    _exclude: True
+    help: return in descending order if --order_by specified
+    argtype: flag
+  limit:
+    _exclude: True
+    default: -1
+    help: max results to display, at max (values less than zero mean no limit)
+    type: int
+  ids:
+    _exclude: True
+    default: null
+    help: the ids of the sets or primers to use
+    type: int
+    nargs: '*'
+  no_header:
+    _exclude: True
+    help: "don't display header"
+    argtype: flag
+  opts_str:
+    _exclude: True
+    help: (bedgraph export only) the options string to add to the track line
+    type: str
+  window_size:
+    default: 10000
+    help: (bedgraph export only) the size of the sliding window used to calculate avg primer binding
+    type: float
+  step_size:
+    _exclude: True
+    type: int
+    help: "(bedgraph export only) the step size used to move the sliding window (default: window_size/5)"
+  output_folder:
+    _exclude: True
+    help: (bed* export only) the folder to store the bedgraph or bedfiles
+    type: str
+  fg_genome_fp:
+    default: "{fg_genome_fp}"
+    help: (bed* export only) path to foreground genome (autofilled)

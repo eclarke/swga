@@ -18,18 +18,16 @@ import stat
 import swga
 from pyfaidx import Fasta
 from swga.utils import (resources, options)
-#from swga.utils.resources import get_swga_opts
-#from swga.utils.options import cfg_from_opts
-from swga.data.messages import (
-    welcome_message,
-    fg_message,
-    bg_message,
-    exclude_prompt,
-    finished_message)
+# from swga.data.messages import (
+#     welcome_message,
+#     fg_message,
+#     bg_message,
+#     exclude_prompt,
+#     finished_message)
 
 SWGA_VERSION = swga.__version__
 
-DEFAULT_PARAMETERS_FNAME = "parameters.cfg"
+DEFAULT_CFG_FNAME = "parameters.cfg"
 
 # Calculate default binding frequencies for foreground and background
 # Fg is based on a binding rate of 1/100000 bp/binding site
@@ -53,8 +51,11 @@ def main(fg_genome_fp, bg_genome_fp, exclude_fp):
 
     # 01. Display welcome message
     click.secho(
-        welcome_message.format(
-            CWD=CWD, SWGA_VERSION=SWGA_VERSION), fg="blue")
+        '''
+swga v{} - interactive setup
+---------------------------------
+This will set up an swga workspace in the current directory.'''
+    .format(SWGA_VERSION), fg="blue")
 
     # 02. Prompt for the foreground genome, if not already specified
     if (not fg_genome_fp):
@@ -62,7 +63,12 @@ def main(fg_genome_fp, bg_genome_fp, exclude_fp):
             "Enter path to foreground genome file, in FASTA format",
             type=click.Path(exists=True, resolve_path=True))
     fg_length, fg_nrecords = fasta_stats(fg_genome_fp)
-    click.secho(fg_message.format(**locals()), fg="green")
+    click.secho('''
+Foreground genome: {fg_genome_fp}
+  Length:  {fg_length} bp
+  Records: {fg_nrecords}'''
+        .format(**locals()), fg="green")
+
 
     # 03. Prompt for background genome, if not already specified
     if (not bg_genome_fp):
@@ -70,10 +76,18 @@ def main(fg_genome_fp, bg_genome_fp, exclude_fp):
             "Enter path to background genome file, in FASTA format",
             type=click.Path(exists=True, resolve_path=True))
     bg_length = fasta_len_quick(bg_genome_fp)
-    click.secho(bg_message.format(**locals()), fg="green")
+    click.secho('''
+Background genome: {bg_genome_fp}
+  Length:  {bg_length} bp\n'''
+        .format(**locals()), fg="green")
 
     # 04. Prompt for a file containing sequences to exclude, if not already
     # given
+    exclude_prompt = """
+Do you want to add a FASTA file of sequences that will be used to exclude
+primers? For instance, to avoid primers that bind to a mitochondrial genome,
+you would add the path to that genome file. There can be multiple sequences in
+the file, but only one file can be specified."""
     if (not exclude_fp):
         if click.confirm(exclude_prompt):
             exclude_fp = click.prompt(
@@ -82,7 +96,7 @@ def main(fg_genome_fp, bg_genome_fp, exclude_fp):
 
     if exclude_fp:
         exclude_fp_message = click.style(
-            "Exclusionary sequences file: {}".format(exclude_fp), fg="red")
+            "Exclusionary sequences file: {}".format(exclude_fp), fg="green")
     else:
         exclude_fp = ""
         exclude_fp_message = click.style(
@@ -93,7 +107,7 @@ def main(fg_genome_fp, bg_genome_fp, exclude_fp):
     # 05. Build and populate the parameters file
     opts = resources.get_swga_opts()
     default_parameters = options.cfg_from_opts(opts)
-    cfg_fp = os.path.join(CWD, DEFAULT_PARAMETERS_FNAME)
+    cfg_fp = os.path.join(CWD, DEFAULT_CFG_FNAME)
     min_fg_bind = int(MIN_FG_RATE * float(fg_length))
     max_bg_bind = int(MAX_BG_RATE * float(bg_length))
 
@@ -101,14 +115,21 @@ def main(fg_genome_fp, bg_genome_fp, exclude_fp):
     if os.path.isfile(cfg_fp):
         click.confirm(
             "Existing file `%s` will be overwritten. Continue?"
-            % DEFAULT_PARAMETERS_FNAME, abort=True)
+            % DEFAULT_CFG_FNAME, abort=True)
 
     with open(cfg_fp, "wb") as cfg_file:
         cfg_file.write(default_parameters.format(SWGA_VERSION=SWGA_VERSION, **locals()))
 
     # Done!
-    click.secho(finished_message.format(
-        DEFAULT_PARAMETERS_FNAME=DEFAULT_PARAMETERS_FNAME), fg="green")
+    click.secho("""
+Done! 
+
+A file called "{DEFAULT_CFG_FNAME}" has been placed in this directory. The
+values given in this file will be used as defaults for the commands in SWGA. You
+can modify these default values by editing this file in a plain-text editor such
+as nano or TextEdit.
+--------------------"""
+        .format(DEFAULT_CFG_FNAME=DEFAULT_CFG_FNAME), fg="green")
 
 
 def fasta_len_quick(fasta_fp):
@@ -220,7 +241,3 @@ def convert(self, value, param, ctx):
         ), param, ctx)
 
     return rv
-
-
-if __name__ == "__main__":
-    main()

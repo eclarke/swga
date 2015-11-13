@@ -1,11 +1,4 @@
 from command import Command
-from . import (
-    count,
-    filter,
-    init,
-    find_sets,
-    score,
-    summary,
-    export,
-    activate
-)
+from specfiles import command_names
+
+map(__import__, command_names)

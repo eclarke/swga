@@ -1,0 +1,47 @@
+find_sets:
+  _meta:
+    help: Find sets of compatible primers in a primer compatibility graph
+  primer_db:
+    default: "{primer_db}"
+    help: primer database name
+  min_size:
+    default: 2
+    help: minimum size of primer sets
+  max_size:
+    default: 7
+    help: max size of primer sets
+  max_dimer_bp:
+    default: 3
+    help: max number of consecutive complimentary bases between two primers
+    type: int
+  min_bg_bind_dist:
+    default: 30000
+    help: min avg distance between primers in the bg genome
+  bg_genome_len:
+    default: "{bg_length}"
+    help: length of background genome (autofilled by swga init)
+  fg_genome_fp: 
+    default: "{fg_length}"
+    help: path to foreground (aka target) genome  
+  max_fg_bind_dist:
+    default: 36000
+    help: Max distance between primers on the foreground genome
+    type: int
+  max_sets:
+    default: 500
+    help: Max number of sets to check
+    type: int
+  reset:
+    _exclude: True
+    help: remove all previously-found sets
+    argtype: flag
+  workers:
+    default: 1
+    help: >
+      number of workers to spawn. 1 worker searches graph using weighted vertex 
+      coloring; > 1 workers randomizes vertex coloring to explore more area 
+      simultaneously.
+    type: int
+  force:
+    argtype: flag
+    help: clear any previous sets without prompting

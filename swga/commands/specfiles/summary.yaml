@@ -1,0 +1,14 @@
+summary:
+  _meta:
+    help: Summarizes current primer and sets database.
+  primer_db:
+    default: "{primerdb}"
+    help: primer database name
+  bg_length:
+    default: "{bglen}"
+    help: length of the background genome (autofilled by swga init)
+    type: int
+  fg_length:
+    default: "{fglen}"
+    help: length of the foreground genome (autofilled by swga init)
+    type: int

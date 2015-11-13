@@ -1,6 +1,9 @@
-import swga
-import swga.utils.configure
-from swga.utils.options import argparser_from_opts
+#import swga
+import os
+from pkg_resources import resource_stream
+from ConfigParser import SafeConfigParser
+import argutils
+from argutils import (read, export)
 from swga.clint.textui import indent, colored
 
 
@@ -10,13 +13,16 @@ class Command:
     cfg_file = None
 
     def __init__(self, name, description=None, cfg_file=None):
-        opts = swga.utils.resources.get_swga_opts()
-        self.name = name
-        self.parser = argparser_from_opts(opts, name)
+        
+        fp = os.path.join('commands', 'specfiles', name+'.yaml')
+        specfile = resource_stream("swga", fp)
+        opts = read.from_yaml(get_cmd_specfile(name))
 
-        defaults = swga.utils.configure.parse_config(
-            cfg_file, name) if cfg_file else {}
-        self.parser.set_defaults(**defaults)
+        self.name = name
+        self.parser = export.to_argparser(name, opts)
+        config = SafeConfigParser()
+        if config.read(cfg_file):
+            parser = argutils.set_parser_defaults(name, opts)
 
     def parse_args(self, argv, quiet=False):
         args, unknown = self.parser.parse_known_args(argv)
@@ -34,9 +40,7 @@ class Command:
     def kwargs_as_args(self, **kwargs):
         '''
         Another interface to the command besides command-line arguments:
-        specify them as arguments to this function. The values will replace the
-        command-line ones if conflicting, and it is not necessary to call
-        self.parse_args beforehand.
+        specify them as arguments to this function.
         '''
         for k, v in kwargs.items():
             setattr(self, k, v)
