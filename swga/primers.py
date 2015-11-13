@@ -84,7 +84,7 @@ class Primers(object):
         '''
         self.primers = list(Primer.select().where(
             (Primer.seq << self.primers) &
-            (Primer.fg_freq >= min_bind)).execute())
+            (Primer.fg_freq >= min_bind)))
 
         message(
             '{}/{} primers bind the foreground genome >= {} times'
@@ -98,7 +98,7 @@ class Primers(object):
         '''
         self.primers = list(Primer.select().where(
             (Primer.seq << self.primers) &
-            (Primer.bg_freq <= rate)).execute())
+            (Primer.bg_freq <= rate)))
 
         message(
             '{}/{} primers bind the background genome <= {} times'
