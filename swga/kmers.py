@@ -7,7 +7,7 @@ import re
 import struct
 
 from swga import message
-import swga.utils.resources as resources
+from swga.utils import dsk
 
 
 def parse_kmer_file(lines):
@@ -30,7 +30,6 @@ def count_kmers(k, genome_fp, cwd, threshold=1):
 
     assert isinstance(threshold, int)
 
-    dsk = resources.get_dsk()
     genome = genome_fp.split(os.sep).pop()
     out = '%s-%dmers' % (genome, k)
     outfile = os.path.join(cwd, out + '.solid_kmers_binary')

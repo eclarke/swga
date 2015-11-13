@@ -16,8 +16,8 @@ graph_fname = "compatibility_graph.dimacs"
 
 
 def main(argv, cfg_file):
-    cmd = Command('find_sets', cfg_file=cfg_file)
-    score_cmd = Command('score', cfg_file=cfg_file)
+    cmd = Command('find_sets')
+    score_cmd = Command('score')
     cmd.parse_args(argv)
     score_cmd.parse_args(argv)
 

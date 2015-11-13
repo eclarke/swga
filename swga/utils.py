@@ -2,7 +2,10 @@ import os
 import sys
 import errno
 import swga
-from swga.clint.textui import progress
+from click import progressbar
+from pkg_resources import (
+    resource_exists, resource_filename
+)
 
 
 def mkdirp(path):
@@ -28,19 +31,32 @@ def chunk_iterator(itr, fn, n=100, show_progress=True, label=None):
     - show_progress show a progress bar
     - label the label to show on the progress bar
     '''
-    if len(itr) == 0:
+    length = len(itr)
+    if length == 0:
         return
     label = "" if label is None else label
-    if len(itr)/n <= 1:
+    if length/n <= 1:
         show_progress = False
         swga.message(label)
     chunked_itr = chunks(itr, n)
     if show_progress:
-        chunked = progress.bar(
-            chunked_itr,
-            label=label,
-            expected_size=max(len(itr)/n, 1))
+        with progressbar(chunked_itr, max(length/n, 1), label) as bar:
+            for chunk in bar:
+                fn(chunk)
     else:
-        chunked = chunked_itr
-    for chunk in chunked:
-        fn(chunk)
+        for chunk in chunked_itr:
+            fn(chunk)
+
+
+def _get_resource_file(rs):
+    _rs = os.path.join('bin', rs)
+    res_path = os.path.join(sys.prefix, _rs)
+    if not os.path.isfile(res_path) and resource_exists("swga", _rs):
+        res_path = resource_filename("swga", _rs)
+    else:
+        swga.error("Could not find `{}': try re-installing swga.".format(rs))
+    return res_path
+
+
+dsk = _get_resource_file('dsk')
+set_finder = _get_resource_file('set_finder')

@@ -15,25 +15,68 @@ import subprocess
 from click._compat import filename_to_ui
 import os
 import stat
-import swga
+from swga import (
+    DEFAULT_CFG_FNAME,
+    DEFAULT_DB_FNAME,
+    __version__
+)
+from swga.commands import create_config_file
+import swga.database as database
 from pyfaidx import Fasta
-from swga.utils import (resources, options)
-# from swga.data.messages import (
-#     welcome_message,
-#     fg_message,
-#     bg_message,
-#     exclude_prompt,
-#     finished_message)
 
-SWGA_VERSION = swga.__version__
+version = __version__
 
-DEFAULT_CFG_FNAME = "parameters.cfg"
-
-# Calculate default binding frequencies for foreground and background
+# Default binding frequencies for foreground and background
 # Fg is based on a binding rate of 1/100000 bp/binding site
 # Bg is based on a binding rate of 1/150000 bp/binding site
 MIN_FG_RATE = 0.00001
 MAX_BG_RATE = 0.0000067
+
+
+setup_msg = '''
+swga v{version} - interactive setup
+-------------------------------
+This will set up a new swga workspace in the current directory.
+'''
+
+fg_prompt = '''Enter path to foreground FASTA file'''
+fg_parsing = 'Checking {fg_genome_fp}...'
+fg_msg = '''\
+Foreground filepath: {fg_genome_fp}
+  Length:  {fg_length} bp
+  Records: {fg_nrecords}
+'''
+
+bg_prompt = '''Enter path to background FASTA file'''
+bg_parsing = 'Checking {bg_genome_fp}...'
+bg_msg = '''\
+Background filepath: {bg_genome_fp}
+  Length:  {bg_length} bp
+'''
+
+excl_prompt = '''\
+Do you want to add a FASTA file of sequences that will be used to exclude
+primers? For instance, to avoid primers that bind to a mitochondrial genome,
+you would add the path to that genome file. There can be multiple sequences in
+the file, but only one file can be specified.
+'''
+excl_prompt2 = '''Enter path to exclusionary sequence(s), in FASTA format'''
+excl_msg = '''Exclusionary sequences file: {}'''
+excl_msg_no_file = '''No exclusionary sequences file specified.'''
+
+cfg_prompt = '''Existing file `{}' will be overwritten. Continue?'''
+
+fin_msg = '''\
+Done!
+
+Created pre-filled config file `{}'.
+
+This file has been pre-filled with reasonable defaults. However, you will
+probably want to modify them to suit your needs. You can override the values
+in this file both by passing arguments to each command or by modifying this
+file in a plain-text editor such as TextEdit or `nano'.
+--------------------
+'''
 
 
 @click.command()
@@ -47,89 +90,66 @@ MAX_BG_RATE = 0.0000067
     "-e", "--exclude_fp",
     type=click.Path(exists=True, resolve_path=True))
 def main(fg_genome_fp, bg_genome_fp, exclude_fp):
-    CWD = os.getcwd()
+
+    CWD = os.curdir
 
     # 01. Display welcome message
-    click.secho(
-        '''
-swga v{} - interactive setup
----------------------------------
-This will set up an swga workspace in the current directory.'''
-    .format(SWGA_VERSION), fg="blue")
+    click.secho(setup_msg.format(version=version), fg="blue")
 
     # 02. Prompt for the foreground genome, if not already specified
     if (not fg_genome_fp):
         fg_genome_fp = click.prompt(
-            "Enter path to foreground genome file, in FASTA format",
-            type=click.Path(exists=True, resolve_path=True))
+            fg_prompt, type=click.Path(exists=True, resolve_path=True))
+    click.secho(fg_parsing.format(**locals()), fg='blue')
     fg_length, fg_nrecords = fasta_stats(fg_genome_fp)
-    click.secho('''
-Foreground genome: {fg_genome_fp}
-  Length:  {fg_length} bp
-  Records: {fg_nrecords}'''
-        .format(**locals()), fg="green")
-
+    click.secho(fg_msg.format(**locals()), fg="green")
 
     # 03. Prompt for background genome, if not already specified
     if (not bg_genome_fp):
         bg_genome_fp = click.prompt(
-            "Enter path to background genome file, in FASTA format",
-            type=click.Path(exists=True, resolve_path=True))
+            bg_prompt, type=click.Path(exists=True, resolve_path=True))
+    click.secho(bg_parsing.format(**locals()), fg='blue')
     bg_length = fasta_len_quick(bg_genome_fp)
-    click.secho('''
-Background genome: {bg_genome_fp}
-  Length:  {bg_length} bp\n'''
-        .format(**locals()), fg="green")
+    click.secho(bg_msg.format(**locals()), fg="green")
 
     # 04. Prompt for a file containing sequences to exclude, if not already
-    # given
-    exclude_prompt = """
-Do you want to add a FASTA file of sequences that will be used to exclude
-primers? For instance, to avoid primers that bind to a mitochondrial genome,
-you would add the path to that genome file. There can be multiple sequences in
-the file, but only one file can be specified."""
+    #     given
     if (not exclude_fp):
-        if click.confirm(exclude_prompt):
+        if click.confirm(excl_prompt):
             exclude_fp = click.prompt(
-                "Enter path to exclusionary sequence(s), in FASTA format",
-                type=click.Path(exists=True, resolve_path=True))
+                excl_prompt2, type=click.Path(exists=True, resolve_path=True))
 
     if exclude_fp:
-        exclude_fp_message = click.style(
-            "Exclusionary sequences file: {}".format(exclude_fp), fg="green")
+        click.secho(excl_msg.format(exclude_fp), fg="green")
     else:
         exclude_fp = ""
-        exclude_fp_message = click.style(
-            "No exclusionary sequences file specified.", fg="green")
+        click.secho(excl_msg_no_file, fg="green")
 
-    click.echo(exclude_fp_message)
-
-    # 05. Build and populate the parameters file
-    opts = resources.get_swga_opts()
-    default_parameters = options.cfg_from_opts(opts)
+    # 05. Build and populate the config file
+    default_parameters = create_config_file()
     cfg_fp = os.path.join(CWD, DEFAULT_CFG_FNAME)
     min_fg_bind = int(MIN_FG_RATE * float(fg_length))
     max_bg_bind = int(MAX_BG_RATE * float(bg_length))
 
-    # 06. Write parameters file
+    # 06. Write config file
     if os.path.isfile(cfg_fp):
-        click.confirm(
-            "Existing file `%s` will be overwritten. Continue?"
-            % DEFAULT_CFG_FNAME, abort=True)
-
+        click.confirm(cfg_prompt.format(DEFAULT_CFG_FNAME), abort=True)
     with open(cfg_fp, "wb") as cfg_file:
-        cfg_file.write(default_parameters.format(SWGA_VERSION=SWGA_VERSION, **locals()))
+        cfg_file.write(default_parameters.format(**locals()))
+
+    # 07. Initialize the database
+    database.init_db(DEFAULT_DB_FNAME, create_if_missing=True)
+    database.check_create_tables(DEFAULT_DB_FNAME)
+    database.Metadata.insert(
+        version=version,
+        fg_file=fg_genome_fp,
+        bg_file=bg_genome_fp,
+        fg_length=fg_length,
+        bg_length=bg_length
+    ).execute()
 
     # Done!
-    click.secho("""
-Done! 
-
-A file called "{DEFAULT_CFG_FNAME}" has been placed in this directory. The
-values given in this file will be used as defaults for the commands in SWGA. You
-can modify these default values by editing this file in a plain-text editor such
-as nano or TextEdit.
---------------------"""
-        .format(DEFAULT_CFG_FNAME=DEFAULT_CFG_FNAME), fg="green")
+    click.secho(fin_msg.format(DEFAULT_CFG_FNAME), fg="green")
 
 
 def fasta_len_quick(fasta_fp):
@@ -151,8 +171,8 @@ def fasta_len_quick(fasta_fp):
 def fasta_stats(fasta_fp):
     """
     Retrieves the number of bases and number of records in a FASTA file. Also
-    creates a FASTA index (.fai) for later searching. May be slow for very large
-    files.
+    creates a FASTA index (.fai) for later searching. May be slow for very
+    large files.
     """
     # pyfaidx can't handle blank lines within records, so we have to check :(
     check_empty_lines(fasta_fp)

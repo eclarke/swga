@@ -41,6 +41,7 @@ def _update(fn):
 
 
 class Primers(object):
+
     '''A list of primers and associated methods.'''
 
     @staticmethod
@@ -83,9 +84,11 @@ class Primers(object):
         return self.primers[key]
 
     def __iter__(self):
-        query = (Primer.select()
+        query = (
+            Primer.select()
             .where(Primer.seq << self.primers)
-            .order_by(Primer._id))
+            .order_by(Primer._id)
+        )
         return query.iterator()
 
     @_filter
@@ -151,8 +154,8 @@ class Primers(object):
             .limit(n))
 
         results = (Primer
-            .select().where(Primer.seq << first_pass)
-            .order_by(Primer.ratio.desc()))
+                   .select().where(Primer.seq << first_pass)
+                   .order_by(Primer.ratio.desc()))
 
         return results
 

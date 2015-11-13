@@ -4,7 +4,7 @@ import tempfile
 import contextlib
 import pytest
 import swga.database
-from swga.database import Primer, Set, PrimerSet
+from swga.database import Primer, Set, PrimerSet, Metadata
 
 
 @pytest.fixture
@@ -15,11 +15,11 @@ def seqs():
 @pytest.fixture(scope="function")
 def initdb(request):
     swga.database.db.init(":memory:")
-    swga.database.db.create_tables([Primer, Set, PrimerSet])
+    swga.database.db.create_tables([Primer, Set, PrimerSet, Metadata])
 
     def fin():
         print("Closing database")
-        swga.database.db.drop_tables([Primer, Set, PrimerSet])
+        swga.database.db.drop_tables([Primer, Set, PrimerSet, Metadata])
         swga.database.db.close()
     request.addfinalizer(fin)
 

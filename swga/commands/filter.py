@@ -19,7 +19,7 @@ import swga.database
 
 
 def main(argv, cfg_file):
-    cmd = Command('filter', cfg_file=cfg_file)
+    cmd = Command('filter')
     cmd.parse_args(argv)
 
     swga.database.init_db(cmd.primer_db)

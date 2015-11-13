@@ -1,58 +1,40 @@
-filter: 
-  _meta:
-    help: Activate suitable primers in a database
-  input:
-    default: null
-    help: >
-      List of primers (one per line) to activate, instead of pulling from db
-    _exclude: True
-  skip_filtering:
-    help: > 
-      Skip filtering and simply mark the provided primers from --input as active
-    opttype: flag
-  primer_db:
-    default: "{primerdb}"
-    help: primer database name
-  fg_genome_fp: 
-    default: "{fg_genome_fp}"
-    help: path to foreground (aka target) genome  
-  bg_genome_fp:
-    default: "{bg_genome_fp}"
-    help: path to background genome
-  max_primers:
-    default: 200
-    help: max number of primers to keep after filtering
-    type: int
-  bg_length:
-    default: "{bg_length}"
-    help: length of the background genome (autofilled by swga init)
-    type: int
-  fg_length:
-    default: "{fg_length}"
-    help: length of the foreground genome (autofilled by swga init)
-    type: int
-  min_fg_bind:
-    default: "{min_fg_bind}"
-    help: >
-      minimum number of primer binding sites on fg genome (default autofilled 
-      using genome length and binding rate of 1/100000)
-    type: int
-  max_bg_bind:
-    default: "{max_bg_bind}"
-    help: >
-      maximum primer binding sites on bg genome (default autofilled using 
-      genome length and binding rate of 1/150000)
-    type: int
-  min_tm:
-    default: 25
-    help: minimum primer melting temperature (C)
-    type: float
-  max_tm:
-    default: 75
-    help: maximum primer melting temperature (C)
-    type: float
-  max_gini:
-    default: 0.6
-    help: >
-      maximum Gini coefficient for an individual primer on the foreground genome
-    type: float
+_meta:
+  help: Activate suitable primers in a database
+input:
+  default: null
+  help: >
+    List of primers (one per line) to activate, instead of pulling from db
+  _exclude: True
+skip_filtering:
+  help: > 
+    Skip filtering and simply mark the provided primers from --input as active
+  argtype: flag
+max_primers:
+  default: 200
+  help: max number of primers to keep after filtering
+  type: int
+min_fg_bind:
+  default: "{min_fg_bind}"
+  help: >
+    minimum number of primer binding sites on fg genome (default autofilled 
+    using genome length and binding rate of 1/100000)
+  type: int
+max_bg_bind:
+  default: "{max_bg_bind}"
+  help: >
+    maximum primer binding sites on bg genome (default autofilled using 
+    genome length and binding rate of 1/150000)
+  type: int
+min_tm:
+  default: 25
+  help: minimum primer melting temperature (C)
+  type: float
+max_tm:
+  default: 75
+  help: maximum primer melting temperature (C)
+  type: float
+max_gini:
+  default: 0.6
+  help: >
+    maximum Gini coefficient for an individual primer on the foreground genome
+  type: float

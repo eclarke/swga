@@ -2,14 +2,13 @@
 import os
 from collections import defaultdict
 
-from swga import (warn, message)
+from swga import message
 import swga.database as database
 import swga.kmers
 from swga.primers import Primer
 from swga.commands import Command
 from swga.utils import mkdirp
 from peewee import OperationalError
-import click
 
 INF = float('inf')
 
@@ -17,22 +16,14 @@ output_dir = ".swga_tmp"
 
 
 def main(argv, cfg_file):
-    cmd = Command('count', cfg_file=cfg_file)
+    cmd = Command('count')
     cmd.parse_args(argv)
-    database.init_db(cmd.primer_db, create_if_missing=True)
+    
     if cmd.input:
         kmers = swga.kmers.parse_kmer_file(cmd.input)
         count_specific_kmers(kmers, **cmd.args)
     else:
         count_kmers(**cmd.args)
-
-
-def check_create_tables(primer_db, skip_check=False):
-    if os.path.isfile(primer_db) and not skip_check:
-        warn("Existing database found at %s" % os.path.abspath(primer_db))
-        warn("This will reset the entire database!")
-        click.confirm("Are you sure you want to proceed?", abort=True)
-    database.create_tables()
 
 
 def count_specific_kmers(
@@ -51,7 +42,8 @@ def count_specific_kmers(
     except OperationalError:
         # If this fails due to an OperationalError, it probably means the
         # database tables haven't been created yet
-        check_create_tables(primer_db, skip_check=True)
+        raise
+        database.check_create_tables(primer_db, skip_check=True)
         mkdirp(output_dir)
 
     # Group the kmers by length to avoid repeatedly counting kmers of the same
@@ -96,7 +88,6 @@ def count_kmers(
     assert os.path.isfile(fg_genome_fp)
     assert os.path.isfile(bg_genome_fp)
 
-    check_create_tables(primer_db)
     mkdirp(output_dir)
 
     kmers = []

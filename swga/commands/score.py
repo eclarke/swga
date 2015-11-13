@@ -11,8 +11,9 @@ from swga.commands import Command
 from swga.commands.summary import fmtkv
 from swga.database import Set
 
+
 def main(argv, cfg_file):
-    cmd = Command('score', cfg_file=cfg_file)
+    cmd = Command('score')
     cmd.parse_args(argv)
     swga.database.init_db(cmd.primer_db)
     primers = Primers(cmd.input)
@@ -69,7 +70,8 @@ def score_set(
                 "as infinite")
             bg_dist_mean = float('Inf')
         else:
-            bg_dist_mean = float(bg_genome_len)/sum(p.bg_freq for p in primers)
+            bg_dist_mean = float(
+                bg_genome_len) / sum(p.bg_freq for p in primers)
 
     set_score, variables = score_fun(
         primer_set=primers,
@@ -111,4 +113,3 @@ def score_set(
         elif interactive:
             swga.message("That primer set already exists.")
     return set_added, max_dist
-

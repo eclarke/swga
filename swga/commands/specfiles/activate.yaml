@@ -1,24 +1,15 @@
-activate:
-  _meta:
-    help: >
-      activate a list of primers, updating melting temp and fg binding 
-      locations as needed
-  input:
-    default: null
-    help: "a file containing a list of primers to score, one per line"
-    type: File-r
-    argtype: arg
-    _exclude: True
-  reset:
-    help: reset what primers are marked as active
-    argtype: flag
-    _exclude: True
-  primer_db:
-    default: "{primer_db}"
-    help: primer database name
-  fg_genome_fp: 
-    default: "{fg_genome_fp}"
-    help: path to foreground (aka target) genome  
-  bg_genome_fp:
-    default: "{bg_genome_fp}"
-    help: path to background genome
+_meta:
+  help: >
+    activate a list of primers, updating melting temp and fg binding 
+    locations as needed
+  _exclude: True
+input:
+  default: null
+  help: "a file containing a list of primers to score, one per line"
+  type: File-r
+  argtype: arg
+  _exclude: True
+reset:
+  help: reset what primers are marked as active
+  argtype: flag
+  _exclude: True

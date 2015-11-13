@@ -1,52 +1,39 @@
-count:
-  _meta:
-    help: >
-      Count kmers in a foreground genome, then count those in a background 
-      genome, and add results to database
-  primer_db:
-    default: *primerdb
-    help: primer database name
-  fg_genome_fp: 
-    default: "{fg_genome_fp}"
-    help: path to foreground (aka target) genome
-  bg_genome_fp:
-    default: "{bg_genome_fp}"
-    help: path to background genome
-  exclude_fp:
-    default: "{exclude_fp}"
-    help: (FASTA) any primers appearing here above a threshold will be excluded
-  min_size:
-    default: 5
-    help: minimum kmer size
-    type: int
-  max_size:
-    default: 12
-    help: maximum kmer size
-    type: int
-  min_fg_bind:
-    default: "{min_fg_bind}"
-    help: >
-      minimum number of primer binding sites on fg genome (default autofilled 
-      using genome length and binding rate of 1/100000)
-    type: int
-  max_bg_bind:
-    default: "{max_bg_bind}"
-    help: > 
-      maximum primer binding sites on bg genome (default autofilled using genome
-      length and binding rate of 1/150000)
-    type: int
-  max_dimer_bp:
-    default: 3
-    help: >
-      max number of consecutive complementary bases between a primer and its 
-      rev. complement
-    type: int
-  exclude_threshold:
-    default: 1
-    help: primers appearing >= this in exclude_fp will be excluded
-    type: int
-  input:
-    default: null
-    help: a list of primers to manually add to the database
-    type: File-r
-    _exclude: true
+_meta:
+  help: >
+    Count kmers in a foreground genome, then count those in a background 
+    genome, and add results to database
+min_size:
+  default: 5
+  help: minimum kmer size
+  type: int
+max_size:
+  default: 12
+  help: maximum kmer size
+  type: int
+min_fg_bind:
+  default: "{min_fg_bind}"
+  help: >
+    minimum number of primer binding sites on fg genome (default autofilled 
+    using genome length and binding rate of 1/100000)
+  type: int
+max_bg_bind:
+  default: "{max_bg_bind}"
+  help: > 
+    maximum primer binding sites on bg genome (default autofilled using genome
+    length and binding rate of 1/150000)
+  type: int
+max_dimer_bp:
+  default: 3
+  help: >
+    max number of consecutive complementary bases between a primer and its 
+    rev. complement
+  type: int
+exclude_threshold:
+  default: 1
+  help: primers appearing >= this in exclude_fp will be excluded
+  type: int
+input:
+  default: null
+  help: a list of primers to manually add to the database
+  type: File-r
+  _exclude: True

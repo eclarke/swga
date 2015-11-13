@@ -1,5 +1,4 @@
-from swga import message
-import swga.utils.resources as resources
+from swga.utils import set_finder
 import subprocess
 import os
 import time
@@ -13,13 +12,21 @@ def find_sets(
         bg_genome_len,
         graph_fp,
         vertex_ordering="weighted-coloring"):
-    assert vertex_ordering in ["weighted-coloring", "random"]
-    set_finder = resources.get_setfinder()
 
-    find_set_cmd = [set_finder, '-q', '-q', '-B', min_bg_bind_dist,
-                    '-L', bg_genome_len, '-m', min_size, '-M',
-                    max_size, '-a', '-u', '-r', vertex_ordering,
-                    graph_fp]
+    if vertex_ordering not in ["weighted-coloring", "random"]:
+        raise ValueError("Unknown choice: {}".format(vertex_ordering))
+
+    find_set_cmd = [
+        set_finder, '-q', '-q',
+        '--bg_freq', min_bg_bind_dist,
+        '--bg_len', bg_genome_len,
+        '--min', min_size,
+        '--max', max_size,
+        '--all',
+#        '--unweighted',
+        '--reorder', vertex_ordering,
+        graph_fp
+    ]
     find_set_cmd = " ".join([str(_) for _ in find_set_cmd])
 
     # We call the set_finder command as a line-buffered subprocess that passes

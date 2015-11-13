@@ -7,14 +7,15 @@ Defines the models and fields of the primer database using Peewee ORM. Also
 contains a litany of helper functions for adding and retrieving stored data.
 
 """
-import os
-import swga
 import json
+import os
+import click
+from swga import (error, warn, __version__)
 from swga.utils import chunk_iterator
-from swga.locate import revcomp
-import swga.utils
-import swga.score
+import swga.locate as locate
+from swga.score import seq_diff
 import melting
+import semantic_version as semver
 import peewee as pw
 try:
     from playhouse.shortcuts import ManyToManyField
@@ -80,11 +81,12 @@ class Primer(SwgaBase):
         return rep_str.format(
             self.id, self.seq, self.fg_freq, self.bg_freq, self.ratio)
 
+    @property
     def locations(self):
         if self._locations:
             return json.loads(self._locations)
         else:
-            swga.error("No locations stored for " + str(self))
+            error("No locations stored for " + str(self))
 
     def update_tm(self):
         self.tm = melting.temp(
@@ -92,13 +94,13 @@ class Primer(SwgaBase):
 
     def _update_locations(self, genome_fp):
         self._locations = json.dumps(
-            swga.locate.binding_sites(self.seq, genome_fp))
+            locate.binding_sites(self.seq, genome_fp))
 
     def _update_gini(self, genome_fp):
-        chr_ends = swga.locate.chromosome_ends(genome_fp)
-        locs = swga.locate.linearize_binding_sites([self], chr_ends)
-        dists = swga.score.seq_diff(locs)
-        self.gini = swga.stats.gini(dists)
+        chr_ends = locate.chromosome_ends(genome_fp)
+        locs = locate.linearize_binding_sites([self], chr_ends)
+        dists = seq_diff(locs)
+        self.gini = stats.gini(dists)
 
 
 class Set(SwgaBase):
@@ -144,6 +146,15 @@ class Set(SwgaBase):
 
 PrimerSet = Set.primers.get_through_model()
 
+
+class Metadata(SwgaBase):
+    '''Holds metadata about the swga workspace.'''
+    version = pw.TextField()
+    fg_file = pw.TextField()
+    bg_file = pw.TextField()
+    fg_length = pw.IntegerField()
+    bg_length = pw.IntegerField()
+
         
 def init_db(db_fname, create_if_missing=False):
     '''
@@ -152,13 +163,13 @@ def init_db(db_fname, create_if_missing=False):
     found. Otherwise, it exits with an error (SystemExit).
     '''
     if db_fname is None:
-        swga.error("Primer db name cannot be `None`: corrupt preferences.cfg?")
+        error("Database name cannot be `None'.")
     elif db_fname == ":memory:":
-        swga.warn("Creating in-memory primer database; this may not work.")
+        warn("Creating in-memory database.")
     elif not os.path.isfile(db_fname) and not create_if_missing:
         # Exits here
-        swga.error(
-            "Primer db not found at '%s': specify different filename or "
+        error(
+            "Database not found at '%s': specify different filename or "
             "re-run `swga count`" % db_fname, exception=False
         )
     db.init(db_fname)
@@ -170,17 +181,48 @@ def create_tables(drop=True):
     Creates the tables in the database. If `drop`=True, attempts to safely drop
     the tables before creating them.
     '''
-    tbl_list = [Primer, Set, PrimerSet]
+    tbl_list = [Primer, Set, PrimerSet, Metadata]
     if drop:
         db.drop_tables(tbl_list, safe=True)
     db.create_tables(tbl_list, safe=True)
+
+
+def check_create_tables(primer_db, skip_check=False):
+    if os.path.isfile(primer_db) and not skip_check:
+        warn(
+            "This directory was already initialized as a workspace. "
+            "Continuing will reset any stored primers and sets you may have found."
+        )
+        click.confirm("Are you sure you want to proceed?", abort=True)
+    create_tables()
+
+
+def check_version(swga_version=__version__):
+    try:
+        meta = Metadata.get()
+        db_ver = semver.Version(meta.version)
+    except pw.OperationalError:
+        db_ver = "<NA>"
+    ver = semver.Version(swga_version)
+    spec = semver.Spec('=={}.{}'.format(ver.major, ver.minor))
+    if db_ver not in spec:
+        error(
+            "This workspace was created with an incompatible version of swga.\n"
+            "  Workspace version: {}\n"
+            "  swga version:      {}\n"
+            "Please re-initialize the workspace with `swga init` or use a "
+            "different version of swga."
+            .format(db_ver, ver),
+            exception=False,
+            wrap=False
+        )
 
 
 def add_primers(primers, chunksize=199, add_revcomp=True):
     if add_revcomp:
         def mkrevcomp(p):
             p2 = dict(**p)
-            p2['seq'] = revcomp(p['seq'])
+            p2['seq'] = locate.revcomp(p['seq'])
             return p2
         primers += [mkrevcomp(p) for p in primers]
     chunk_iterator(
@@ -193,13 +235,13 @@ def add_primers(primers, chunksize=199, add_revcomp=True):
 @db.atomic()
 def add_set(_id, primers, **kwargs):
     if not primers:
-        swga.error("Invalid primers for set")
+        error("Invalid primers for set")
     if isinstance(primers, pw.SelectQuery):
         nprimers = primers.count()
     else:
         nprimers = len(primers)
     if nprimers == 0:
-        swga.error("Cannot have an empty set")
+        error("Cannot have an empty set")
     _hash = hash(frozenset([p.seq for p in primers]))
     if Set.select(pw.fn.Count(Set._id)).where(Set._hash == _hash).scalar() > 0:
         return None

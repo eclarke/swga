@@ -21,7 +21,7 @@ def test_locate_chromosome_ends(fastafile):
     assert ends['record2'] == [16, 23]
     assert ends['record3'] == [24, 31]
 
-    
+
 def test_linearize_binding_sites(kmer, initdb, fastafile):
     p = Primer.create(seq=kmer)
     p._update_locations(fastafile)
@@ -33,8 +33,9 @@ def test_linearize_binding_sites(kmer, initdb, fastafile):
         start, end = ends
         assert start in linear_bind_sites
         assert end in linear_bind_sites
-        for site in p.locations()[record]:
+        for site in p.locations[record]:
             assert site in linear_bind_sites
-        
+
+
 def test_revcomp():
     assert "ATGC" == swga.locate.revcomp("GCAT")

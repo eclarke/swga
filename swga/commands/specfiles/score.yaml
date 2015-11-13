@@ -1,29 +1,17 @@
-score:
-  _meta:
-    help: score a set of primers
-  primer_db:
-    default: "{primer_db}"
-    help: primer database name
-  fg_genome_fp: 
-    default: "{fg_genome_fp}"
-    help: path to foreground (aka target) genome
-  bg_genome_fp:
-    default: "{bg_genome_fp}"
-    help: path to background genome
-  bg_genome_len:
-    default: "{bg_length}"
-    help: length of background genome (autofilled by swga init)
-  input:
-    default: null
-    help: a file containing a list of primers to score, one per line
-    type: File-r
-    _exclude: True
-  force:
-    help: do not prompt for confirmation before adding a set manually
-    argtype: flag
-  score_expression:
-    default: "(fg_dist_mean * fg_dist_gini) / (bg_dist_mean)"
-    help: >
-      Specify an expression to calculate the set score. Code must only use the
-      following variables: set_size, fg_dist_mean, fg_dist_std, fg_dist_gini,
-      fg_dist_max, bg_dist_mean. Expression must have valid Python syntax.
+_meta:
+  help: score a set of primers
+input:
+  default: null
+  help: a file containing a list of primers to score, one per line
+  type: File-r
+  _exclude: True
+force:
+  help: do not prompt for confirmation before adding a set manually
+  argtype: flag
+  _exclude: True
+score_expression:
+  default: "(fg_dist_mean * fg_dist_gini) / (bg_dist_mean)"
+  help: >
+    Specify an expression to calculate the set score. Code must only use the
+    following variables: set_size, fg_dist_mean, fg_dist_std, fg_dist_gini,
+    fg_dist_max, bg_dist_mean. Expression must have valid Python syntax.

@@ -6,7 +6,7 @@ from swga.commands import Command
 
 
 def main(argv, cfg_file):
-    cmd = Command('activate', cfg_file=cfg_file)
+    cmd = Command('activate', cfg_file)
     cmd.parse_args(argv)
 
     swga.database.init_db(cmd.primer_db)

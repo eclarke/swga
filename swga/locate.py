@@ -26,7 +26,7 @@ def linearize_binding_sites(primers, chr_ends):
     '''
     new_locs = []
     for primer in primers:
-        for rec, locs in primer.locations().iteritems():
+        for rec, locs in primer.locations.iteritems():
             chr_start, chr_end = chr_ends[rec]
             new_locs += [l + chr_start for l in locs] + [chr_start, chr_end]
     new_locs = list(set(new_locs))

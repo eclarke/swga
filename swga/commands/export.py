@@ -35,7 +35,7 @@ from swga.export import BedGraph, BedFile
 
 
 def main(argv, cfg_file):
-    cmd = Command('export', cfg_file=cfg_file)
+    cmd = Command('export')
     cmd.parse_args(argv)
     header = not cmd.no_header
     what = cmd.what

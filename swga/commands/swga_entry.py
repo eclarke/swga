@@ -1,7 +1,20 @@
 import argparse
-import swga
-import swga.utils.configure
-import swga.commands as commands
+
+from swga import (
+    error,
+    DEFAULT_CFG_FNAME
+)
+
+from swga.commands import (
+    init,
+    summary,
+    count,
+    filter,
+    find_sets,
+    score,
+    activate,
+    export
+)   
 
 usage = """Usage: swga [-c --config CFG_FILE] <command> [options]
 
@@ -26,16 +39,16 @@ Options:
 
 def main():
     command_opts = {
-        'init': commands.init.main,
-        'summary': commands.summary.main,
-        'count': commands.count.main,
-        'filter': commands.filter.main,
-        'find_sets': commands.find_sets.main,
-        'score': commands.score.main,
-        'activate': commands.activate.main,
-        'export': commands.export.main}
+        'init': init.main,
+        'summary': summary.main,
+        'count': count.main,
+        'filter': filter.main,
+        'find_sets': find_sets.main,
+        'score': score.main,
+        'activate': activate.main,
+        'export': export.main}
 
-    cfg_file = swga.utils.configure.default_config_file
+    cfg_file = DEFAULT_CFG_FNAME
 
     parser = argparse.ArgumentParser(
         usage=usage % cfg_file,
@@ -58,4 +71,4 @@ def main():
     try:
         command_opts[args.command](remaining, args.config)
     except KeyboardInterrupt:
-        swga.error("\n-- Stopped by user --", exception=False)
+        error("\n-- Stopped by user --", exception=False)
