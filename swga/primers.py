@@ -7,6 +7,7 @@ from functools import wraps
 from swga import (error, warn, message)
 from swga.utils import chunk_iterator
 from swga.database import Primer
+from peewee import SelectQuery
 
 
 def _filter(fn):
@@ -17,10 +18,10 @@ def _filter(fn):
     '''
     @wraps(fn)
     def func(self, *args, **kwargs):
-        fn(self, *args, **kwargs)
+        results = fn(self, *args, **kwargs)
+        assert isinstance(results, SelectQuery)
+        self.primers = [p['seq'] for p in results.dicts().execute()]
         self._update_n()
-        if not isinstance(self.primers, list):
-            self.primers = list(self.primers)
         return self
     return func
 
@@ -95,13 +96,15 @@ class Primers(object):
         Removes primers that bind less than the given rate to the foreground
         genome.
         '''
-        self.primers = Primer.select().where(
+        results = Primer.select().where(
             (Primer.seq << self.primers) &
             (Primer.fg_freq >= min_bind))
 
         message(
             '{}/{} primers bind the foreground genome >= {} times'
-            .format(len(self.primers), self.n, min_bind))
+            .format(results.count(), self.n, min_bind))
+
+        return results
 
     @_filter
     def filter_max_bg_rate(self, rate):
@@ -109,13 +112,15 @@ class Primers(object):
         Removes primers that bind more than the given number of times to
         the background genome.
         '''
-        self.primers = list(Primer.select().where(
+        results = Primer.select().where(
             (Primer.seq << self.primers) &
-            (Primer.bg_freq <= rate)))
+            (Primer.bg_freq <= rate))
 
         message(
             '{}/{} primers bind the background genome <= {} times'
-            .format(len(self.primers), self.n, rate))
+            .format(results.count(), self.n, rate))
+
+        return results
 
     @_filter
     def filter_tm_range(self, min_tm, max_tm):
@@ -124,13 +129,14 @@ class Primers(object):
         Finds melting temperatures if not already present.
         '''
         self.update_melt_temps()
-        self.primers = Primer.select().where(
+        results = Primer.select().where(
             (Primer.seq << self.primers) &
             (Primer.tm <= max_tm) &
             (Primer.tm >= min_tm))
         message(
             '{}/{} primers have a melting temp between {} and {} C'
-            .format(len(self.primers), self.n, min_tm, max_tm))
+            .format(results.count(), self.n, min_tm, max_tm))
+        return results
 
     @_filter
     def limit_to(self, n):
@@ -146,9 +152,11 @@ class Primers(object):
             .order_by(Primer.bg_freq)
             .limit(n))
 
-        self.primers = (Primer
+        results = (Primer
             .select().where(Primer.seq << first_pass)
             .order_by(Primer.ratio.desc()))
+
+        return results
 
     @_filter
     def filter_max_gini(self, gini_max, fg_genome_fp):
@@ -166,13 +174,15 @@ class Primers(object):
          .update_locations(fg_genome_fp)
          .update_gini(fg_genome_fp))
 
-        self.primers = Primer.select().where(
+        results = Primer.select().where(
             (Primer.seq << self.primers) &
             (Primer.gini <= gini_max))
 
         message(
             '{}/{} primers have a Gini coefficient <= {}'
-            .format(len(self.primers), self.n, gini_max))
+            .format(results.count(), self.n, gini_max))
+
+        return results
 
     @_update
     def update_locations(self, fg_genome_fp):
