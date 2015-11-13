@@ -58,14 +58,12 @@ class Primers(object):
         If None, selects all primers.
         '''
         if primers is None:
-            self.primers = Primer.select()
-            self.n = self.primers.count()
+            self.primers = list(Primer.select().execute())
         elif isinstance(primers, file):
             self.primers = read_primer_list(primers)
-            self.n = len(self.primers)
         else:
-            self.primers = Primer.select().where(Primer.seq << primers)
-            self.n = self.primers.count()
+            self.primers = list(Primer.select().where(Primer.seq << primers).execute())
+        self.n = len(self.primers)
 
     def __len__(self):
         return self.n
