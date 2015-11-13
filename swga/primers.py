@@ -20,7 +20,7 @@ def _filter(fn):
     def func(self, *args, **kwargs):
         results = fn(self, *args, **kwargs)
         assert isinstance(results, SelectQuery)
-        self.primers = [p['seq'] for p in results.dicts().execute()]
+        self.primers = results
         self._update_n()
         return self
     return func
@@ -74,8 +74,6 @@ class Primers(object):
 
     @primers.setter
     def primers(self, value):
-        if not isinstance(value, list):
-            value = list(value)
         self._primers = value
 
     def __len__(self):
@@ -87,7 +85,7 @@ class Primers(object):
     def __iter__(self):
         query = (Primer.select()
             .where(Primer.seq << self.primers)
-            .order_by(Primer._id).execute())
+            .order_by(Primer._id))
         return query.iterator()
 
     @_filter
@@ -264,7 +262,7 @@ class Primers(object):
         return self
 
     def _update_n(self):
-        n = len(self.primers)
+        n = self.primers.count()
         if n == 0:
             error('No primers left.', exception=False)
         else:
