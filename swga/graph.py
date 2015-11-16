@@ -1,8 +1,10 @@
 import itertools
 from swga.kmers import max_sequential_nt
+from swga import (error, message)
+from swga.primers import Primers
 
 
-def test_pairs(starting_primers, max_binding):
+def build_edges(starting_primers, max_binding):
     '''
     Adds a primer pair to the list of edges if it passes the heterodimer
     filter using the max_binding cutoff.
@@ -38,3 +40,21 @@ def write_graph(primers, edges, file_handle):
         except IndexError:
             raise ValueError("Edges must be specified as a list with" +
                              "two elements. Invalid edge: {}".format(edge))
+
+
+def build_graph(max_hetdimer_bind, outfile):
+    '''Selects all active primers and outputs a primer compatibility graph.'''
+
+    # Reset all the primer IDs (as ids are only used for set_finder)
+    primers = Primers.select_active().assign_ids()
+#    print [(p._id, p.ratio) for p in primers]
+    message("Composing primer compatibility graph...")
+    edges = build_edges(primers, max_hetdimer_bind)
+
+    if len(edges) == 0:
+        error(
+            "No compatible primers. Try relaxing your parameters.",
+            exception=False)
+
+    with open(outfile, 'wb') as out:
+        write_graph(primers, edges, out)

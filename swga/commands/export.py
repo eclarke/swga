@@ -29,81 +29,85 @@ import os
 import swga.database as database
 import swga.locate
 import swga.stats
-from swga.commands import Command
+from swga.commands._command import Command
 from swga.database import Primer, Set
 from swga.export import BedGraph, BedFile
 
 
-def main(argv, cfg_file):
-    cmd = Command('export')
-    cmd.parse_args(argv)
-    header = not cmd.no_header
-    what = cmd.what
-    database.init_db(cmd.primer_db)
+class Export(Command):
 
-    if what in ['set', 'sets']:
-        sets = get_items(Set, cmd.ids, cmd.order_by, cmd.limit, cmd.descending)
-        export(Set, sets, cmd.output, header)
+    def __init__(self, argv):
+        super(Export, self).__init__('export')
+        self.parse_args(argv)
+        self.header = not self.no_header
 
-    if what in ['primer', 'primers']:
-        primers = get_items(
-            Primer, cmd.ids, cmd.order_by, cmd.limit, cmd.descending)
-        export(Primer, primers, cmd.output, header)
+    def run(self):
+        if self.what in ['set', 'sets']:
+            sets = self.get_items(Set)
+            export(Set, sets, self.output, self.header)
 
-    if what == 'lorenz':
-        sets = get_items(Set, cmd.ids, cmd.order_by, cmd.limit, cmd.descending)
-        export_lorenz(sets, cmd.output, cmd.fg_genome_fp, header)
+        if self.what in ['primer', 'primers']:
+            primers = self.get_items(Primer)
+            export(Primer, primers, self.output, self.header)
 
-    if "bed" in what:
-        outpath = cmd.output_folder if cmd.output_folder else os.getcwd()
-        sets = get_items(Set, cmd.ids, cmd.order_by, cmd.limit, cmd.descending)
-        if what == "bedfile":
-            for set in sets:
-                swga.message(
-                    "Exporting set {} and associated primers as bedfiles..."
-                    .format(set._id))
-                bedfile = BedFile(set, cmd.fg_genome_fp)
-                bedfile.write(outpath)
-        elif what == "bedgraph":
-            for set in sets:
-                swga.message("Exporting set {} as bedgraph...".format(set._id))
-                bedgraph = BedGraph(
-                    set=set,
-                    fg_genome_fp=cmd.fg_genome_fp,
-                    opts_str=cmd.opts_str,
-                    window_size=cmd.window_size,
-                    step_size=cmd.step_size)
-                bedgraph.write(outpath)
+        if self.what == 'lorenz':
+            sets = self.get_items(Set)
+            export_lorenz(sets, self.output, self.fg_genome_fp, self.header)
 
+        if "bed" in self.what:
+            outpath = self.output_folder if self.output_folder else os.getcwd()
+            sets = self.get_items(Set)
+            if self.what == "bedfile":
+                for set in sets:
+                    swga.message(
+                        "Exporting set {} and its primers as bedfiles..."
+                        .format(set._id))
+                    bedfile = BedFile(set, self.fg_genome_fp)
+                    bedfile.write(outpath)
+            elif self.what == "bedgraph":
+                for set in sets:
+                    swga.message("Exporting set {} as bedgraph..."
+                                 .format(set._id))
+                    bedgraph = BedGraph(
+                        set=set,
+                        fg_genome_fp=self.fg_genome_fp,
+                        opts_str=self.opts_str,
+                        window_size=self.window_size,
+                        step_size=self.step_size)
+                    bedgraph.write(outpath)
 
-def get_items(model, ids=None, order_by=None, limit=None, descending=False):
-    '''
-    Retrieves the rows from the model given by the arguments (basically an
-    adaptor around very simple SQL queries.)
-    '''
+    def get_items(self, model):
+        '''
+        Retrieves the rows from the model given by the arguments (basically an
+        adaptor around very simple SQL queries.)
+        '''
+        ids = self.ids
+        order_by = self.order_by
+        limit = self.limit
+        descending = self.descending
 
-    if ids and (order_by or limit):
-        swga.warn("ID(s) specified: ignoring --order_by and --limit options.")
-        order_by = limit = None
+        if ids and (order_by or limit):
+            swga.warn("ID(s) specified: ignoring --order_by/--limit options.")
+            order_by = limit = None
 
-    validate_order_field(order_by, model)
+        validate_order_field(order_by, model)
 
-    if ids:
-        targets = model.select().where(model._id << ids)
-        for target in targets:
-            yield target
-    else:
-        query = model.select()
-        if order_by:
-            if descending:
-                query = query.order_by(model.fields()[order_by].desc())
-            else:
-                query = query.order_by(model.fields()[order_by])
-        if limit:
-            query = query.limit(limit)
-        targets = query
-        for target in targets:
-            yield target
+        if ids:
+            targets = model.select().where(model._id << ids)
+            for target in targets:
+                yield target
+        else:
+            query = model.select()
+            if order_by:
+                if descending:
+                    query = query.order_by(model.fields()[order_by].desc())
+                else:
+                    query = query.order_by(model.fields()[order_by])
+            if limit:
+                query = query.limit(limit)
+            targets = query
+            for target in targets:
+                yield target
 
 
 def export(model, rows, outfile, header=True):

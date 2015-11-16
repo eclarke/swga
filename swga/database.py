@@ -12,6 +12,7 @@ import os
 import click
 from swga import (error, warn, __version__)
 from swga.utils import chunk_iterator
+import swga.stats as stats
 import swga.locate as locate
 from swga.score import seq_diff
 import melting
@@ -152,6 +153,7 @@ class Metadata(SwgaBase):
     version = pw.TextField()
     fg_file = pw.TextField()
     bg_file = pw.TextField()
+    ex_file = pw.TextField()
     fg_length = pw.IntegerField()
     bg_length = pw.IntegerField()
 

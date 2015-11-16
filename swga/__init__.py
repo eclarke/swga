@@ -33,11 +33,12 @@ def message(msg, newline=True):
 def quote(text, width=72, quote="", nl=True):
     if not text:
         return ""
-    for line in text.splitlines():
-        sublines = textwrap.wrap(text, width=width, replace_whitespace=False)
-        sublines = [quote + l for l in sublines if l.strip()]
+    out = ""
+    for line in text.split("\n"):
+        sublines = textwrap.wrap(line, width=width, replace_whitespace=False)
+        sublines = [quote + l for l in sublines]# if l.strip()]
 #        lines = [quote + line for line in lines if line.strip()]
-        out = "\n".join(sublines)
+        out += "\n".join(sublines) + "\n"
     if nl:
         out += "\n"
     return out

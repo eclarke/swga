@@ -1,15 +1,14 @@
-import os
-import click
 import argutils
 import argutils.read
 import argutils.export
-from pkg_resources import resource_stream
-from ConfigParser import SafeConfigParser
-from swga import (
-    warn, message, DEFAULT_DB_FNAME, DEFAULT_CFG_FNAME,
-    __version__
-)
-import swga.database as database
+from swga.utils import specfile
+import activate
+import count
+import export
+import filter
+import find_sets
+import score
+import summary
 
 
 _commands = [
@@ -21,11 +20,6 @@ _commands = [
     'score',
     'summary',
 ]
-
-
-def specfile(name):
-    fp = os.path.join('commands', 'specfiles', name + '.yaml')
-    return resource_stream("swga", fp)
 
 
 def create_config_file():
@@ -40,60 +34,10 @@ def create_config_file():
     return cfg_file_str
 
 
-class Command:
-    args = None
-    name = ""
-    cfg_file = None
-
-    def __init__(self, name,
-                 cfg_file=DEFAULT_CFG_FNAME,
-                 db_name=DEFAULT_DB_FNAME):
-
-        spec = specfile(name)
-        opts = argutils.read.from_yaml(spec)
-
-        self.name = name
-        self.parser = argutils.export.to_argparser(name, opts)
-        config = SafeConfigParser()
-        if config.read(cfg_file) and config.has_section(name):
-            self.parser = argutils.set_parser_defaults(self.parser, config)
-
-        database.init_db(db_name)
-        database.check_version()
-        meta = database.Metadata.get()
-        self.primer_db = db_name
-        self.fg_genome_fp = meta.fg_file
-        self.bg_genome_fp = meta.bg_file
-        self.fg_length = meta.fg_length
-        self.bg_length = meta.bg_length
-
-    def parse_args(self, argv, quiet=False):
-        args, unknown = self.parser.parse_known_args(argv)
-        self.unknown = unknown
-        self.args = vars(args)
-        self.kwargs_as_args(**self.args)
-        if not quiet:
-            self.pprint_args()
-        if len(self.args) > 0 and all(v is None for k, v in self.args.items()):
-            warn(
-                "[swga %s]: All parameters are missing- ",
-                "this may indicate a corrupt or missing parameters file."
-                % self.name)
-
-    def kwargs_as_args(self, **kwargs):
-        '''
-        Another interface to the command besides command-line arguments:
-        specify them as arguments to this function.
-        '''
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-
-    def pprint_args(self):
-        if not self.args:
-            return
-        else:
-            message(click.style("swga v{}: {}".format(__version__, self.name), fg='green'))
-            for arg, val in self.args.iteritems():
-                if val is None or val == "":
-                    val = click.style("None", fg='red')
-                message(click.style("  - {}: {}".format(arg, val), fg='blue'))
+Activate = activate.Activate
+Count = count.Count
+Export = export.Export
+Filter = filter.Filter
+FindSets = find_sets.FindSets
+Score = score.Score
+Summary = summary.Summary

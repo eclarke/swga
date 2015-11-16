@@ -145,6 +145,7 @@ def main(fg_genome_fp, bg_genome_fp, exclude_fp):
         version=version,
         fg_file=fg_genome_fp,
         bg_file=bg_genome_fp,
+        ex_file=exclude_fp,
         fg_length=fg_length,
         bg_length=bg_length
     ).execute()

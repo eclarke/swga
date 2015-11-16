@@ -14,38 +14,39 @@ subsequent runs will be much faster.
 '''
 
 from swga.primers import Primers
-from swga.commands import Command
+from swga.commands._command import Command
 import swga.database
 
 
-def main(argv, cfg_file):
-    cmd = Command('filter')
-    cmd.parse_args(argv)
+class Filter(Command):
 
-    swga.database.init_db(cmd.primer_db)
+    def __init__(self, argv):
+        super(Filter, self).__init__('filter')
+        self.parse_args(argv)
 
-    # If we have an input file, use that. Otherwise pull from db
-    if cmd.input:
-        with open(cmd.input, 'rb') as infile:
-            primers = Primers(infile)
-    else:
-        cmd.skip_filtering = False
-        primers = Primers()
+    def run(self):
+        # If we have an input file, use that. Otherwise pull from db
+        if self.input:
+            with open(self.input, 'rb') as infile:
+                primers = Primers(infile)
+        else:
+            self.skip_filtering = False
+            primers = Primers()
 
-    assert isinstance(primers, Primers)
+        assert isinstance(primers, Primers)
 
-    # Undo all active marks, if any
-    swga.database.Primer.update(active=False).execute()
+        # Undo all active marks, if any
+        swga.database.Primer.update(active=False).execute()
 
-    if not cmd.skip_filtering:
-        (
-            primers
-            .filter_min_fg_rate(cmd.min_fg_bind)
-            .filter_max_bg_rate(cmd.max_bg_bind)
-            .summarize()
-            .filter_tm_range(cmd.min_tm, cmd.max_tm)
-            .limit_to(cmd.max_primers)
-            .filter_max_gini(cmd.max_gini, cmd.fg_genome_fp)
-        )
+        if not self.skip_filtering:
+            (
+                primers
+                .filter_min_fg_rate(self.min_fg_bind)
+                .filter_max_bg_rate(self.max_bg_bind)
+                .summarize()
+                .filter_tm_range(self.min_tm, self.max_tm)
+                .limit_to(self.max_primers)
+                .filter_max_gini(self.max_gini, self.fg_genome_fp)
+            )
 
-    primers.activate(cmd.max_primers)
+        primers.activate(self.max_primers)

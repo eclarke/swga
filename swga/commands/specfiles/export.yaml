@@ -5,7 +5,7 @@ what:
   default: sets
   help: what to export (sets, primers, bedfile, bedgraph)
   argtype: arg
-  choices: {set, sets, primer, primers, bedfile, bedgraph, lorenz}
+  choices: "set, sets, primer, primers, bedfile, bedgraph, lorenz"
 output:
   default: stdout
   help: where to write results

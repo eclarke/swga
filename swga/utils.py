@@ -4,7 +4,7 @@ import errno
 import swga
 from click import progressbar
 from pkg_resources import (
-    resource_exists, resource_filename
+    resource_exists, resource_filename, resource_stream
 )
 
 
@@ -50,12 +50,16 @@ def chunk_iterator(itr, fn, n=100, show_progress=True, label=None):
 
 def _get_resource_file(rs):
     _rs = os.path.join('bin', rs)
-    #res_path = os.path.join(sys.prefix, _rs)
     if resource_exists("swga", _rs):
         res_path = resource_filename("swga", _rs)
         return res_path
     else:
         swga.error("Could not find `{}': try re-installing swga.".format(rs))
+
+
+def specfile(name):
+    fp = os.path.join('commands', 'specfiles', name + '.yaml')
+    return resource_stream("swga", fp)
 
 
 dsk = _get_resource_file('dsk')

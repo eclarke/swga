@@ -1,152 +1,139 @@
 import functools
+import subprocess
+import os
+import time
+import signal
 
 import click
-import swga.database
+import swga.database as database
 import swga.graph as graph
 import swga.locate as locate
 import swga.score as score
-from swga.primers import Primers
-from swga.clint.textui import progress
-from swga.commands import Command
-from swga.commands.score import score_set
-from swga.database import Set, init_db
-import swga.setfinder as setfinder
-
-graph_fname = "compatibility_graph.dimacs"
+from swga import (warn, message)
+from swga.commands._command import Command
+from swga.commands.score import Score
+from swga.database import Set
+from swga.utils import set_finder
 
 
-def main(argv, cfg_file):
-    cmd = Command('find_sets')
-    score_cmd = Command('score')
-    cmd.parse_args(argv)
-    score_cmd.parse_args(argv)
-
-    init_db(cmd.primer_db)
-
-    # We need to clear all the previously-used sets each time due to uniqueness
-    # constraints
-    allsets = Set.select()
-    if allsets.count() > 0:
-        if not cmd.force:
-            click.confirm("Remove all previously-found sets?", abort=True)
-        for s in progress.bar(allsets, expected_size=allsets.count()):
-            s.primers.clear()
-            s.delete_instance()
-
-    make_graph(cmd.max_dimer_bp, graph_fname)
-
-    swga.message(
-        "Now finding sets. If nothing appears, try relaxing your parameters."
-    )
-
-    if cmd.workers <= 1:
-        setlines = setfinder.find_sets(
-            cmd.min_bg_bind_dist,
-            cmd.min_size,
-            cmd.max_size,
-            cmd.bg_genome_len,
-            graph_fp=graph_fname)
-    else:
-        setlines = setfinder.mp_find_sets(
-            nprocesses=cmd.workers,
-            graph_fp=graph_fname,
-            min_bg_bind_dist=cmd.min_bg_bind_dist,
-            min_size=cmd.min_size,
-            max_size=cmd.max_size,
-            bg_genome_len=cmd.bg_genome_len)
-
-    score_sets(
-        setlines,
-        cmd.fg_genome_fp,
-        score_cmd.score_expression,
-        cmd.max_fg_bind_dist,
-        cmd.max_sets)
+GRAPH_FP = "compatibility_graph.dimacs"
+STATUS_LINE = '''\
+\rSets: {: ^5,.6g} | Passed: {: ^5,.6g} | Smallest max bind dist:{: ^12,.4G}\
+'''
 
 
-def make_graph(max_hetdimer_bind, outfile):
-    '''Selects all active primers and outputs a primer compatibility graph.'''
+class FindSets(Command):
 
-    # Reset all the primer IDs (as ids are only used for set_finder)
-    primers = Primers.select_active().assign_ids()
-    print [(p._id, p.ratio) for p in primers]
-    swga.message("Composing primer compatibility graph...")
-    edges = graph.test_pairs(primers, max_hetdimer_bind)
-    print edges
+    def __init__(self, argv):
+        super(FindSets, self).__init__('find_sets')
+        self.parse_args(argv)
+        if self.max_sets < 1:
+            self.max_sets = float("inf")
+        self.score_cmd = Score(argv)
 
-    if len(edges) == 0:
-        swga.error(
-            "No compatible primers. Try relaxing your parameters.",
-            exception=False)
+    def run(self):
+        # We need to clear all the previously-used sets each time due to
+        # uniqueness constraints
+        all_sets = Set.select()
+        if all_sets.count() > 0:
+            if not self.force:
+                click.confirm("Remove all previously-found sets?", abort=True)
+            for s in all_sets:
+                s.primers.clear()
+                s.delete_instance()
 
-    with open(outfile, 'wb') as out:
-        graph.write_graph(primers, edges, out)
+        graph.build_graph(self.max_dimer_bp, GRAPH_FP)
 
+        message(
+            "Finding sets. If nothing appears, try relaxing your parameters.")
 
-def score_sets(
-        setlines,
-        fg_genome_fp,
-        score_expression,
-        max_fg_bind_dist,
-        max_sets):
-    '''
-    Retrieves the primers and their binding locations from the output of
-    find_sets and calculates the max binding distance between primers in the
-    foreground genome.
+        setfinder_lines = self.find_sets(GRAPH_FP, self.workers)
+        self.process_lines(setfinder_lines)
 
-    If the max distance is below a specified threshold, it passes the set
-    and some additional attributes to a user-defined score function.
+    def find_sets(self, graph_fp, workers):
+        if workers <= 1:
+            return self._find_sets(graph_fp)
+        else:
+            return self._mp_find_sets(graph_fp, workers)
 
-    After a specified number of sets pass the filter, it exits the process.
-    '''
+    def _find_sets(self, graph_fp, vertex_ordering="weighted-coloring"):
+        assert vertex_ordering in ["weighted-coloring", "random"]
+        find_set_cmd = [
+            set_finder, '-q', '-q',
+            '--bg_freq', self.min_bg_bind_dist,
+            '--bg_len', self.bg_length,
+            '--min', self.min_size,
+            '--max', self.max_size,
+            '--all',
+            '--reorder', vertex_ordering,
+            graph_fp
+        ]
+        find_set_cmd = " ".join([str(_) for _ in find_set_cmd])
 
-    if max_sets < 1:
-        max_sets = float("inf")
+        # We call the set_finder command as a line-buffered subprocess that
+        # passes its output back to this process.
+        # The function then yields each line as a generator; when close() is
+        # called, it terminates the set_finder subprocess.
+        process = subprocess.Popen(
+            find_set_cmd,
+            shell=True,
+            stdout=subprocess.PIPE,
+            preexec_fn=os.setsid,
+            bufsize=1)
+        try:
+            for line in iter(process.stdout.readline, b''):
+                (yield line)
+        finally:
+            time.sleep(0.1)
+            if process.poll() is None:
+                os.killpg(process.pid, signal.SIGKILL)
 
-    # Evaluate the user-defined scoring function
-    score_fun = functools.partial(
-        score.default_score_set,
-        expression=score_expression)
+    def _mp_find_sets(self, graph_fp, workers):
+        setfinder_procs = [self._find_sets(graph_fp, vertex_ordering="random")
+                           for _ in range(workers)]
+        try:
+            while True:
+                for i, setfinder in enumerate(setfinder_procs):
+                    (yield setfinder.next())
+        finally:
+            for i, setfinder in enumerate(setfinder_procs):
+                setfinder.close()
 
-    chr_ends = locate.chromosome_ends(fg_genome_fp)
+    def process_lines(self, setfinder_lines):
+        passed = processed = 0
+        smallest_max_dist = float('inf')
 
-    passed = processed = 0
-    min_max_dist = float('inf')
+        try:
+            for line in setfinder_lines:
+                try:
+                    primer_ids, bg_dist_mean = score.read_set_finder_line(line)
+                except ValueError:
+                    warn("Could not parse line:\n\t" + line)
+                    continue
 
-    status = "\rSets: {: ^5,.6g} | Passed: {: ^5,.6g} | Smallest max binding distance:{: ^12,.4G}"
+                primers = database.get_primers_for_ids(primer_ids)
+                processed += 1
 
-    try:
-        for line in setlines:
-            try:
-                primer_ids, bg_dist_mean = score.read_set_finder_line(line)
-            except ValueError:
-                swga.warn("Could not parse line:\n\t" + line)
-                continue
+                set_passed, max_dist = self.score_cmd.score_set(
+                    set_id=passed,
+                    primers=primers,
+                    max_fg_bind_dist=self.max_fg_bind_dist,
+                    bg_dist_mean=bg_dist_mean)
 
-            primers = swga.database.get_primers_for_ids(primer_ids)
-            processed += 1
+                if set_passed:
+                    passed += 1
 
-            set_passed, max_dist = score_set(
-                set_id=passed,
-                bg_dist_mean=bg_dist_mean,
-                primers=primers,
-                chr_ends=chr_ends,
-                score_fun=score_fun,
-                score_expression=score_expression,
-                max_fg_bind_dist=max_fg_bind_dist,
-                interactive=False)
+                if max_dist < smallest_max_dist:
+                    smallest_max_dist = max_dist
 
-            if set_passed:
-                passed += 1
+                message(
+                    STATUS_LINE.format(processed, passed, smallest_max_dist),
+                    newline=False)
 
-            min_max_dist = max_dist if max_dist < min_max_dist else min_max_dist
-
-            swga.message(
-                status.format(processed, passed, min_max_dist), newline=False)
-
-            if passed >= max_sets:
-                swga.message("\nDone (scored %i sets)" % passed)
-                break
-    finally:
-        # Raises a GeneratorExit inside the find_sets command, prompting it to quit
-        # the subprocess
-        setlines.close()
+                if passed >= self.max_sets:
+                    message("\nDone (scored %i sets)" % passed)
+                    break
+        finally:
+            # Raises a GeneratorExit inside the find_sets command, prompting it
+            # to quit the subprocess
+            setfinder_lines.close()

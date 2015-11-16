@@ -258,8 +258,8 @@ class Primers(object):
              .execute())
         message('Marked {} primers as active.'.format(n))
         if n < min_active:
-            warn(
-                'Fewer than {} primers were selected ({} passed all the '
+            message(
+                'Note: Fewer than {} primers were selected ({} passed all the '
                 'filters). You may want to try less restrictive filtering '
                 'parameters.'.format(min_active, n))
         return self

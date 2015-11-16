@@ -1,29 +1,22 @@
-import swga.database
-import swga.primers
 from swga import warn
 from swga.primers import Primers
-from swga.commands import Command
+from swga.commands._command import Command
 
 
-def main(argv, cfg_file):
-    cmd = Command('activate', cfg_file)
-    cmd.parse_args(argv)
+class Activate(Command):
 
-    swga.database.init_db(cmd.primer_db)
+    def __init__(self, argv):
+        super(Activate, self).__init__('activate')
+        self.parse_args(argv)
 
-    primers = Primers(cmd.input)
+    def run(self):
+        primers = Primers(self.input)
 
-    try:
-        (primers
-            .update_melt_temps()
-            .update_locations(cmd.fg_genome_fp)
-            .activate())
-    except AttributeError as e:
-        warn("Error updating database: '{}'".format(e.message))
-        warn(
-            "Sometimes this happens if you're using a database created with "
-            "an older version of swga. Please try creating a new workspace "
-            "with `swga init` in another folder and adding these primers to "
-            "that database instead."
-        )
-        raise e
+        try:
+            (primers
+                .update_melt_temps()
+                .update_locations(self.fg_genome_fp)
+                .activate())
+        except AttributeError as e:
+            warn("Error updating database: '{}'".format(e.message))
+            raise e

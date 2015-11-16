@@ -7,14 +7,14 @@ from swga import (
 
 from swga.commands import (
     init,
-    summary,
-    count,
-    filter,
-    find_sets,
-    score,
-    activate,
-    export
-)   
+    Summary,
+    Count,
+    Filter,
+    FindSets,
+    Score,
+    Activate,
+    Export
+)
 
 usage = """Usage: swga [-c --config CFG_FILE] <command> [options]
 
@@ -31,27 +31,22 @@ Pipeline commands:
 Other commands:
   activate:         activate a list of primers, calculating Tm and locations
   score:            score a set specified by a list of primers in a file
-
-Options:
-  --config FILE     path to config file (default %s)
 """
 
 
 def main():
     command_opts = {
-        'init': init.main,
-        'summary': summary.main,
-        'count': count.main,
-        'filter': filter.main,
-        'find_sets': find_sets.main,
-        'score': score.main,
-        'activate': activate.main,
-        'export': export.main}
-
-    cfg_file = DEFAULT_CFG_FNAME
+        'summary': Summary,
+        'count': Count,
+        'filter': Filter,
+        'find_sets': FindSets,
+        'score': Score,
+        'activate': Activate,
+        'export': Export
+    }
 
     parser = argparse.ArgumentParser(
-        usage=usage % cfg_file,
+        usage=usage,
         formatter_class=argparse.RawDescriptionHelpFormatter,
         add_help=False)
 
@@ -60,15 +55,14 @@ def main():
         type=str,
         choices=command_opts.keys())
 
-    parser.add_argument(
-        '-c', '--config',
-        metavar="CFG_FILE",
-        help='path to config file (default: %(default)s)',
-        default=cfg_file)
-
     args, remaining = parser.parse_known_args()
 
     try:
-        command_opts[args.command](remaining, args.config)
+        if args.command == 'init':
+            init.main(remaining)
+        else:
+            cmd = command_opts[args.command](remaining)
+            cmd.run()
+
     except KeyboardInterrupt:
         error("\n-- Stopped by user --", exception=False)

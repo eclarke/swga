@@ -2,11 +2,11 @@
 import os
 from collections import defaultdict
 
-from swga import message
+from swga import (error, message)
 import swga.database as database
 import swga.kmers
 from swga.primers import Primer
-from swga.commands import Command
+from swga.commands._command import Command
 from swga.utils import mkdirp
 from peewee import OperationalError
 
@@ -15,112 +15,101 @@ INF = float('inf')
 output_dir = ".swga_tmp"
 
 
-def main(argv, cfg_file):
-    cmd = Command('count')
-    cmd.parse_args(argv)
-    
-    if cmd.input:
-        kmers = swga.kmers.parse_kmer_file(cmd.input)
-        count_specific_kmers(kmers, **cmd.args)
-    else:
-        count_kmers(**cmd.args)
+class Count(Command):
 
+    def __init__(self, argv):
+        super(Count, self).__init__('count')
+        self.parse_args(argv)
 
-def count_specific_kmers(
-        kmers,
-        fg_genome_fp,
-        bg_genome_fp,
-        primer_db,
-        **kwargs):
+    def run(self):
+        if self.input:
+            kmers = swga.kmers.parse_kmer_file(self.input)
+            self.count_specific_kmers(kmers)
+        else:
+            self.count_kmers()
 
-    try:
-        # Skip primers that already exist and warn users
-        existing = [p.seq for p in Primer.select().where(Primer.seq << kmers)]
-        for p in existing:
-            message("{} already exists in db, skipping...".format(p))
-        kmers = [p for p in kmers if p not in existing]
-    except OperationalError:
-        # If this fails due to an OperationalError, it probably means the
-        # database tables haven't been created yet
-        raise
-        database.check_create_tables(primer_db, skip_check=True)
+    def count_specific_kmers(self, kmers):
+        try:
+            # Skip primers that already exist and warn users
+            existing = [p.seq for p in Primer.select().where(Primer.seq << kmers)]
+            for p in existing:
+                message("{} already exists in db, skipping...".format(p))
+            kmers = [p for p in kmers if p not in existing]
+        except OperationalError:
+            # If this fails due to an OperationalError, it probably means the
+            # database tables haven't been created yet. That's `swga init's job
+            error(
+                "It doesn't appear that the workspace has been initialized: "
+                "run `swga init' first."
+            )
+            raise
+            database.check_create_tables(self.primer_db, skip_check=True)
+            mkdirp(output_dir)
+
+        # Group the kmers by length to avoid repeatedly counting kmers of the
+        # same size
+        kmers_by_length = defaultdict(list)
+        for kmer in kmers:
+            kmers_by_length[len(kmer)].append(kmer)
+
+        for k, mers in kmers_by_length.items():
+            fg = swga.kmers.count_kmers(k, self.fg_genome_fp, output_dir, 1)
+            bg = swga.kmers.count_kmers(k, self.bg_genome_fp, output_dir, 1)
+            primers = []
+            for mer in mers:
+                try:
+                    primers.append(primer_dict(mer, fg, bg, 0, INF, INF))
+                except KeyError:
+                    message(
+                        "{} does not exist in foreground genome, skipping..."
+                        .format(mer))
+
+            # Omitting any primers that were returned empty
+            # primers = filter(lambda p: p == {}, primers)
+            chunk_size = 199
+            message(
+                "Writing {n} {k}-mers into db in blocks of {cs}..."
+                .format(n=len(primers), k=k, cs=chunk_size))
+            database.add_primers(primers, chunk_size, add_revcomp=False)
+
+    def count_kmers(self):
+        assert os.path.isfile(self.fg_genome_fp)
+        assert os.path.isfile(self.bg_genome_fp)
+
         mkdirp(output_dir)
 
-    # Group the kmers by length to avoid repeatedly counting kmers of the same
-    # size
-    kmers_by_length = defaultdict(list)
-    for kmer in kmers:
-        kmers_by_length[len(kmer)].append(kmer)
+        kmers = []
+        for k in xrange(self.min_size, self.max_size + 1):
+            fg = swga.kmers.count_kmers(k, self.fg_genome_fp, output_dir)
+            bg = swga.kmers.count_kmers(k, self.bg_genome_fp, output_dir)
 
-    for k, mers in kmers_by_length.items():
-        fg = swga.kmers.count_kmers(k, fg_genome_fp, output_dir, 1)
-        bg = swga.kmers.count_kmers(k, bg_genome_fp, output_dir, 1)
-        primers = []
-        for mer in mers:
-            try:
-                primers.append(primer_dict(mer, fg, bg, 0, INF, INF))
-            except KeyError:
-                message(
-                    "{} does not exist in foreground genome, skipping..."
-                    .format(mer))
+            if self.exclude_fp:
+                assert os.path.isfile(self.exclude_fp)
+                ex = swga.kmers.count_kmers(
+                    k, self.exclude_fp, output_dir, self.exclude_threshold)
+            else:
+                ex = {}
 
-        # Omitting any primers that were returned empty
-        # primers = filter(lambda p: p == {}, primers)
-        chunk_size = 199
-        message(
-            "Writing {n} {k}-mers into db in blocks of {cs}..."
-            .format(n=len(primers), k=k, cs=chunk_size))
-        database.add_primers(primers, chunk_size, add_revcomp=False)
+            # Keep kmers found in foreground, merging bg binding values, and
+            # excluding those found in the excluded fasta
 
+            kmers = [
+                primer_dict(seq, fg, bg, self.min_fg_bind, self.max_bg_bind,
+                            self.max_dimer_bp)
+                for seq in fg.viewkeys() if seq not in ex.viewkeys()
+            ]
 
-def count_kmers(
-        fg_genome_fp,
-        bg_genome_fp,
-        min_size,
-        max_size,
-        min_fg_bind,
-        max_bg_bind,
-        max_dimer_bp,
-        primer_db,
-        exclude_fp,
-        exclude_threshold,
-        **kwargs):
-    assert os.path.isfile(fg_genome_fp)
-    assert os.path.isfile(bg_genome_fp)
+            kmers = filter(lambda x: x != {}, kmers)
 
-    mkdirp(output_dir)
+            nkmers = len(kmers)
 
-    kmers = []
-    for k in xrange(min_size, max_size + 1):
-        fg = swga.kmers.count_kmers(k, fg_genome_fp, output_dir)
-        bg = swga.kmers.count_kmers(k, bg_genome_fp, output_dir)
+            chunk_size = 199
+            message(
+                "Writing {n} {k}-mers into db in blocks of {cs}..."
+                .format(n=nkmers * 2, k=k, cs=chunk_size))
+            database.add_primers(kmers, chunk_size, add_revcomp=True)
 
-        if exclude_fp:
-            assert os.path.isfile(exclude_fp)
-            ex = swga.kmers.count_kmers(
-                k, exclude_fp, output_dir, exclude_threshold)
-        else:
-            ex = {}
-
-        # Keep kmers found in foreground, merging bg binding values, and
-        # excluding those found in the excluded fasta
-
-        kmers = [
-            primer_dict(seq, fg, bg, min_fg_bind, max_bg_bind, max_dimer_bp)
-            for seq in fg.viewkeys() if seq not in ex.viewkeys()
-        ]
-
-        kmers = filter(lambda x: x != {}, kmers)
-
-        nkmers = len(kmers)
-
-        chunk_size = 199
-        message(
-            "Writing {n} {k}-mers into db in blocks of {cs}..."
-            .format(n=nkmers * 2, k=k, cs=chunk_size))
-        database.add_primers(kmers, chunk_size, add_revcomp=True)
-
-    message("Counted kmers in range %d-%d" % (min_size, max_size))
+        message("Counted kmers in range %d-%d" % (self.min_size, self.max_size))
 
 
 def primer_dict(seq, fg, bg, min_fg_bind, max_bg_bind, max_dimer_bp):
