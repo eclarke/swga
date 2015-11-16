@@ -64,7 +64,7 @@ excl_prompt2 = '''Enter path to exclusionary sequence(s), in FASTA format'''
 excl_msg = '''Exclusionary sequences file: {}'''
 excl_msg_no_file = '''No exclusionary sequences file specified.'''
 
-cfg_prompt = '''Existing file `{}' will be overwritten. Continue?'''
+overwrite_cfg_prompt = '''Existing file `{}' will be overwritten. Continue?'''
 
 fin_msg = '''\
 Done!
@@ -133,7 +133,8 @@ def main(fg_genome_fp, bg_genome_fp, exclude_fp):
 
     # 06. Write config file
     if os.path.isfile(cfg_fp):
-        click.confirm(cfg_prompt.format(DEFAULT_CFG_FNAME), abort=True)
+        click.confirm(overwrite_cfg_prompt.format(DEFAULT_CFG_FNAME), 
+                      abort=True)
     with open(cfg_fp, "wb") as cfg_file:
         cfg_file.write(default_parameters.format(**locals()))
 
@@ -209,7 +210,7 @@ def check_empty_lines(fasta_fp):
         subprocess.check_call(
             "sed -ie '/^$/d' \"{}\"".format(fasta_fp), shell=True)
 
-
+##
 # The monkeypatching going on here forces the click framework to strip
 # whitespace from the ends of filename strings passed to it. This allows users
 # to drag-and-drop files on the Mac OS X terminal (which appends a trailing

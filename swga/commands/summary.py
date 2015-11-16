@@ -11,7 +11,7 @@ from peewee import fn
 def main(argv, cfg_file):
     cmd = Command('summary')
     cmd.parse_args(argv, quiet=True)
-    summary(**cmd.args)
+    summary(cmd.primer_db, cmd.fg_length, cmd.bg_length)
 
 
 def summary(primer_db, fg_length, bg_length):
@@ -28,8 +28,9 @@ def summary(primer_db, fg_length, bg_length):
         .scalar(as_tuple=True))
 
     if (avg_fg_bind is None) or (avg_bg_bind is None):
-        raise swga.error(
-            "Could not calculate summary statistics; database may be corrupt")
+        (avg_fg_bind, avg_bg_bind) = (0,0)
+#        raise swga.error(
+#            "Could not calculate summary statistics; database may be corrupt")
 
     fg_bind_ratio = avg_fg_bind / float(fg_length)
     bg_bind_ratio = avg_bg_bind / float(bg_length)
@@ -110,9 +111,9 @@ The primers in Set {best_set} are:
     """ if nsets > 0 else ifzero_sets_msg)
 
     primer_db = os.path.abspath(primer_db)
-    nprimers = click.style(nprimers, bold=True, fg='blue')
-    nactive = click.style(nactive, bold=True, fg='blue')
-    nsets = click.style(nsets, bold=True, fg='blue')
+    nprimers = click.style(str(nprimers), bold=True, fg='blue')
+    nactive = click.style(str(nactive), bold=True, fg='blue')
+    nsets = click.style(str(nsets), bold=True, fg='blue')
     set_msg = set_msg.format(**locals())
     melting_tmp_msg = melting_tmp_msg.format(**locals())
     version_header = click.style(version_header, fg='green')

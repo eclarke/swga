@@ -1,4 +1,4 @@
-from swga.utils import set_finder
+#from swga.utils import set_finder
 import subprocess
 import os
 import time
@@ -17,7 +17,7 @@ def find_sets(
         raise ValueError("Unknown choice: {}".format(vertex_ordering))
 
     find_set_cmd = [
-        set_finder, '-q', '-q',
+        swga.utils.set_finder, '-q', '-q',
         '--bg_freq', min_bg_bind_dist,
         '--bg_len', bg_genome_len,
         '--min', min_size,

@@ -4,6 +4,7 @@ import platform
 import subprocess
 from setuptools import setup, find_packages, Command, dist
 from distutils.command.build import build as _build
+from distutils.command.build_py import build_py as _build_py
 from distutils.spawn import find_executable
 from setuptools.command.bdist_egg import bdist_egg as _bdist_egg
 
@@ -17,27 +18,17 @@ with open("VERSION") as version_file:
 
 class bdist_egg(_bdist_egg):
     def run(self):
-        print "HELLO"
-        print os.listdir("swga")
-        self.run_command('build_contrib')
+        self.run_command('build_py')
         _bdist_egg.run(self)
 
 
-class build_contrib(Command):
-    description = "Build extras"
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
+class build_py(_build_py):
 
     def run(self):
         """
         Builds `DSK` and `cliquer` in the contrib/ directory and moves them 
         to the right place before installing `swga`.
         """
-
         def find_prog(target='g++'):
             '''Finds all items on the path with the target in their name.'''
             for path in os.environ["PATH"].split(os.pathsep):
@@ -90,7 +81,7 @@ class build_contrib(Command):
                     )
                     omp=0
 
-        cliquer_make_cmd = ('make')
+        cliquer_make_cmd = (['make'])
         dsk_make_cmd = (
             'make',
             'CC='+CC,
@@ -99,20 +90,26 @@ class build_contrib(Command):
         )
 
         print(" ".join(cliquer_make_cmd))
-        subprocess.check_call(cliquer_make_cmd, cwd="contrib/cliquer")
+        if not self.dry_run:
+            subprocess.check_call(cliquer_make_cmd, cwd="contrib/cliquer")
         print(" ".join(dsk_make_cmd))
-        subprocess.check_call(dsk_make_cmd, cwd="contrib/dsk")
-        try:
-            subprocess.check_call(["mkdir", "-p", "swga/bin"])
-            print("Moving set_finder")
-            os.rename("contrib/cliquer/set_finder", "swga/bin/set_finder")
-            print("Moving dsk")
-            os.rename("contrib/dsk/dsk", "swga/bin/dsk")
-        except OSError:
-            raise
+        if not self.dry_run:
+            subprocess.check_call(dsk_make_cmd, cwd="contrib/dsk")
 
-class build(_build):
-    sub_commands = _build.sub_commands + [('build_contrib', None)]
+        if not self.dry_run:            
+            try:
+                subprocess.check_call(["mkdir", "-p", "swga/bin"])
+                print("Moving set_finder")
+                os.rename("contrib/cliquer/set_finder", "swga/bin/set_finder")
+                print("Moving dsk")
+                os.rename("contrib/dsk/dsk", "swga/bin/dsk")
+            except OSError:
+                raise
+
+        _build_py.run(self)
+
+#class build(_build):
+#    sub_commands = _build.sub_commands + [('build_contrib', None)]
 
 setup(
     name='swga',
@@ -152,7 +149,6 @@ setup(
     entry_points = {'console_scripts': ['swga = swga.commands.swga_entry:main']},
     cmdclass={
         'bdist_egg': bdist_egg,
-        'build': build,
-        'build_contrib': build_contrib
+        'build_py': build_py
     }
 )

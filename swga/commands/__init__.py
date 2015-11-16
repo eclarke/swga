@@ -36,7 +36,6 @@ def create_config_file():
         if opts:
             if opts['_meta'].get("_exclude"):
                 continue
-            print argutils.export.to_config(cmd, opts)
             cfg_file_str += argutils.export.to_config(cmd, opts) + "\n"
     return cfg_file_str
 
@@ -56,12 +55,17 @@ class Command:
         self.name = name
         self.parser = argutils.export.to_argparser(name, opts)
         config = SafeConfigParser()
-        if config.read(cfg_file):
+        if config.read(cfg_file) and config.has_section(name):
             self.parser = argutils.set_parser_defaults(self.parser, config)
 
         database.init_db(db_name)
         database.check_version()
         meta = database.Metadata.get()
+        self.primer_db = db_name
+        self.fg_genome_fp = meta.fg_file
+        self.bg_genome_fp = meta.bg_file
+        self.fg_length = meta.fg_length
+        self.bg_length = meta.bg_length
 
     def parse_args(self, argv, quiet=False):
         args, unknown = self.parser.parse_known_args(argv)
