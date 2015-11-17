@@ -12,6 +12,7 @@ use (since it creates the parameters file).
 
 import click
 import subprocess
+import argparse
 from click._compat import filename_to_ui
 import os
 import stat
@@ -79,17 +80,29 @@ file in a plain-text editor such as TextEdit or `nano'.
 '''
 
 
-@click.command()
-@click.option(
-    "-f", "--fg_genome_fp",
-    type=click.Path(exists=True, resolve_path=True))
-@click.option(
-    "-b", "--bg_genome_fp",
-    type=click.Path(exists=True, resolve_path=True))
-@click.option(
-    "-e", "--exclude_fp",
-    type=click.Path(exists=True, resolve_path=True))
-def main(fg_genome_fp, bg_genome_fp, exclude_fp):
+def main(argv=None):
+
+    parser = argparse.ArgumentParser(
+        description="Initialize the current directory as an swga workspace.")
+    parser.add_argument(
+        '-f', '--fg_genome_fp',
+        help='Path to foreground genome/sequences (in FASTA format)',
+        type=argparse.FileType('r'))
+    parser.add_argument(
+        '-b', '--bg_genome_fp',
+        help='Path to background genome/sequences (in FASTA format)',
+        type=argparse.FileType('r'))
+    parser.add_argument(
+        '-e', '--exclude_fp',
+        help='Path to sequences to exclude from analysis (in FASTA format)',
+        type=argparse.FileType('r'))
+
+    args = parser.parse_args(argv) if argv else parser.parse_args()
+
+    # Convert to local variables
+    fg_genome_fp = args.fg_genome_fp
+    bg_genome_fp = args.bg_genome_fp
+    exclude_fp = args.exclude_fp
 
     CWD = os.curdir
 
@@ -100,6 +113,8 @@ def main(fg_genome_fp, bg_genome_fp, exclude_fp):
     if (not fg_genome_fp):
         fg_genome_fp = click.prompt(
             fg_prompt, type=click.Path(exists=True, resolve_path=True))
+    else:
+        fg_genome_fp = os.path.abspath(fg_genome_fp.name)
     click.secho(fg_parsing.format(**locals()), fg='blue')
     fg_length, fg_nrecords = fasta_stats(fg_genome_fp)
     click.secho(fg_msg.format(**locals()), fg="green")
@@ -108,6 +123,8 @@ def main(fg_genome_fp, bg_genome_fp, exclude_fp):
     if (not bg_genome_fp):
         bg_genome_fp = click.prompt(
             bg_prompt, type=click.Path(exists=True, resolve_path=True))
+    else:
+        bg_genome_fp = os.path.abspath(bg_genome_fp.name)
     click.secho(bg_parsing.format(**locals()), fg='blue')
     bg_length = fasta_len_quick(bg_genome_fp)
     click.secho(bg_msg.format(**locals()), fg="green")
@@ -118,6 +135,8 @@ def main(fg_genome_fp, bg_genome_fp, exclude_fp):
         if click.confirm(excl_prompt):
             exclude_fp = click.prompt(
                 excl_prompt2, type=click.Path(exists=True, resolve_path=True))
+    else:
+        exclude_fp = os.path.abspath(exclude_fp.name)   
 
     if exclude_fp:
         click.secho(excl_msg.format(exclude_fp), fg="green")
@@ -133,7 +152,7 @@ def main(fg_genome_fp, bg_genome_fp, exclude_fp):
 
     # 06. Write config file
     if os.path.isfile(cfg_fp):
-        click.confirm(overwrite_cfg_prompt.format(DEFAULT_CFG_FNAME), 
+        click.confirm(overwrite_cfg_prompt.format(DEFAULT_CFG_FNAME),
                       abort=True)
     with open(cfg_fp, "wb") as cfg_file:
         cfg_file.write(default_parameters.format(**locals()))
@@ -217,6 +236,8 @@ def check_empty_lines(fasta_fp):
 # to drag-and-drop files on the Mac OS X terminal (which appends a trailing
 # space); without this, click says that the file doesn't exist.
 ##
+
+
 def monkeypatch_method(cls):
     def decorator(func):
         setattr(cls, func.__name__, func)
