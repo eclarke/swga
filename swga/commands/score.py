@@ -63,7 +63,7 @@ class Score(Command):
                 bg_dist_mean = float('Inf')
             else:
                 bg_dist_mean = float(
-                    self.bg_genome_len) / sum(p.bg_freq for p in primers)
+                    self.bg_length) / sum(p.bg_freq for p in primers)
 
         set_score, variables = self.score_fun(
             primer_set=primers,
@@ -89,7 +89,7 @@ class Score(Command):
                 # This is None if there are no other sets yet
                 if min_set_id is None:
                     min_set_id = 0
-                self.set_id = min_set_id - 1
+                set_id = min_set_id - 1
             else:
                 add_set = False
 

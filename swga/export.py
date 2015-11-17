@@ -146,4 +146,4 @@ class BedGraph(object):
                     record_name, midpoint, midpoint, hits)
                 bedgraph_file.write(linestr)
 
-        swga.message("Bedgraph written to {}".format(bedgraph_fp))
+        message("Bedgraph written to {}".format(bedgraph_fp))

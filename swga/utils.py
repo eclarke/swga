@@ -7,6 +7,13 @@ from pkg_resources import (
     resource_exists, resource_filename, resource_stream
 )
 
+__all__ = [
+    "mkdirp",
+    "chunk_iterator",
+    "specfile",
+    "dsk",
+    "set_finder"
+]
 
 def mkdirp(path):
     '''Simulates 'mkdir -p': creates a directory unless it already exists'''

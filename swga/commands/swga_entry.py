@@ -36,6 +36,7 @@ Other commands:
 
 def main():
     command_opts = {
+        'init': init.main,
         'summary': Summary,
         'count': Count,
         'filter': Filter,

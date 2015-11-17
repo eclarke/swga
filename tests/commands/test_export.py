@@ -21,7 +21,7 @@ def test_lorenz(isolated_filesystem):
             "swga export lorenz --id -1 --no_header", 
             shell=True
         )
-        
+        print lorenz
         # Retrieve the first line of the output and parse the results
         line = lorenz.split("\n")[0].split("\t")
         assert line[0] == "-1"

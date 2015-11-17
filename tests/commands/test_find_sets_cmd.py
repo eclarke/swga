@@ -1,8 +1,9 @@
 import pytest
+import shlex
 import swga.score
-from swga.setfinder import find_sets
+from swga.commands import FindSets
 from swga.database import Primer
-from swga.commands.find_sets import make_graph
+from swga.graph import build_graph
 
 @pytest.fixture
 def primers():
@@ -13,9 +14,9 @@ def primers():
     ]
     return primers
     
-def test_make_graph(initdb, primers, tmpdir):
+def test_build_graph(initdb, primers, tmpdir):
     outfile = tmpdir.join('graph')
-    make_graph(max_hetdimer_bind=3, outfile=str(outfile))
+    build_graph(max_hetdimer_bind=3, outfile=str(outfile))
     graph = outfile.read()
     print graph
     assert graph == """p sp 3 3
@@ -44,7 +45,8 @@ e 5 6
 '''
     fp = tmpdir.join("testgraph")
     fp.write(graph)
-    sets = find_sets(
+    fs = FindSets(shlex.split("--min_size 3 --max_size 3 --min_bg_bind_dist 2"))
+    sets = fs.find_sets(
         min_bg_bind_dist=2,
         min_size=3,
         max_size=3,

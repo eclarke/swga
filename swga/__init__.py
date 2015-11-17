@@ -22,7 +22,7 @@ def error(msg, exception=True, wrap=True):
 
 def warn(msg):
     '''Prints a warning message to stderr.'''
-    text = quote(msg, quote="!> ")
+    text = quote(msg, quote="!> ", nl=False)
     click.secho(text, err=True, fg='red')
 
 
@@ -37,10 +37,7 @@ def quote(text, width=72, quote="", nl=True):
     for line in text.split("\n"):
         sublines = textwrap.wrap(line, width=width, replace_whitespace=False)
         sublines = [quote + l for l in sublines]# if l.strip()]
-#        lines = [quote + line for line in lines if line.strip()]
         out += "\n".join(sublines) + "\n"
-    if nl:
-        out += "\n"
     return out
 
 

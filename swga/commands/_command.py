@@ -10,7 +10,7 @@ from swga import (
     warn,
     message
 )
-from swga.utils import specfile
+import swga.utils as utils
 
 
 class Command(object):
@@ -24,7 +24,7 @@ class Command(object):
             cfg_file=DEFAULT_CFG_FNAME,
             db_name=DEFAULT_DB_FNAME):
 
-        spec = specfile(name)
+        spec = utils.specfile(name)
         opts = argutils.read.from_yaml(spec)
 
         self.name = name

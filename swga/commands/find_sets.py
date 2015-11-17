@@ -9,11 +9,12 @@ import swga.database as database
 import swga.graph as graph
 import swga.locate as locate
 import swga.score as score
+import swga.utils as utils
 from swga import (warn, message)
 from swga.commands._command import Command
 from swga.commands.score import Score
 from swga.database import Set
-from swga.utils import set_finder
+
 
 
 GRAPH_FP = "compatibility_graph.dimacs"
@@ -59,11 +60,12 @@ class FindSets(Command):
     def _find_sets(self, graph_fp, vertex_ordering="weighted-coloring"):
         assert vertex_ordering in ["weighted-coloring", "random"]
         find_set_cmd = [
-            set_finder, '-q', '-q',
+            utils.set_finder, '-q', '-q',
             '--bg_freq', self.min_bg_bind_dist,
             '--bg_len', self.bg_length,
             '--min', self.min_size,
             '--max', self.max_size,
+            '--unweighted',
             '--all',
             '--reorder', vertex_ordering,
             graph_fp

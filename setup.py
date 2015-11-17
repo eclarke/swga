@@ -108,9 +108,6 @@ class build_py(_build_py):
 
         _build_py.run(self)
 
-#class build(_build):
-#    sub_commands = _build.sub_commands + [('build_contrib', None)]
-
 setup(
     name='swga',
     version=version,
@@ -124,7 +121,8 @@ setup(
         'peewee',
         'melt',
         'pytest',
-        'argutils'
+        'argutils',
+        'semantic_version'
     ],
     classifiers = [
         'Programming Language :: Python',

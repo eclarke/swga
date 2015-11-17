@@ -1,7 +1,7 @@
 import argutils
 import argutils.read
 import argutils.export
-from swga.utils import specfile
+import swga.utils as utils
 import activate
 import count
 import export
@@ -25,7 +25,7 @@ _commands = [
 def create_config_file():
     cfg_file_str = ""
     for cmd in _commands:
-        spec = specfile(cmd)
+        spec = utils.specfile(cmd)
         opts = argutils.read.from_yaml(spec)
         if opts:
             if opts['_meta'].get("_exclude"):

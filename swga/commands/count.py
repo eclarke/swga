@@ -43,8 +43,7 @@ class Count(Command):
                 "run `swga init' first."
             )
             raise
-            database.check_create_tables(self.primer_db, skip_check=True)
-            mkdirp(output_dir)
+        mkdirp(output_dir)
 
         # Group the kmers by length to avoid repeatedly counting kmers of the
         # same size

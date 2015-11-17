@@ -9,6 +9,7 @@ def test_version_check(initdb):
         version="0.2.0",
         fg_file="-",
         bg_file="-",
+        ex_file='-',
         fg_length=0,
         bg_length=0).execute()
     assert database.check_version("0.2.4") is None

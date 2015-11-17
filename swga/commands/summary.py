@@ -39,7 +39,7 @@ There are {nsets} sets in the database.
 {set_msg}\
 '''
 
-BEST_SET_DESCRIPTION = '''\
+best_set_desc = '''\
 The best scoring set is #{best_set}, with {bs_size} primers and a score of {bs_score:03f}.
 Various statistics:
  {bs_stats}
@@ -54,7 +54,7 @@ class Summary(Command):
         super(Summary, self).__init__('summary')
         self.parse_args('summary')
         self.summary_msg = summary_template
-        self.best_set_desc = BEST_SET_DESCRIPTION
+        self.best_set_desc = best_set_desc
 
     def run(self):
 
@@ -90,9 +90,9 @@ class Summary(Command):
             bs_size = bs.set_size
             bs_score = bs.score
             bs_stats = "- " + "\n - ".join(
-                fmtkv(k, v)
-                for k, v in bs.__dict__['_data'].items()
-                if k not in ["_id", "pids", "score"]
+                fmtkv(k, bs.__dict__['_data'][k])
+                for k in bs.exported_fields()
+                if k not in ["_id", "pids", "score", "primers"]
             )
             self.best_set_desc = self.best_set_desc.format(**locals())
 

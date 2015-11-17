@@ -40,6 +40,8 @@ class Export(Command):
         super(Export, self).__init__('export')
         self.parse_args(argv)
         self.header = not self.no_header
+        if self.limit < 0:
+            self.limit = None
 
     def run(self):
         if self.what in ['set', 'sets']:
