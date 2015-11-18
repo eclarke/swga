@@ -51,6 +51,7 @@ class SwgaBase(pw.Model):
 
 
 class Primer(SwgaBase):
+
     '''
     The primers table contains the sequence and metadata for each primer. Once
     set composition is determined, the sets that each primer belongs to can be
@@ -149,6 +150,7 @@ PrimerSet = Set.primers.get_through_model()
 
 
 class Metadata(SwgaBase):
+
     '''Holds metadata about the swga workspace.'''
     version = pw.TextField()
     fg_file = pw.TextField()
@@ -157,7 +159,7 @@ class Metadata(SwgaBase):
     fg_length = pw.IntegerField()
     bg_length = pw.IntegerField()
 
-        
+
 def init_db(db_fname, create_if_missing=False):
     '''
     Initializes the database at the file path specified.

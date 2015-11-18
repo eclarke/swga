@@ -34,7 +34,7 @@ def tset():
     return Set.create(_id=1, score=100)
 
 
-@pytest.fixture
+@pytest.fixture(scope='session')
 def testdata_fp():
     return os.path.join(os.path.dirname(__file__), "data")
 
@@ -75,7 +75,7 @@ def ex_fasta(request, testdata_fp):
     return _fastafile(request, testdata_fp, "bburgdorferi_plasmid_lp28-4.fa")
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def simple_fastas(request, testdata_fp):
     from collections import namedtuple
     Files = namedtuple('Files', ['fg', 'bg', 'ex', 'primers'])

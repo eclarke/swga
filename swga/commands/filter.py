@@ -2,12 +2,6 @@
 '''
 Selects valid primers from a database according to various criteria.
 
-This code could be a lot more succinct, but it's largely broken apart
-to provide useful messages during operation (like how many primers satisfy
-each criteria) and for performance reasons (i.e. we only calculate melt
-temps on primers that pass the binding rate thresholds, and only calculate
-binding locations on primers that pass all filters.)
-
 Since all the results of the calculations are stored in the primer db,
 the user can run this command multiple times to tune parameters and
 subsequent runs will be much faster.

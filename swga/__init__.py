@@ -4,7 +4,7 @@ import pkg_resources
 import sys
 import textwrap
 
-DEFAULT_DB_FNAME = ".swga_data"
+DEFAULT_DB_FNAME = "swga.db"
 DEFAULT_CFG_FNAME = "parameters.cfg"
 
 __version__ = pkg_resources.require("swga")[0].version

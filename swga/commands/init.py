@@ -37,7 +37,7 @@ MAX_BG_RATE = 0.0000067
 setup_msg = '''
 swga v{version} - interactive setup
 -------------------------------
-This will set up a new swga workspace in the current directory.
+This will set up a new swga workspace in the current directory ({CWD}).
 '''
 
 fg_prompt = '''Enter path to foreground FASTA file'''
@@ -70,7 +70,7 @@ overwrite_cfg_prompt = '''Existing file `{}' will be overwritten. Continue?'''
 fin_msg = '''\
 Done!
 
-Created pre-filled config file `{}'.
+Created pre-filled config file `{}'. Workspace data: `{}'
 
 This file has been pre-filled with reasonable defaults. However, you will
 probably want to modify them to suit your needs. You can override the values
@@ -96,6 +96,10 @@ def main(argv=None):
         '-e', '--exclude_fp',
         help='Path to sequences to exclude from analysis (in FASTA format)',
         type=argparse.FileType('r'))
+    parser.add_argument(
+        '--force',
+        help='Overwrite any existing data in the directory without prompts',
+        action='store_true')
 
     args = parser.parse_args(argv) if argv else parser.parse_args()
 
@@ -104,10 +108,16 @@ def main(argv=None):
     bg_genome_fp = args.bg_genome_fp
     exclude_fp = args.exclude_fp
 
-    CWD = os.curdir
+    # Sanity check our default files for read/write
+    cwd = os.path.abspath(os.curdir)
+    assert os.access(cwd, os.W_OK | os.X_OK)
+    db_fp = os.path.abspath(os.path.join(cwd, DEFAULT_DB_FNAME))
+    # assert os.access(db_fp, os.W_OK | os.X_OK)
+    cfg_fp = os.path.abspath(DEFAULT_CFG_FNAME)
+    # assert os.access(cfg_fp, os.W_OK | os.X_OK)
 
     # 01. Display welcome message
-    click.secho(setup_msg.format(version=version), fg="blue")
+    click.secho(setup_msg.format(version=version, CWD=cwd), fg="blue")
 
     # 02. Prompt for the foreground genome, if not already specified
     if (not fg_genome_fp):
@@ -136,7 +146,7 @@ def main(argv=None):
             exclude_fp = click.prompt(
                 excl_prompt2, type=click.Path(exists=True, resolve_path=True))
     else:
-        exclude_fp = os.path.abspath(exclude_fp.name)   
+        exclude_fp = os.path.abspath(exclude_fp.name)
 
     if exclude_fp:
         click.secho(excl_msg.format(exclude_fp), fg="green")
@@ -146,20 +156,20 @@ def main(argv=None):
 
     # 05. Build and populate the config file
     default_parameters = create_config_file()
-    cfg_fp = os.path.join(CWD, DEFAULT_CFG_FNAME)
+    #cfg_fp = os.path.join(CWD, DEFAULT_CFG_FNAME)
     min_fg_bind = int(MIN_FG_RATE * float(fg_length))
     max_bg_bind = int(MAX_BG_RATE * float(bg_length))
 
     # 06. Write config file
-    if os.path.isfile(cfg_fp):
+    if not args.force and os.path.isfile(cfg_fp):
         click.confirm(overwrite_cfg_prompt.format(DEFAULT_CFG_FNAME),
                       abort=True)
     with open(cfg_fp, "wb") as cfg_file:
         cfg_file.write(default_parameters.format(**locals()))
 
     # 07. Initialize the database
-    database.init_db(DEFAULT_DB_FNAME, create_if_missing=True)
-    database.check_create_tables(DEFAULT_DB_FNAME)
+    database.init_db(db_fp, create_if_missing=True)
+    database.check_create_tables(db_fp, skip_check=args.force)
     database.Metadata.insert(
         version=version,
         fg_file=fg_genome_fp,
@@ -170,7 +180,7 @@ def main(argv=None):
     ).execute()
 
     # Done!
-    click.secho(fin_msg.format(DEFAULT_CFG_FNAME), fg="green")
+    click.secho(fin_msg.format(cfg_fp, db_fp), fg="green")
 
 
 def fasta_len_quick(fasta_fp):
