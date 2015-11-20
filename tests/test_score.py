@@ -1,5 +1,5 @@
 import swga.score
-
+import swga.stats
 
 def test_read_set_finder_line():
     line = "1,2,3,4 3500.01234"
@@ -11,8 +11,8 @@ def test_seq_diff():
     seq = [1, 3, 4, 5]
     unsorted_seq = [3, 1, 5, 4]
     diffs = [2, 1, 1]
-    assert swga.score.seq_diff(seq) == diffs
-    assert swga.score.seq_diff(unsorted_seq) == diffs
+    assert swga.stats.seq_diff(seq) == diffs
+    assert swga.stats.seq_diff(unsorted_seq) == diffs
 
 
 def test_get_user_fun():

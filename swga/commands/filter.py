@@ -14,10 +14,6 @@ import swga.database
 
 class Filter(Command):
 
-    def __init__(self, argv):
-        super(Filter, self).__init__('filter')
-        self.parse_args(argv)
-
     def run(self):
         # If we have an input file, use that. Otherwise pull from db
         if self.input:

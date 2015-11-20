@@ -170,14 +170,14 @@ def main(argv=None):
     # 07. Initialize the database
     database.init_db(db_fp, create_if_missing=True)
     database.check_create_tables(db_fp, skip_check=args.force)
-    database.Metadata.insert(
-        version=version,
-        fg_file=fg_genome_fp,
-        bg_file=bg_genome_fp,
-        ex_file=exclude_fp,
-        fg_length=fg_length,
-        bg_length=bg_length
-    ).execute()
+    database.set_metadata(
+        db_fp,
+        version,
+        fg_genome_fp,
+        bg_genome_fp,
+        exclude_fp,
+        fg_length,
+        bg_length)
 
     # Done!
     click.secho(fin_msg.format(cfg_fp, db_fp), fg="green")

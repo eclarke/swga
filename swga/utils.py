@@ -1,5 +1,4 @@
 import os
-import sys
 import errno
 import swga
 from click import progressbar
@@ -15,6 +14,7 @@ __all__ = [
     "set_finder"
 ]
 
+
 def mkdirp(path):
     '''Simulates 'mkdir -p': creates a directory unless it already exists'''
     try:
@@ -26,7 +26,7 @@ def mkdirp(path):
 
 def chunks(l, n):
     for i in xrange(0, len(l), n):
-        yield l[i:i+n]
+        yield l[i:i + n]
 
 
 def chunk_iterator(itr, fn, n=100, show_progress=True, label=None):
@@ -42,12 +42,12 @@ def chunk_iterator(itr, fn, n=100, show_progress=True, label=None):
     if length == 0:
         return
     label = "" if label is None else label
-    if length/n <= 1:
+    if length / n <= 1:
         show_progress = False
         swga.message(label)
     chunked_itr = chunks(itr, n)
     if show_progress:
-        with progressbar(chunked_itr, max(length/n, 1), label) as bar:
+        with progressbar(chunked_itr, max(length / n, 1), label) as bar:
             for chunk in bar:
                 fn(chunk)
     else:
@@ -67,6 +67,14 @@ def _get_resource_file(rs):
 def specfile(name):
     fp = os.path.join('commands', 'specfiles', name + '.yaml')
     return resource_stream("swga", fp)
+
+
+def fmtkv(k, v):
+    set_stat_line = "{key:.<16}: {val: >10s}"
+    num_fmt_str = "{:,G}"
+    if not isinstance(v, basestring):
+        v = num_fmt_str.format(v)
+    return set_stat_line.format(key=k, val=v)
 
 
 dsk = _get_resource_file('dsk')

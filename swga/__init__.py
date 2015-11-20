@@ -1,13 +1,22 @@
 from __future__ import absolute_import
-import click
+from collections import namedtuple
 import pkg_resources
-import sys
 import textwrap
+import sys
+
+import click
+
 
 DEFAULT_DB_FNAME = "swga.db"
 DEFAULT_CFG_FNAME = "parameters.cfg"
 
 __version__ = pkg_resources.require("swga")[0].version
+
+
+# A struct-like object that holds basic information about the workspace
+meta = namedtuple(
+    "meta",
+    "db_name fg_file bg_file ex_file fg_length bg_length")
 
 
 def error(msg, exception=True, wrap=True):

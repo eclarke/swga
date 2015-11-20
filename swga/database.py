@@ -9,12 +9,12 @@ contains a litany of helper functions for adding and retrieving stored data.
 """
 import json
 import os
+from contextlib import contextmanager
 import click
-from swga import (error, warn, __version__)
+from swga import (error, warn, meta, __version__)
 from swga.utils import chunk_iterator
 import swga.stats as stats
 import swga.locate as locate
-from swga.score import seq_diff
 import melting
 import semantic_version as semver
 import peewee as pw
@@ -101,7 +101,7 @@ class Primer(SwgaBase):
     def _update_gini(self, genome_fp):
         chr_ends = locate.chromosome_ends(genome_fp)
         locs = locate.linearize_binding_sites([self], chr_ends)
-        dists = seq_diff(locs)
+        dists = stats.seq_diff(locs)
         self.gini = stats.gini(dists)
 
 
@@ -149,15 +149,29 @@ class Set(SwgaBase):
 PrimerSet = Set.primers.get_through_model()
 
 
-class Metadata(SwgaBase):
+class _metadata(SwgaBase):
 
     '''Holds metadata about the swga workspace.'''
+    db_name = pw.TextField()
     version = pw.TextField()
     fg_file = pw.TextField()
     bg_file = pw.TextField()
     ex_file = pw.TextField()
     fg_length = pw.IntegerField()
     bg_length = pw.IntegerField()
+
+@contextmanager
+def connection(db_name, create_if_missing=False):
+    if db_name != ':memory:':
+        if not os.path.isfile(db_name) and not create_if_missing:
+            error(
+                '{} does not appear to be a workspace (database not found). '
+                'Run `swga init` to initialize this directory as a workspace.'
+                .format(os.path.curdir))
+    db.init(db_name)
+    db.connect()
+    yield db
+    db.close()
 
 
 def init_db(db_fname, create_if_missing=False):
@@ -185,7 +199,7 @@ def create_tables(drop=True):
     Creates the tables in the database. If `drop`=True, attempts to safely drop
     the tables before creating them.
     '''
-    tbl_list = [Primer, Set, PrimerSet, Metadata]
+    tbl_list = [Primer, Set, PrimerSet, _metadata]
     if drop:
         db.drop_tables(tbl_list, safe=True)
     db.create_tables(tbl_list, safe=True)
@@ -203,7 +217,7 @@ def check_create_tables(primer_db, skip_check=False):
 
 def check_version(swga_version=__version__):
     try:
-        meta = Metadata.get()
+        meta = _metadata.get()
         db_ver = semver.Version(meta.version)
     except pw.OperationalError:
         db_ver = "<NA>"
@@ -265,3 +279,22 @@ def get_primers_for_set(set_id):
 
 def get_primers_for_ids(pids):
     return list(Primer.select().where(Primer._id << pids).execute())
+
+
+def get_metadata(db_name):
+    m = _metadata.get()
+    return meta(m.db_name, m.fg_file, m.bg_file, m.ex_file, m.fg_length, m.bg_length)
+
+def set_metadata(db_name, version, fg_file, bg_file, ex_file, fg_length, bg_length):
+    """Sets the metadata for a workspace. Clears any previous info."""
+    _metadata.delete().execute()
+    _metadata.insert(
+        db_name=db_name,
+        version=version,
+        fg_file=fg_file,
+        bg_file=bg_file,
+        ex_file=ex_file,
+        fg_length=fg_length,
+        bg_length=bg_length
+    ).execute()
+

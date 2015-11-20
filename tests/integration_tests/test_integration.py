@@ -2,11 +2,6 @@ import os
 from subprocess import call
 
 
-def test_finished_message(isolated_filesystem):
-    from swga.data import finished_message
-    finished_message.main()
-
-
 def test_init(isolated_filesystem, fg_fasta, bg_fasta, ex_fasta):
     with isolated_filesystem:
         command = "swga init -f {} -b {} -e {}".format(
@@ -21,7 +16,6 @@ def test_count(isolated_filesystem):
         command = "swga count --min_size 7 --max_size 7 --max_bg_bind -1"
         retcode = call(command, shell=True)
         assert retcode == 0
-        assert os.path.exists("primers.db")
 
 
 def test_filter(isolated_filesystem):

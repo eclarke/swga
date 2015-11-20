@@ -1,11 +1,12 @@
 import pytest
 import swga
 import swga.database as database
-from swga.database import Primer, Set, Metadata
+from swga.database import Primer, Set, _metadata
 
 
 def test_version_check(initdb):
-    Metadata.insert(
+    _metadata.insert(
+        db_name="-",
         version="0.2.0",
         fg_file="-",
         bg_file="-",

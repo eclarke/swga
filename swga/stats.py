@@ -24,6 +24,20 @@ def stdev(values):
     return sqrt(sum((x-mu)**2 for x in values) / (n-1))
 
 
+def seq_diff(seq):
+    '''
+    Returns the sequential differences along a sorted sequence of numbers.
+    If the sequence is not already sorted, it will sort it first.
+    '''
+    seq.sort()
+    diffs = []
+    for i in xrange(len(seq)-1):
+        diff = seq[i+1] - seq[i]
+        assert diff >= 0
+        diffs.append(diff)
+    return diffs
+
+
 def gini(distances):
     '''
     Returns an approximation of the Gini ratio for a set of distances

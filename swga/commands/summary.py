@@ -4,6 +4,7 @@ from swga import quote, __version__
 import swga.database
 from swga.commands._command import Command
 from swga.database import Primer, Set
+from swga.utils import fmtkv
 import click
 from peewee import fn
 
@@ -50,14 +51,9 @@ The primers in Set {best_set} are:
 
 class Summary(Command):
 
-    def __init__(self, argv):
-        super(Summary, self).__init__('summary')
-        self.parse_args('summary')
+    def run(self):
         self.summary_msg = summary_template
         self.best_set_desc = best_set_desc
-
-    def run(self):
-
         avg_fg_bind, avg_bg_bind, nprimers = (
             Primer
             .select(fn.Avg(Primer.fg_freq),
@@ -128,11 +124,3 @@ class Summary(Command):
 
         self.summary_msg = self.summary_msg.format(**values)
         click.echo(quote(self.summary_msg, quote="  ", width=200))
-
-
-def fmtkv(k, v):
-    set_stat_line = "{key:.<16}: {val: >10s}"
-    num_fmt_str = "{:,G}"
-    if not isinstance(v, basestring):
-        v = num_fmt_str.format(v)
-    return set_stat_line.format(key=k, val=v)

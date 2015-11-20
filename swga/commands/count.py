@@ -11,15 +11,10 @@ from swga.utils import mkdirp
 from peewee import OperationalError
 
 INF = float('inf')
-
 output_dir = ".swga_tmp"
 
 
 class Count(Command):
-
-    def __init__(self, argv):
-        super(Count, self).__init__('count')
-        self.parse_args(argv)
 
     def run(self):
         if self.input:
@@ -37,12 +32,10 @@ class Count(Command):
             kmers = [p for p in kmers if p not in existing]
         except OperationalError:
             # If this fails due to an OperationalError, it probably means the
-            # database tables haven't been created yet. That's `swga init's job
+            # database tables haven't been created yet. 
             error(
                 "It doesn't appear that the workspace has been initialized: "
-                "run `swga init' first."
-            )
-            raise
+                "run `swga init' first.")
         mkdirp(output_dir)
 
         # Group the kmers by length to avoid repeatedly counting kmers of the
@@ -72,9 +65,6 @@ class Count(Command):
             database.add_primers(primers, chunk_size, add_revcomp=False)
 
     def count_kmers(self):
-        assert os.path.isfile(self.fg_genome_fp)
-        assert os.path.isfile(self.bg_genome_fp)
-
         mkdirp(output_dir)
 
         kmers = []

@@ -36,14 +36,10 @@ from swga.export import BedGraph, BedFile
 
 class Export(Command):
 
-    def __init__(self, argv):
-        super(Export, self).__init__('export')
-        self.parse_args(argv)
+    def run(self):
         self.header = not self.no_header
         if self.limit < 0:
             self.limit = None
-
-    def run(self):
         if self.what in ['set', 'sets']:
             sets = self.get_items(Set)
             export(Set, sets, self.output, self.header)
@@ -167,7 +163,7 @@ def export_lorenz(sets, outfile, fg_genome_fp, header=True):
 
         lorenz = swga.stats.lorenz(distances)
         lorenz_str = ",".join(str(d) for d in lorenz)
-        writer.writerow({'SetID': set._id, 'CDF':lorenz_str})
+        writer.writerow({'SetID': set._id, 'CDF': lorenz_str})
 
 
 def validate_order_field(field, model):

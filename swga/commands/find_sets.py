@@ -12,9 +12,7 @@ import swga.score as score
 import swga.utils as utils
 from swga import (warn, message)
 from swga.commands._command import Command
-from swga.commands.score import Score
 from swga.database import Set
-
 
 
 GRAPH_FP = "compatibility_graph.dimacs"
@@ -25,14 +23,10 @@ STATUS_LINE = '''\
 
 class FindSets(Command):
 
-    def __init__(self, argv):
-        super(FindSets, self).__init__('find_sets')
-        self.parse_args(argv)
+    def run(self):
         if self.max_sets < 1:
             self.max_sets = float("inf")
-        self.score_cmd = Score(argv)
-
-    def run(self):
+        # self.score_cmd = Score(argv)
         # We need to clear all the previously-used sets each time due to
         # uniqueness constraints
         all_sets = Set.select()
@@ -42,6 +36,13 @@ class FindSets(Command):
             for s in all_sets:
                 s.primers.clear()
                 s.delete_instance()
+
+        self.chr_ends = locate.chromosome_ends(self.fg_genome_fp)
+        # Evaluate the scoring expression from a string and return it as a
+        # callable function
+        self.score_fun = functools.partial(
+            score.default_score_set,
+            expression=self.score_expression)
 
         graph.build_graph(self.max_dimer_bp, GRAPH_FP)
 
@@ -116,14 +117,14 @@ class FindSets(Command):
                 primers = database.get_primers_for_ids(primer_ids)
                 processed += 1
 
-                set_passed, max_dist = self.score_cmd.score_set(
-                    set_id=passed,
+                set_score, variables, max_dist = score.score_set(
                     primers=primers,
                     max_fg_bind_dist=self.max_fg_bind_dist,
-                    bg_dist_mean=bg_dist_mean)
-
-                if set_passed:
-                    passed += 1
+                    bg_dist_mean=bg_dist_mean,
+                    chr_ends=self.chr_ends,
+                    score_fun=self.score_fun,
+                    interactive=False
+                )
 
                 if max_dist < smallest_max_dist:
                     smallest_max_dist = max_dist
@@ -131,6 +132,19 @@ class FindSets(Command):
                 message(
                     STATUS_LINE.format(processed, passed, smallest_max_dist),
                     newline=False)
+
+                # Return early if the set doesn't pass
+                if set_score is False:
+                    continue
+                else:
+                    passed += 1
+
+                database.add_set(
+                    _id=passed,
+                    primers=primers,
+                    score=set_score,
+                    scoring_fn=self.score_expression,
+                    **variables)
 
                 if passed >= self.max_sets:
                     message("\nDone (scored %i sets)" % passed)

@@ -1,10 +1,11 @@
 import argparse
-
+import os
 from swga import (
     error,
+    DEFAULT_DB_FNAME,
     DEFAULT_CFG_FNAME
 )
-
+import swga.database as database
 from swga.commands import (
     init,
     Summary,
@@ -16,7 +17,7 @@ from swga.commands import (
     Export
 )
 
-usage = """Usage: swga [-c --config CFG_FILE] <command> [options]
+usage = """Usage: swga <command> [options]
 
 Utility commands:
   init:             initializes a directory with a pre-filled parameters file
@@ -62,8 +63,13 @@ def main():
         if args.command == 'init':
             init.main(remaining)
         else:
-            cmd = command_opts[args.command](remaining)
-            cmd.run()
-
+            db_name = os.path.abspath(DEFAULT_DB_FNAME)
+            cfg_file = os.path.abspath(DEFAULT_CFG_FNAME)
+            with database.connection(db_name):
+                database.check_version()
+                metadata = database.get_metadata(db_name)
+                cmd = command_opts[args.command](args.command, cfg_file, metadata)
+                cmd.parse_args(remaining)
+                cmd.run()
     except KeyboardInterrupt:
         error("\n-- Stopped by user --", exception=False)

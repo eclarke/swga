@@ -5,10 +5,6 @@ from swga.commands._command import Command
 
 class Activate(Command):
 
-    def __init__(self, argv):
-        super(Activate, self).__init__('activate')
-        self.parse_args(argv)
-
     def run(self):
         primers = Primers(self.input)
 

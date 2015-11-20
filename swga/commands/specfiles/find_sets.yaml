@@ -36,3 +36,9 @@ force:
   argtype: flag
   help: clear any previous sets without prompting
   _exclude: True
+score_expression:
+  default: "(fg_dist_mean * fg_dist_gini) / (bg_dist_mean)"
+  help: >
+    Specify an expression to calculate the set score. Code must only use the
+    following variables: set_size, fg_dist_mean, fg_dist_std, fg_dist_gini,
+    fg_dist_max, bg_dist_mean. Expression must have valid Python syntax.
