@@ -8,13 +8,13 @@ from distutils.command.build_py import build_py as _build_py
 from distutils.spawn import find_executable
 from setuptools.command.bdist_egg import bdist_egg as _bdist_egg
 
+version = "0.4.0"
+
 class BinaryDistribution(dist.Distribution):
     def is_pure(self):
         return False
 
 
-with open("VERSION") as version_file:
-    version = version_file.read().strip()
 
 class bdist_egg(_bdist_egg):
     def run(self):
