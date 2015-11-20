@@ -159,7 +159,7 @@ def export_lorenz(sets, outfile, fg_genome_fp, header=True):
         primers = list(Primer.select().where(Primer.seq << primer_seqs).execute())
         chr_ends = swga.locate.chromosome_ends(fg_genome_fp)
         binding_sites = swga.locate.linearize_binding_sites(primers, chr_ends)
-        distances = swga.score.seq_diff(binding_sites)
+        distances = swga.stats.seq_diff(binding_sites)
 
         lorenz = swga.stats.lorenz(distances)
         lorenz_str = ",".join(str(d) for d in lorenz)

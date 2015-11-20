@@ -1,10 +1,11 @@
 import os
+import pytest
 from click.testing import CliRunner
 
 from swga.commands import init
 from swga import DEFAULT_CFG_FNAME
 
-
+@pytest.mark.xfail
 def __init_testing_partial(input_list):
     runner = CliRunner()
     with runner.isolated_filesystem():
@@ -12,7 +13,7 @@ def __init_testing_partial(input_list):
         assert result.exit_code == 0
         assert os.path.isfile(DEFAULT_CFG_FNAME)
 
-
+@pytest.mark.xfail
 def test_init_noprompts(fastafile):
     runner = CliRunner()
     with runner.isolated_filesystem():
@@ -22,7 +23,7 @@ def test_init_noprompts(fastafile):
         assert result.exit_code == 0
         assert os.path.isfile(DEFAULT_CFG_FNAME)
 
-
+@pytest.mark.xfail
 def test_init_prompts(fastafile):
     __init_testing_partial([
         fastafile,  # foreground
@@ -31,7 +32,7 @@ def test_init_prompts(fastafile):
         fastafile   # exclude_fp
     ])
 
-
+@pytest.mark.xfail
 def test_init_noexclude(fastafile):
     __init_testing_partial([
         fastafile,

@@ -29,18 +29,15 @@ class Score(Command):
         bg_dist_mean = score.calculate_bg_dist_mean(primers, self.bg_length)
 
         set_score, variables, _ = score.score_set(
-            set_id=0,
             primers=primers,
             max_fg_bind_dist=0,
             bg_dist_mean=bg_dist_mean,
             chr_ends=self.chr_ends,
             score_fun=self.score_fun,
-            score_expression=self.score_expression,
-            interactive=True,
-            force=self.force
+            interactive=True
         )
 
-        do_add_set, set_id = self.user_add_set(score, variables)
+        do_add_set, set_id = self.user_add_set(set_score, variables)
 
         if do_add_set:
             s = swga.database.add_set(
@@ -56,11 +53,11 @@ class Score(Command):
             else:
                 swga.message("That primer set already exists.")
 
-    def user_add_set(self, score, variables):
+    def user_add_set(self, set_score, variables):
         """Output set statistics and prompt the user to add the set."""
         set_dict = dict(
-            {'score': score,
-             'scoring_fn': self.expression}.items() +
+            {'score': set_score,
+             'scoring_fn': self.score_expression}.items() +
             variables.items())
         message("Set statistics:\n - " + "\n - ".join(
             utils.fmtkv(k, v) for k, v in set_dict.items()))

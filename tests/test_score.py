@@ -15,12 +15,6 @@ def test_seq_diff():
     assert swga.stats.seq_diff(unsorted_seq) == diffs
 
 
-def test_get_user_fun():
-    spec_str = "swga.score:get_user_fun"
-    fun = swga.score.get_user_fun(spec_str)
-    assert fun == swga.score.get_user_fun
-
-
 def test_default_score_set():
     expression = "fg_dist_mean/bg_dist_mean"
     primer_set = [1,2,3,4]

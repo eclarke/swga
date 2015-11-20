@@ -16,7 +16,7 @@ __all__ = [
 
 
 def mkdirp(path):
-    '''Simulates 'mkdir -p': creates a directory unless it already exists'''
+    """Create a directory unless it already exists, using EAFP methods."""
     try:
         os.makedirs(path)
     except OSError as e:
@@ -30,14 +30,14 @@ def chunks(l, n):
 
 
 def chunk_iterator(itr, fn, n=100, show_progress=True, label=None):
-    '''Breaks an iterable into chunks and applies a function to each chunk.
-    Arguments:
-    - itr the iterable to be chunked
-    - fn the function to be applied to each chunks
-    - n the size of each chunk
-    - show_progress show a progress bar
-    - label the label to show on the progress bar
-    '''
+    """Break an iterable into chunks and apply a function to each chunk.
+
+    :param itr: the iterable to be chunked
+    :param fn: the function to be applied to each chunks
+    :param n: the size of each chunk
+    :param show_progress: show a progress bar
+    :param label: the label to show on the progress bar
+    """
     length = len(itr)
     if length == 0:
         return
@@ -65,14 +65,17 @@ def _get_resource_file(rs):
 
 
 def specfile(name):
+    """Return the path to the specfile for a given command name."""
     fp = os.path.join('commands', 'specfiles', name + '.yaml')
     return resource_stream("swga", fp)
 
 
 def fmtkv(k, v):
+    """Pretty-print a key-value pair."""
     set_stat_line = "{key:.<16}: {val: >10s}"
     num_fmt_str = "{:,G}"
     if not isinstance(v, basestring):
+        print k, v
         v = num_fmt_str.format(v)
     return set_stat_line.format(key=k, val=v)
 

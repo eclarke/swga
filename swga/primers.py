@@ -11,11 +11,11 @@ from peewee import SelectQuery
 
 
 def _filter(fn):
-    '''Wrapper for filter methods.
+    """Wrapper for filter methods.
 
     Updates the internal count of primers and ensures the statement
     executes after each filter method.
-    '''
+    """
     @wraps(fn)
     def func(self, *args, **kwargs):
         results = fn(self, *args, **kwargs)
@@ -27,10 +27,10 @@ def _filter(fn):
 
 
 def _update(fn):
-    '''Wrapper for update methods.
+    """Wrapper for update methods.
 
     Updates the database in chunks after each update method.
-    '''
+    """
     @wraps(fn)
     def func(self, *args, **kwargs):
         targets = fn(self, *args, **kwargs)
@@ -42,23 +42,24 @@ def _update(fn):
 
 class Primers(object):
 
-    '''A list of primers and associated methods.'''
+    """A list of primers, and self-modifying filter/update functions."""
 
     @staticmethod
     def select_active():
         active = Primer.select().where(Primer.active == True)
         if active.count() == 0:
             error(
-                'No active primers found. Run `swga filter` or `swga activate` first.',
+                'No active primers found. Run `swga filter` or `swga activate` '
+                'first.',
                 exception=False)
         return Primers(active)
 
     def __init__(self, primers=None):
-        '''Create a new list of primers.
+        """Create a new list of primers.
 
         :param primers: a list of Primer objects or a list of primer sequences.
         If None, selects all primers.
-        '''
+        """
         if primers is None:
             self._primers = Primer.select()
             self.n = self.primers.count()
@@ -93,30 +94,21 @@ class Primers(object):
 
     @_filter
     def filter_min_fg_rate(self, min_bind):
-        '''
-        Removes primers that bind less than the given rate to the foreground
-        genome.
-        '''
+        """Remove primers that bind less than `min_bind` to the foreground."""
         results = Primer.select().where(
             (Primer.seq << self.primers) &
             (Primer.fg_freq >= min_bind))
-
         message(
             '{}/{} primers bind the foreground genome >= {} times'
             .format(results.count(), self.n, min_bind))
-
         return results
 
     @_filter
     def filter_max_bg_rate(self, rate):
-        '''
-        Removes primers that bind more than the given number of times to
-        the background genome.
-        '''
+        """Remove primers that bind more than `rate` to the background genome."""
         results = Primer.select().where(
             (Primer.seq << self.primers) &
             (Primer.bg_freq <= rate))
-
         message(
             '{}/{} primers bind the background genome <= {} times'
             .format(results.count(), self.n, rate))
@@ -125,10 +117,10 @@ class Primers(object):
 
     @_filter
     def filter_tm_range(self, min_tm, max_tm):
-        '''
-        Removes primers outside the given melting temp range.
-        Finds melting temperatures if not already present.
-        '''
+        """Remove primers that have melting temps outside this range.
+
+        Finds any missing melt temps for primers.
+        """
         self.update_melt_temps()
         results = Primer.select().where(
             (Primer.seq << self.primers) &
@@ -141,10 +133,10 @@ class Primers(object):
 
     @_filter
     def limit_to(self, n):
-        '''
-        Sorts by background binding rate, selects the top `n` least frequently
+        """
+        Sort by background binding rate, selects the top `n` least frequently
         binding, then returns those ordered by descending bg/fg ratio.
-        '''
+        """
         if n < 1:
             raise ValueError('n must be greater than 1')
 
@@ -161,13 +153,13 @@ class Primers(object):
 
     @_filter
     def filter_max_gini(self, gini_max, fg_genome_fp):
-        '''
-        Filters out primers with Gini coefficients greater than the max
-        provided. Finds binding locations and Gini coefficients for primers
-        that do not have them already.
+        """Remove primers with Gini coefficients less than `gini_max`.
+
+        Finds binding locations and Gini coefficients for primers that do not
+        have them already.
 
         :param gini_max: max Gini coefficient (0-1)
-        '''
+        """
         if 0 > gini_max > 1:
             raise ValueError('Gini coefficient must be between 0-1')
 
@@ -187,7 +179,7 @@ class Primers(object):
 
     @_update
     def update_locations(self, fg_genome_fp):
-        '''Finds binding locations for any primers that don't have them.'''
+        """Find binding locations for any primers that don't have them."""
         targets = list(Primer.select().where(
             (Primer.seq << self.primers) &
             (Primer._locations >> None)))
@@ -201,7 +193,7 @@ class Primers(object):
 
     @_update
     def update_gini(self, fg_genome_fp):
-        '''Calculates Gini coefs for any primers that don't have it.'''
+        """Calculate Gini coef for any primers that don't have it."""
         targets = list(Primer.select().where(
             (Primer.seq << self.primers) &
             (Primer.gini >> None)))
@@ -215,7 +207,7 @@ class Primers(object):
 
     @_update
     def update_melt_temps(self):
-        '''Calculates melting temps for any primers that don't have it.'''
+        """Calculate melting temp for any primers that don't have it."""
         targets = list(Primer.select().where(
             (Primer.seq << self.primers) &
             (Primer.tm >> None)))
@@ -229,10 +221,10 @@ class Primers(object):
 
     @_update
     def assign_ids(self):
-        '''Assigns sequential ids to active primers.
+        """Assign sequential ids to active primers.
 
         Resets any ids previously set.
-        '''
+        """
         Primer.update(_id=-1).execute()
         primers = list(
             Primer.select()
@@ -243,16 +235,16 @@ class Primers(object):
         return primers
 
     def summarize(self):
-        '''Output the number of primers currently in list.'''
+        """Output the number of primers currently in list."""
         message('{} primers satisfy all filters so far.'.format(self.n))
         return self
 
     def activate(self, min_active=1):
-        '''Activates all the primers in the list.
+        """Activate all the primers in the list.
 
         :param min_active: The maximum number expected to activate. Warns if
         fewer than this number.
-        '''
+        """
         n = (Primer.update(active=True)
              .where(Primer.seq << self.primers)
              .execute())
@@ -274,12 +266,12 @@ class Primers(object):
     @staticmethod
     def _update_in_chunks(targets, chunksize=100, show_progress=True,
                           label='Updating primer db...'):
-        '''Updates the records for the list of primers in chunks.
+        """Update the records for the list of primers in chunks.
 
         Technically, this performs an upsert, where primer records are updated
         or inserted as needed. This is faster than updating the records for
         each primer individually.
-        '''
+        """
         def upsert_chunk(chunk):
             Primer.delete().where(Primer.seq << chunk).execute()
             Primer.insert_many(p.to_dict() for p in chunk).execute()
@@ -293,10 +285,11 @@ class Primers(object):
 
 
 def read_primer_list(lines):
-    '''
-    Reads in a list of primers, one per line, and returns the corresponding
-    records from the primer database.
-    '''
+    """Read in a list of primers and return their records from the db.
+
+    :param lines: a list of primer sequences, one per line; anything after the
+    first whitespace is ignored.
+    """
     seqs = [re.split(r'[ \t]+', line.strip('\n'))[0] for line in lines]
     primers = list(Primer.select().where(Primer.seq << seqs).execute())
     if len(primers) < len(seqs):
