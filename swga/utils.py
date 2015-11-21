@@ -56,12 +56,21 @@ def chunk_iterator(itr, fn, n=100, show_progress=True, label=None):
 
 
 def _get_resource_file(rs):
-    _rs = os.path.join('bin', rs)
-    if resource_exists("swga", _rs):
-        res_path = resource_filename("swga", _rs)
-        return res_path
-    else:
+    import sys
+    _rs = os.path.join(sys.prefix, 'bin', rs)
+    # If it's not in sys.prefix/bin/, try sys.exec_prefix?
+    if not os.path.isfile(_rs):
+        _rs = os.path.join(sys.exec_prefix, 'bin', rs)
+    # If it still doesn't work, raise an error
+    if not os.path.isfile(_rs):
         swga.error("Could not find `{}': try re-installing swga.".format(rs))
+    else:
+        return os.path.abspath(_rs)
+    # if resource_exists("swga", _rs):
+        # res_path = resource_filename("swga", _rs)
+        # return res_path
+
+
 
 
 def specfile(name):

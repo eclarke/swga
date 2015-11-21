@@ -8,13 +8,7 @@ from distutils.command.build_py import build_py as _build_py
 from distutils.spawn import find_executable
 from setuptools.command.bdist_egg import bdist_egg as _bdist_egg
 
-version = "0.4.0"
-
-
-class BinaryDistribution(dist.Distribution):
-
-    def is_pure(self):
-        return False
+version = "0.4.1"
 
 
 class bdist_egg(_bdist_egg):
@@ -133,7 +127,6 @@ setup(
         ('bin', ['ext/dsk/dsk', 'ext/cliquer/set_finder'])
     ],
     include_package_data=True,
-    distclass=BinaryDistribution,
     url='https://github.com/eclarke/swga',
     license='LICENSE.txt',
     description='Pipeline to select primer sets for selective whole-genome amplification.',
