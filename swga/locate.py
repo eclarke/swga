@@ -10,6 +10,7 @@ from pyfaidx import Fasta
 
 
 def revcomp(s):
+    """Reverse complement of a DNA string."""
     r = {
         'A': 'T', 'T': 'A',
         'G': 'C', 'C': 'G'
