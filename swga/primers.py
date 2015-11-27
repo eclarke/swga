@@ -4,10 +4,13 @@ Functions for handling lists of primers (filtering, updating, etc).
 
 import re
 from functools import wraps
-from swga import (error, warn, message)
-from swga.utils import chunk_iterator
-from swga.database import Primer
+
 from peewee import SelectQuery
+
+from . import (error, warn, message)
+from workspace import Primer
+import locate
+import utils
 
 
 def _filter(fn):
@@ -276,7 +279,7 @@ class Primers(object):
             Primer.delete().where(Primer.seq << chunk).execute()
             Primer.insert_many(p.to_dict() for p in chunk).execute()
 
-        chunk_iterator(
+        utils.chunk_iterator(
             itr=targets,
             fn=upsert_chunk,
             n=chunksize,
@@ -300,3 +303,21 @@ def read_primer_list(lines):
                 seq + ' not in the database; skipping. Add it manually with '
                 '`swga count --input <file>` ')
     return primers
+
+
+def add_primers(primers, chunksize=199, add_revcomp=True):
+    """Add an arbitrary amount of primers to the database in chunks.
+
+    :param primers: a list of Primer(s) or a Primers object
+    """
+    if add_revcomp:
+        def mkrevcomp(p):
+            p2 = dict(**p)
+            p2['seq'] = locate.revcomp(p['seq'])
+            return p2
+        primers += [mkrevcomp(p) for p in primers]
+    utils.chunk_iterator(
+        primers,
+        fn=lambda c: Primer.insert_many(c).execute(),
+        n=chunksize,
+        label="Updating database: ")

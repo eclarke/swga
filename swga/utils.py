@@ -1,10 +1,11 @@
 import os
 import errno
-import swga
-from click import progressbar
 from pkg_resources import (
     resource_exists, resource_filename, resource_stream
 )
+
+import swga
+from click import progressbar
 
 __all__ = [
     "mkdirp",
@@ -13,6 +14,8 @@ __all__ = [
     "dsk",
     "set_finder"
 ]
+
+
 
 
 def mkdirp(path):
@@ -66,11 +69,6 @@ def _get_resource_file(rs):
         swga.error("Could not find `{}': try re-installing swga.".format(rs))
     else:
         return os.path.abspath(_rs)
-    # if resource_exists("swga", _rs):
-        # res_path = resource_filename("swga", _rs)
-        # return res_path
-
-
 
 
 def specfile(name):

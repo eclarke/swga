@@ -131,7 +131,7 @@ setup(
     license='LICENSE.txt',
     description='Pipeline to select primer sets for selective whole-genome amplification.',
     long_description=open('README.md').read(),
-    entry_points={'console_scripts': ['swga = swga.commands.swga_entry:main']},
+    entry_points={'console_scripts': ['swga = swga.main:main']},
     cmdclass={
         'bdist_egg': bdist_egg,
         'build_py': build_py

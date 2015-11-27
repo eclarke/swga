@@ -5,7 +5,7 @@ from swga import (
     DEFAULT_DB_FNAME,
     DEFAULT_CFG_FNAME
 )
-import swga.database as database
+import workspace
 from swga.commands import (
     init,
     Summary,
@@ -35,6 +35,18 @@ Other commands:
 """
 
 
+def setup_and_run(cmd_class, name, remaining_args):
+    """Setup and run a command in the current workspace."""
+    db_name = os.path.abspath(DEFAULT_DB_FNAME)
+    cfg_file = os.path.abspath(DEFAULT_CFG_FNAME)
+    with workspace.connection(db_name) as ws:
+        ws.check_version()
+        metadata = ws.metadata
+        cmd = cmd_class(name, cfg_file, metadata)
+        cmd.parse_args(remaining_args)
+        cmd.run()
+
+
 def main():
     command_opts = {
         'init': init.main,
@@ -61,15 +73,9 @@ def main():
 
     try:
         if args.command == 'init':
-            init.main(remaining)
+            command_opts[args.command](remaining)
         else:
-            db_name = os.path.abspath(DEFAULT_DB_FNAME)
-            cfg_file = os.path.abspath(DEFAULT_CFG_FNAME)
-            with database.connection(db_name):
-                database.check_version()
-                metadata = database.get_metadata(db_name)
-                cmd = command_opts[args.command](args.command, cfg_file, metadata)
-                cmd.parse_args(remaining)
-                cmd.run()
+            cmd_class = command_opts[args.command]
+            setup_and_run(cmd_class, args.command, remaining)
     except KeyboardInterrupt:
         error("\n-- Stopped by user --", exception=False)
