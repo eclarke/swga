@@ -21,6 +21,7 @@ def test_init_noprompts(fastafile):
         assert os.path.isfile(DEFAULT_CFG_FNAME)
 
 
+@pytest.mark.xfail
 def test_init_prompts(runner, fastafile):
     with CliRunner().isolated_filesystem():
         runner([
@@ -32,6 +33,7 @@ def test_init_prompts(runner, fastafile):
         assert os.path.isfile(DEFAULT_CFG_FNAME)
 
 
+@pytest.mark.xfail
 def test_init_noexclude(runner, fastafile):
     with CliRunner().isolated_filesystem():
         runner([
