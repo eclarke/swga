@@ -6,6 +6,6 @@ install:
   - pip install .
 before_script:
   - pip install python-coveralls pytest-cov
-script: cd tests; py.test --cov=swga --cov-config=.coveragerc
+script: py.test --cov=swga swga
 after_success:
   - coveralls
