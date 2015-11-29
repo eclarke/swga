@@ -9,6 +9,7 @@ skip_filtering:
   help: > 
     Skip filtering and simply mark the provided primers from --input as active
   argtype: flag
+  _exclude: True
 max_primers:
   default: 200
   help: max number of primers to keep after filtering
