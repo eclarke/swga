@@ -1,8 +1,8 @@
 import pytest
 import shlex
 import swga.score
-from swga.commands import FindSets
-from swga.database import Primer
+import swga.sets
+from swga.workspace import Primer
 from swga.graph import build_graph
 
 @pytest.fixture
@@ -15,7 +15,7 @@ def primers():
     return primers
     
 
-def test_build_graph(initdb, primers, tmpdir):
+def test_build_graph(ws, primers, tmpdir):
     outfile = tmpdir.join('graph')
     build_graph(max_hetdimer_bind=3, outfile=str(outfile))
     graph = outfile.read()
@@ -29,31 +29,30 @@ e 1 3
 e 2 3
 """
 
-@pytest.mark.xfail
+
 def test_find_sets(tmpdir):
-    graph = '''p sp 6 7
-n 1 1
-n 2 2
-n 3 1
-n 4 4
-n 5 5
-n 6 6
-e 1 2
-e 1 3
-e 2 3
-e 2 4
-e 4 5
-e 4 6
-e 5 6
-'''
+    from swga.commands import FindSets
+    graph = ('p sp 6 7\n'
+             'n 1 1\n'
+             'n 2 2\n'
+             'n 3 1\n'
+             'n 4 4\n'
+             'n 5 5\n'
+             'n 6 6\n'
+             'e 1 2\n'
+             'e 1 3\n'
+             'e 2 3\n'
+             'e 2 4\n'
+             'e 4 5\n'
+             'e 4 6\n'
+             'e 5 6\n')
     fp = tmpdir.join("testgraph")
     fp.write(graph)
-
-    sets = find_sets(
+    sets = swga.sets.find(
         min_bg_bind_dist=2,
         min_size=3,
         max_size=3,
-        bg_genome_len=10,
+        bg_length=10,
         graph_fp=fp)
     output = list(sets)
     assert len(output) == 1

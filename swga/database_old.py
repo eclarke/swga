@@ -98,7 +98,7 @@ def add_set(_id, primers, **kwargs):
     else:
         nprimers = len(primers)
     if nprimers == 0:
-        error("Cannot have an empty set")
+        raise ValueError("Cannot have an empty set")
     _hash = hash(frozenset([p.seq for p in primers]))
     if Set.select(pw.fn.Count(Set._id)).where(Set._hash == _hash).scalar() > 0:
         return None
@@ -114,26 +114,3 @@ def add_set(_id, primers, **kwargs):
 def get_primers_for_set(set_id):
     set = Set.get(Set._id == set_id)
     return [p.seq for p in set.primers]
-
-
-def get_primers_for_ids(pids):
-    return list(Primer.select().where(Primer._id << pids).execute())
-
-
-def get_metadata(db_name):
-    m = _metadata.get()
-    return meta(m.db_name, m.fg_file, m.bg_file, m.ex_file, m.fg_length, m.bg_length)
-
-def set_metadata(db_name, version, fg_file, bg_file, ex_file, fg_length, bg_length):
-    """Sets the metadata for a workspace. Clears any previous info."""
-    _metadata.delete().execute()
-    _metadata.insert(
-        db_name=db_name,
-        version=version,
-        fg_file=fg_file,
-        bg_file=bg_file,
-        ex_file=ex_file,
-        fg_length=fg_length,
-        bg_length=bg_length
-    ).execute()
-

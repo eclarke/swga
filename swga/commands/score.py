@@ -1,23 +1,25 @@
 import click
 import functools
 from peewee import fn
+
+import swga.workspace as workspace
 from swga import error, message
 import swga.utils as utils
 import swga.score as score
-import swga.database
+import swga.locate as locate
 from swga.primers import Primers
-from swga.commands._command import Command
-from swga.database import Set
+from _command import Command
+from swga.workspace import Set
 
 
 class Score(Command):
 
     def run(self):
-        self.chr_ends = swga.locate.chromosome_ends(self.fg_genome_fp)
+        self.chr_ends = locate.chromosome_ends(self.fg_genome_fp)
         # Evaluate the scoring expression from a string and return it as a
         # callable function
         self.score_fun = functools.partial(
-            swga.score.default_score_set,
+            score.default_score_set,
             expression=self.score_expression)
 
         primers = Primers(self.input)
@@ -40,7 +42,7 @@ class Score(Command):
         do_add_set, set_id = self.user_add_set(set_score, variables)
 
         if do_add_set:
-            s = swga.database.add_set(
+            s = workspace.Set.add(
                 _id=set_id,
                 primers=primers,
                 score=set_score,
@@ -49,9 +51,9 @@ class Score(Command):
             set_added = s is not None
 
             if set_added:
-                swga.message("Set {} added successfully.".format(set_id))
+                message("Set {} added successfully.".format(set_id))
             else:
-                swga.message("That primer set already exists.")
+                message("That primer set already exists.")
 
     def user_add_set(self, set_score, variables):
         """Output set statistics and prompt the user to add the set."""

@@ -1,4 +1,5 @@
 import os
+import shutil
 import stat
 import re
 import platform
@@ -7,9 +8,15 @@ from setuptools import setup, find_packages, dist
 from distutils.command.build_py import build_py as _build_py
 from distutils.spawn import find_executable
 from setuptools.command.bdist_egg import bdist_egg as _bdist_egg
+from setuptools.command.develop import develop as _develop
 
 version = "0.4.1"
 
+class develop(_develop):
+
+    def run(self):
+        self.run_command('build_py')
+        _develop.run(self)
 
 class bdist_egg(_bdist_egg):
 
@@ -26,7 +33,7 @@ class build_py(_build_py):
         to the right place before installing `swga`.
         """
         def find_prog(target='g++'):
-            '''Finds all items on the path with the target in their name.'''
+            """Finds all items on the path with the target in their name."""
             for path in os.environ["PATH"].split(os.pathsep):
                 path = path.strip("")
                 if not os.path.isdir(path):
@@ -36,7 +43,7 @@ class build_py(_build_py):
                         yield item
 
         def get_version(target, string):
-            '''Finds a version number (i.e. gcc-4.9 ==> 4.9)'''
+            """Finds a version number (i.e. gcc-4.9 ==> 4.9)"""
             match = re.match(r'{}-([0-9.]+)'.format(re.escape(target)), string)
             if match:
                 return float(match.group(1))
@@ -46,14 +53,14 @@ class build_py(_build_py):
             os.chmod(fp, st.st_mode | stat.S_IEXEC)
 
         # Defaults (e.g. for Linux)
-        CC = find_executable('g++')
+        gcc = find_executable('g++')
         omp = 1
         osx = 0
         # Check if we're on a Mac and adjust compiler accordingly
         if 'Darwin' in platform.system() and not os.environ.get("CC"):
             osx = 1
             gcc_version = subprocess.check_output(
-                [CC, '--version'],
+                [gcc, '--version'],
                 stderr=subprocess.STDOUT
             )
             if 'LLVM' in gcc_version:
@@ -68,10 +75,10 @@ class build_py(_build_py):
                 if real_CC:
                     print(
                         "\nNote: Found real g++ living in `{}`, using it instead "
-                        "of clang. Override by setting CC=/path/to/gcc before "
+                        "of clang.\nOverride by setting CC=/path/to/gcc before "
                         "this command.\n".format(real_CC)
                     )
-                    CC = real_CC
+                    gcc = real_CC
                 else:
                     print(
                         "\nFound clang but no GNU g++ compiler: Disabling "
@@ -84,7 +91,7 @@ class build_py(_build_py):
         cliquer_make_cmd = (['make'])
         dsk_make_cmd = (
             'make',
-            'CC=' + CC,
+            'CC=' + gcc,
             'omp=' + str(omp),
             'osx=' + str(osx)
         )
@@ -94,6 +101,10 @@ class build_py(_build_py):
             subprocess.check_call(dsk_make_cmd, cwd="ext/dsk")
             make_executable("ext/cliquer/set_finder")
             make_executable("ext/dsk/dsk")
+            if not os.path.exists('swga/bin'):
+                os.mkdir('swga/bin')
+            shutil.copyfile("ext/cliquer/set_finder", "swga/bin/set_finder")
+            shutil.copyfile("ext/dsk/dsk", "swga/bin/dsk")
 
         _build_py.run(self)
 
@@ -121,7 +132,7 @@ setup(
         'License :: OSI Approved :: GNU General Public License (GPL)'
     ],
     package_data={
-        'swga': ['commands/specfiles/*']
+        'swga': ['commands/specfiles/*', 'bin/*']
     },
     data_files=[
         ('bin', ['ext/dsk/dsk', 'ext/cliquer/set_finder'])
@@ -134,6 +145,7 @@ setup(
     entry_points={'console_scripts': ['swga = swga.main:main']},
     cmdclass={
         'bdist_egg': bdist_egg,
-        'build_py': build_py
+        'build_py': build_py,
+        'develop': develop
     }
 )

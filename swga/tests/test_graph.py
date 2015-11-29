@@ -1,11 +1,15 @@
+#from __future__ import absolute_import
 import pytest
-import swga.graph
-from swga.database import Primer
 
+from swga.workspace import Primer
+from swga import graph
+
+
+@pytest.mark.usefixtures('ws')
 class TestGraph:
 
     @pytest.fixture(scope="function")
-    def primers(self, initdb):
+    def primers(self):
         primers = [
             # reference primer
             Primer.create(_id=0, seq="ATGCTC"),
@@ -26,14 +30,14 @@ class TestGraph:
         ref_primer = primers[0]
         heterodimers = primers[1:4]
         for heterodimer in heterodimers:
-            edges = swga.graph.build_edges([ref_primer, heterodimer], 2)
+            edges = graph.build_edges([ref_primer, heterodimer], 2)
             assert edges == []
 
     def test_valid_primer_pair(self, primers):
         '''An edge should exist between valid primer pairs.'''
         ref_primer = primers[0]
         valid_primer = primers[4]
-        edges = swga.graph.build_edges([ref_primer, valid_primer], 2)
+        edges = graph.build_edges([ref_primer, valid_primer], 2)
         assert edges == [[0, 4]]
 
     def test_subsequence_check(self, primers):
@@ -43,7 +47,7 @@ class TestGraph:
         '''
         ref_primer = primers[0]
         subseq_primer = primers[5]
-        edges = swga.graph.build_edges([ref_primer, subseq_primer], 2)
+        edges = graph.build_edges([ref_primer, subseq_primer], 2)
         assert edges == []
 
         

@@ -1,7 +1,7 @@
 import pytest
 import swga.primers
 import swga.locate
-from swga.database import Primer
+from swga.workspace import Primer
 
 
 @pytest.fixture
@@ -22,7 +22,7 @@ def test_locate_chromosome_ends(fastafile):
     assert ends['record3'] == [24, 31]
 
 
-def test_linearize_binding_sites(kmer, initdb, fastafile):
+def test_linearize_binding_sites(kmer, ws, fastafile):
     p = Primer.create(seq=kmer)
     p._update_locations(fastafile)
     chr_ends = swga.locate.chromosome_ends(fastafile)

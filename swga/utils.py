@@ -3,6 +3,7 @@ import errno
 from pkg_resources import (
     resource_exists, resource_filename, resource_stream
 )
+import functools
 
 import swga
 from click import progressbar
@@ -47,7 +48,6 @@ def chunk_iterator(itr, fn, n=100, show_progress=True, label=None):
     label = "" if label is None else label
     if length / n <= 1:
         show_progress = False
-        swga.message(label)
     chunked_itr = chunks(itr, n)
     if show_progress:
         with progressbar(chunked_itr, max(length / n, 1), label) as bar:
@@ -64,11 +64,13 @@ def _get_resource_file(rs):
     # If it's not in sys.prefix/bin/, try sys.exec_prefix?
     if not os.path.isfile(_rs):
         _rs = os.path.join(sys.exec_prefix, 'bin', rs)
-    # If it still doesn't work, raise an error
+    # If it still doesn't work, check the package data
     if not os.path.isfile(_rs):
-        swga.error("Could not find `{}': try re-installing swga.".format(rs))
-    else:
-        return os.path.abspath(_rs)
+        if resource_exists('swga', os.path.join('bin', rs)):
+            _rs = resource_filename('swga', os.path.join('bin', rs))
+        else:
+            swga.error("Could not find `{}': try re-installing swga.".format(rs))
+    return os.path.abspath(_rs)
 
 
 def specfile(name):
@@ -87,5 +89,9 @@ def fmtkv(k, v):
     return set_stat_line.format(key=k, val=v)
 
 
-dsk = _get_resource_file('dsk')
-set_finder = _get_resource_file('set_finder')
+def dsk():
+    return _get_resource_file('dsk')
+
+
+def set_finder():
+    return _get_resource_file('set_finder')

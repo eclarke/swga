@@ -3,9 +3,8 @@ import os
 from collections import defaultdict
 
 from swga import (error, message)
-import swga.database as database
 import swga.kmers
-from swga.primers import Primer
+from swga.primers import Primers
 from swga.commands._command import Command
 from swga.utils import mkdirp
 from peewee import OperationalError
@@ -26,7 +25,7 @@ class Count(Command):
     def count_specific_kmers(self, kmers):
         try:
             # Skip primers that already exist and warn users
-            existing = [p.seq for p in Primer.select().where(Primer.seq << kmers)]
+            existing = Primers.select_by_seqs(kmers)
             for p in existing:
                 message("{} already exists in db, skipping...".format(p))
             kmers = [p for p in kmers if p not in existing]
@@ -62,7 +61,7 @@ class Count(Command):
             message(
                 "Writing {n} {k}-mers into db in blocks of {cs}..."
                 .format(n=len(primers), k=k, cs=chunk_size))
-            database.add_primers(primers, chunk_size, add_revcomp=False)
+            Primers.add(primers, add_revcomp=False)
 
     def count_kmers(self):
         mkdirp(output_dir)
@@ -96,7 +95,7 @@ class Count(Command):
             message(
                 "Writing {n} {k}-mers into db in blocks of {cs}..."
                 .format(n=nkmers * 2, k=k, cs=chunk_size))
-            database.add_primers(kmers, chunk_size, add_revcomp=True)
+            Primers.add(kmers, add_revcomp=True)
 
         message("Counted kmers in range %d-%d" % (self.min_size, self.max_size))
 

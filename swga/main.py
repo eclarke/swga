@@ -3,7 +3,8 @@ import os
 from swga import (
     error,
     DEFAULT_DB_FNAME,
-    DEFAULT_CFG_FNAME
+    DEFAULT_CFG_FNAME,
+    __version__
 )
 import workspace
 from swga.commands import (
@@ -40,7 +41,8 @@ def setup_and_run(cmd_class, name, remaining_args):
     db_name = os.path.abspath(DEFAULT_DB_FNAME)
     cfg_file = os.path.abspath(DEFAULT_CFG_FNAME)
     with workspace.connection(db_name) as ws:
-        ws.check_version()
+        assert not ws.is_closed()
+        ws.check_version(__version__)
         metadata = ws.metadata
         cmd = cmd_class(name, cfg_file, metadata)
         cmd.parse_args(remaining_args)

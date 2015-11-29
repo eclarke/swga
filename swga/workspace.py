@@ -9,9 +9,8 @@
 
 import json
 import contextlib
-import logging
 
-import semver
+import semantic_version as semver
 import peewee as pw
 try:
     from playhouse.shortcuts import ManyToManyField
@@ -19,7 +18,7 @@ except ImportError:
     from playhouse.fields import ManyToManyField
 from playhouse.sqlite_ext import SqliteExtDatabase
 
-from . import error, meta, __version__
+from swga import error, meta, __version__
 import locate
 import melting
 import stats
@@ -31,8 +30,8 @@ class SwgaWorkspace(SqliteExtDatabase):
 
     @property
     def metadata(self):
-        m = _metadata.get()._meta.fields
-        m = {key: value for (key, value) in m.items() if key != 'id'}
+        m = _metadata.get()
+        m = {key: getattr(m, key) for key in m.fieldnames() if key != 'id'}
         _m = meta(**m)
         return _m
 
@@ -51,10 +50,11 @@ class SwgaWorkspace(SqliteExtDatabase):
         If the two versions are incompatible, raise a SystemExit.
         """
         try:
+            db_ver = self.metadata.version
             db_ver = semver.Version(self.metadata.version)
         except pw.OperationalError:
             db_ver = "<NA>"
-        ver = semver.Version(__version__)
+        ver = semver.Version(version)
         spec = semver.Spec('=={}.{}'.format(ver.major, ver.minor))
         if db_ver not in spec:
             error(
@@ -153,10 +153,11 @@ class Primer(SwgaModel):
 
 class Set(SwgaModel):
 
-    '''
+    """
     The sets table contains each set's metadata. The actual primers that belong
     in the set are found using the PrimerSet intermediate table.
-    '''
+    """
+
     _id = pw.PrimaryKeyField()
     _hash = pw.IntegerField(unique=True, null=True)
     primers = ManyToManyField(Primer, related_name='sets')
@@ -175,6 +176,9 @@ class Set(SwgaModel):
             in self.__dict__['_data'].items())
         return "Set: " + attr_str
 
+    def primer_seqs(self):
+        return [p.seq for p in self.primers]
+
     @staticmethod
     def exported_fields():
         fields = [
@@ -191,6 +195,32 @@ class Set(SwgaModel):
         ]
         return fields
 
+    @staticmethod
+    @_db.atomic()
+    def add(_id, primers, **kwargs):
+        """Add a set with the specified primers to the database.
+
+        If the same set exists in the database already, this does not add it again.
+        :param _id: the set ID. For user-defined sets, this should be negative.
+        :param primers: a Primers object defining the set to add
+        :param kwargs: additional arguments to Set.create
+        :return: the new Set object and True if the set was added or False if it was not
+        """
+        try:
+            primers = primers.primers
+        except AttributeError:
+            pass
+
+        if (not primers) or len(primers) == 0:
+            raise ValueError("Cannot add an empty set.")
+
+        # We convert the primers into a hashable set to check and see if a set
+        # with the same primers already exists in the db
+        _hash = hash(frozenset([p.seq for p in primers]))
+        s, created = Set.get_or_create(_hash=_hash, defaults=dict(_id=_id, **kwargs))
+        if created:
+            s.primers.add(primers)
+        return s, created
 
 PrimerSet = Set.primers.get_through_model()
 
@@ -221,16 +251,9 @@ def connection(db_name):
 
     Ensures the database is initialized before use, and closed when finished.
     """
-    logging.basicConfig(level=logging.DEBUG)
-    logger = logging.getLogger(__name__)
-    fh = logging.FileHandler('swga.log')
-    fh.setLevel(logging.DEBUG)
-    logger.addHandler(fh)
 
     _db.init(db_name)
-    logger.info('Initialized database at {}'.format(db_name))
     _db.connect()
-    logger.info('Connected to database at {}'.format(db_name))
     yield _db
     _db.close()
-    logger.info('Closing database at {}'.format(db_name))
+

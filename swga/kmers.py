@@ -39,7 +39,7 @@ def count_kmers(k, genome_fp, cwd, threshold=1):
         message("Binary kmer file already exists at %s; parsing..."
                 % outfile)
     else:
-        cmdarr = [swga.utils.dsk, genome_fp, str(k), '-o', out, '-t', str(threshold)]
+        cmdarr = [swga.utils.dsk(), genome_fp, str(k), '-o', out, '-t', str(threshold)]
         cmdstr = " ".join(cmdarr)
         message("In {cwd}:\n> {cmdstr}".format(**locals()))
         try:

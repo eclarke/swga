@@ -1,0 +1,8 @@
+pyfaidx>=0.4.5.2
+click
+pyyaml
+pytest
+peewee>=2.7.3
+melt
+argutils
+semantic_version

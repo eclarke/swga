@@ -16,13 +16,14 @@ import argparse
 from click._compat import filename_to_ui
 import os
 import stat
+
+import swga.workspace as workspace
 from swga import (
     DEFAULT_CFG_FNAME,
     DEFAULT_DB_FNAME,
     __version__
 )
 from swga.commands import create_config_file
-import swga.database as database
 from pyfaidx import Fasta
 
 version = __version__
@@ -101,7 +102,7 @@ def main(argv=None):
         help='Overwrite any existing data in the directory without prompts',
         action='store_true')
 
-    args = parser.parse_args(argv) if argv else parser.parse_args()
+    args = parser.parse_args(argv) if argv is not None else parser.parse_args()
 
     # Convert to local variables
     fg_genome_fp = args.fg_genome_fp
@@ -168,19 +169,28 @@ def main(argv=None):
         cfg_file.write(default_parameters.format(**locals()))
 
     # 07. Initialize the database
-    database.init_db(db_fp, create_if_missing=True)
-    database.check_create_tables(db_fp, skip_check=args.force)
-    database.set_metadata(
-        db_fp,
-        version,
-        fg_genome_fp,
-        bg_genome_fp,
-        exclude_fp,
-        fg_length,
-        bg_length)
+    reset_workspace(db_fp, force=args.force)
+    with workspace.connection(db_fp) as ws:
+        ws.create_tables()
+        ws.metadata = {
+            'version': version,
+            'fg_file': fg_genome_fp,
+            'bg_file': bg_genome_fp,
+            'ex_file': exclude_fp,
+            'fg_length': fg_length,
+            'bg_length': bg_length
+        }
 
     # Done!
     click.secho(fin_msg.format(cfg_fp, db_fp), fg="green")
+
+
+def reset_workspace(db_file, force):
+    if os.path.isfile(db_file) and not force:
+        click.confirm("This directory already appears to be a swga workspace. "
+                      "Do you want to re-initialize it?", abort=True)
+        os.remove(db_file)
+
 
 
 def fasta_len_quick(fasta_fp):

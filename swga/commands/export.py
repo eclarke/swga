@@ -26,11 +26,10 @@ import collections
 import csv
 import os
 
-import swga.database as database
 import swga.locate
 import swga.stats
+from swga.workspace import Primer, Set
 from swga.commands._command import Command
-from swga.database import Primer, Set
 from swga.export import BedGraph, BedFile
 
 
@@ -155,8 +154,8 @@ def export_lorenz(sets, outfile, fg_genome_fp, header=True):
 
     for set in sets:
         # Get the distances between each primer binding site
-        primer_seqs = database.get_primers_for_set(set._id)
-        primers = list(Primer.select().where(Primer.seq << primer_seqs).execute())
+        primers = list(set.primers)
+        # primers = list(Primer.select().where(Primer.seq << primer_seqs).execute())
         chr_ends = swga.locate.chromosome_ends(fg_genome_fp)
         binding_sites = swga.locate.linearize_binding_sites(primers, chr_ends)
         distances = swga.stats.seq_diff(binding_sites)

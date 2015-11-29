@@ -8,8 +8,8 @@ subsequent runs will be much faster.
 '''
 
 from swga.primers import Primers
+from swga.workspace import Primer
 from swga.commands._command import Command
-import swga.database
 
 
 class Filter(Command):
@@ -26,7 +26,7 @@ class Filter(Command):
         assert isinstance(primers, Primers)
 
         # Undo all active marks, if any
-        swga.database.Primer.update(active=False).execute()
+        Primer.update(active=False).execute()
 
         if not self.skip_filtering:
             (

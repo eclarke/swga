@@ -1,9 +1,8 @@
 import os
 import swga
 from swga import quote, __version__
-import swga.database
-from swga.commands._command import Command
-from swga.database import Primer, Set
+from _command import Command
+from swga.workspace import Primer, Set
 from swga.utils import fmtkv
 import click
 from peewee import fn
@@ -80,8 +79,7 @@ class Summary(Command):
 
         if nsets > 0:
             bs = Set.select().order_by(Set.score).limit(1).get()
-            bs_primers = ", ".join(
-                swga.database.get_primers_for_set(bs._id)).strip()
+            bs_primers = ", ".join(bs.primer_seqs()).strip()
             best_set = bs._id
             bs_size = bs.set_size
             bs_score = bs.score

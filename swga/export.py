@@ -1,9 +1,9 @@
 import os
 from types import *
 from collections import Counter
-from swga import (warn, message)
-import swga.database as database
-import swga.locate as locate
+from . import (warn, message)
+from workspace import Set
+import locate
 
 
 def _mk_folder(folder, fg_genome_fp, setstr):
@@ -19,7 +19,7 @@ class BedFile(object):
     """Creates and writes BedFiles from a set of primers."""
     def __init__(self, set, fg_genome_fp):
         super(BedFile, self).__init__()
-        assert isinstance(set, database.Set)
+        assert isinstance(set, Set)
 
         self.set = set
         self.fg_genome_fp = fg_genome_fp
@@ -76,7 +76,7 @@ class BedGraph(object):
         step_size: the step size of the sliding window (must be smaller than window_size)
         '''
         super(BedGraph, self).__init__()
-        assert isinstance(set, database.Set)
+        assert isinstance(set, Set)
 
         self.set = set
         self.fg_genome_fp = fg_genome_fp

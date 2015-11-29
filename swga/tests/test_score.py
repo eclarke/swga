@@ -28,6 +28,3 @@ def test_default_score_set():
     assert score == 2.0/3.0
     assert '__builtins__' not in namespace.keys()
 
-
-
-        

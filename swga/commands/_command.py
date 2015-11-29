@@ -53,9 +53,8 @@ class Command(object):
             self._pprint_args()
         if len(self.args) > 0 and all(v is None for k, v in self.args.items()):
             warn(
-                "[swga %s]: All parameters are missing- ",
-                "this may indicate a corrupt or missing parameters file."
-                % self.name)
+                u'[swga {0:s}]: All parameters are missing- this may indicate a corrupt or missing parameters file.'
+                .format(self.name))
 
     def _pprint_args(self):
         message(

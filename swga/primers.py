@@ -7,7 +7,7 @@ from functools import wraps
 
 from peewee import SelectQuery
 
-from . import (error, warn, message)
+from swga import (error, warn, message)
 from workspace import Primer
 import locate
 import utils
@@ -57,6 +57,36 @@ class Primers(object):
                 exception=False)
         return Primers(active)
 
+    @staticmethod
+    def select_by_ids(ids):
+        selected = Primer.select().where(Primer._id << ids)
+        assert selected.count > 0
+        return Primers(selected)
+
+    @staticmethod
+    def select_by_seqs(seqs):
+        selected = Primer.select().where(Primer.seq << seqs)
+        return Primers(selected)
+
+    @staticmethod
+    def add(primer_dicts, add_revcomp=True):
+        """Add the given primer dicts to the database in chunks.
+        :param primer_dicts: list of dicts defining primers
+        :param add_revcomp: if True, add the reverse complement of the primer as well
+        """
+        if add_revcomp:
+            def mkrevcomp(p):
+                p2 = dict(**p)
+                p2['seq'] = locate.revcomp(p['seq'])
+                return p2
+            primer_dicts += [mkrevcomp(p) for p in primer_dicts]
+        utils.chunk_iterator(
+            primer_dicts,
+            fn=lambda c: Primer.insert_many(c).execute(),
+            n=199,
+            label="Updating database: ")
+
+
     def __init__(self, primers=None):
         """Create a new list of primers.
 
@@ -65,13 +95,13 @@ class Primers(object):
         """
         if primers is None:
             self._primers = Primer.select()
-            self.n = self.primers.count()
+            self.n = int(self._primers.count())
         elif isinstance(primers, file):
             self._primers = read_primer_list(primers)
-            self.n = len(self.primers)
+            self.n = len(self._primers)
         else:
             self._primers = Primer.select().where(Primer.seq << primers)
-            self.n = self.primers.count()
+            self.n = int(self._primers.count())
 
     @property
     def primers(self):
