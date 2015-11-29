@@ -105,6 +105,8 @@ class build_py(_build_py):
                 os.mkdir('swga/bin')
             shutil.copyfile("ext/cliquer/set_finder", "swga/bin/set_finder")
             shutil.copyfile("ext/dsk/dsk", "swga/bin/dsk")
+            make_executable("swga/bin/set_finder")
+            make_executable("swga/bin/dsk")
 
         _build_py.run(self)
 
