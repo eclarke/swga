@@ -24,8 +24,7 @@ class FindSets(Command):
             self.max_sets = float("inf")
         # We need to clear all the previously-used sets each time due to
         # uniqueness constraints
-        all_sets = Set.select()
-        if all_sets.count() > 0:
+        if Set.select().count() > 0:
             if not self.force:
                 click.confirm("Remove all previously-found sets?", abort=True)
             self.workspace.reset_sets()

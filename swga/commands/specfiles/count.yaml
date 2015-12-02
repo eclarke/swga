@@ -37,3 +37,7 @@ input:
   help: a list of primers to manually add to the database
   type: File-r
   _exclude: True
+force:
+  argtype: flag
+  help: clear any previous primers without prompting
+  _exclude: True

@@ -1,7 +1,7 @@
 SWGA Changelog
 ===================
 
-Version 0.4.0
+Version 0.4.2
 --------------------
 This update brings a number of requested features and some major bugfixes. The parameters file and database format have changed, so this is a *breaking update*, meaning you need to run `swga init` and `swga count` again on any current project.
 What's new:
@@ -12,12 +12,6 @@ What's new:
   - `max_gini`: Filter primers by the evenness of binding on the foreground 
     genome, as calculated by the Gini index (a value from 0-1, 0=perfectly even, 
     1=perfectly uneven)
-  - `min_ratio`: Remove primers that have a foreground/background ratio less than
-    specified
-- New set filters:
-  - `min_avg_fg_bind`: ensure a minimum average binding distance on the 
-    foreground genome for a set (useful for avoiding large repeat regions)
-  - `min_ratio`: ensure a minimum foreground/background binding ratio for a set
 - New export options:
   - Export the Lorenz curve for a given set, which can be used to visualize the
     evenness of binding site distributions on a genome (see https://wikipedia.org/en/Lorenz_curve)
@@ -26,7 +20,7 @@ What's new:
     point of confusion
 - Bugfix: Manually adding and activating a custom list of primers now actually 
   works and is covered by the integration tests.
-- Code maintenance: > 90% test coverage, removed dead code, broke out helper 
+- Code maintenance: better test coverage, removed dead code, broke out helper 
   modules into their own packages. 
 - `swga setopt` has been removed.
 

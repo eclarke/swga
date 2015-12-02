@@ -51,9 +51,15 @@ class TestIntegration:
             fg_fasta, bg_fasta, ex_fasta)
         check_call(command, shell=True)
 
+    def test_count_repeat(self):
+        """Repeat count commands should reset primers."""
+        command = "swga count --min_size 5 --max_size 5 --min_tm 0 --max_tm 100"
+        check_call(command, shell=True)
+        command = "swga count --min_size 5 --max_size 5 --min_tm 0 --max_tm 100 --force"
+        check_call(command, shell=True)
 
     def test_count(self):
-        command = "swga count --min_size 7 --max_size 7 --max_bg_bind -1"
+        command = "swga count --min_size 7 --max_size 7 --max_bg_bind -1 --force"
         check_call(command, shell=True)
 
     def test_filter(self):

@@ -48,6 +48,10 @@ class SwgaWorkspace(SqliteExtDatabase):
         self.drop_tables([Set, PrimerSet])
         super(SwgaWorkspace, self).create_tables([Set, PrimerSet])
 
+    def reset_primers(self):
+        self.drop_tables([Set, PrimerSet, Primer])
+        super(SwgaWorkspace, self).create_tables([Set, PrimerSet, Primer])
+
     def check_version(self, version):
         """Check the version of the database and compare it to the swga version.
 

@@ -2,12 +2,16 @@
 import os
 from collections import defaultdict
 
+import click
+
 from swga import (error, message)
 import swga.kmers
+from swga.workspace import Primer
 from swga.primers import Primers
 from swga.commands._command import Command
 from swga.utils import mkdirp
 from peewee import OperationalError
+
 
 INF = float('inf')
 output_dir = ".swga_tmp"
@@ -64,6 +68,16 @@ class Count(Command):
             Primers.add(primers, add_revcomp=False)
 
     def count_kmers(self):
+
+        # We need to clear all previous primers each time due to uniqueness
+        # constraints
+        if Primer.select().count() > 0:
+            if not self.force:
+                click.confirm(
+                    "Remove all previously-found primers and re-count?",
+                    abort=True)
+            self.workspace.reset_primers()
+
         mkdirp(output_dir)
 
         kmers = []
