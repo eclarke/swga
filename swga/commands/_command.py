@@ -12,7 +12,7 @@ import swga.utils as utils
 
 class Command(object):
 
-    def __init__(self, name, cfg_file, metadata):
+    def __init__(self, name, cfg_file, metadata, workspace):
         """Create a new command with the given name and argument string.
 
         :param name: the command name, used to find the appropriate section in
@@ -26,6 +26,7 @@ class Command(object):
 
         self.name = name
         self.parser = argutils.export.to_argparser(name, opts)
+        self.workspace = workspace
         config = SafeConfigParser()
         if config.read(cfg_file) and config.has_section(name):
             self.parser = argutils.set_parser_defaults(self.parser, config)

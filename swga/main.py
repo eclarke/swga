@@ -44,7 +44,7 @@ def setup_and_run(cmd_class, name, remaining_args):
         assert not ws.is_closed()
         ws.check_version(__version__)
         metadata = ws.metadata
-        cmd = cmd_class(name, cfg_file, metadata)
+        cmd = cmd_class(name, cfg_file, metadata, ws)
         cmd.parse_args(remaining_args)
         cmd.run()
 
