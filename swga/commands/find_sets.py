@@ -13,7 +13,7 @@ import swga.sets as sets
 from swga.primers import Primers
 from swga import (warn, message)
 from swga.commands._command import Command
-from swga.workspace import Set
+from swga.workspace import Set, SwgaWorkspace
 
 GRAPH_FP = "compatibility_graph.dimacs"
 STATUS_LINE = '''\
@@ -32,9 +32,7 @@ class FindSets(Command):
         if all_sets.count() > 0:
             if not self.force:
                 click.confirm("Remove all previously-found sets?", abort=True)
-            for s in all_sets:
-                s.primers.clear()
-                s.delete_instance()
+                SwgaWorkspace.reset_sets()
 
         self.chr_ends = locate.chromosome_ends(self.fg_genome_fp)
         # Evaluate the scoring expression from a string and return it as a

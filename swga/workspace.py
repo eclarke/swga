@@ -44,6 +44,10 @@ class SwgaWorkspace(SqliteExtDatabase):
         """Create the tables that subclass SwgaModel."""
         super(SwgaWorkspace, self).create_tables(_tables, safe=safe)
 
+    def reset_sets(self):
+        self.drop_tables([Set, PrimerSet])
+        super(SwgaWorkspace, self).create_tables([Set, PrimerSet])
+
     def check_version(self, version):
         """Check the version of the database and compare it to the swga version.
 
@@ -137,8 +141,7 @@ class Primer(SwgaModel):
             error("No locations stored for " + str(self))
 
     def update_tm(self):
-        self.tm = melting.temp(
-            self.seq, dNTPs_c=1, Mg_c=0.8, Na_c=50, DNA_c=200)
+        self.tm = melting.temp(self.seq)
 
     def _update_locations(self, genome_fp):
         self._locations = json.dumps(
