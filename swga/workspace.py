@@ -218,7 +218,9 @@ class Set(SwgaModel):
         except AttributeError:
             pass
 
-        if (not primers) or len(primers) == 0:
+        if ((not primers) or
+            (isinstance(primers, pw.SelectQuery) and primers.count == 0) or
+            (len(primers) == 0)):
             raise ValueError("Cannot add an empty set.")
 
         # We convert the primers into a hashable set to check and see if a set
