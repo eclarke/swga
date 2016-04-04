@@ -10,7 +10,7 @@ from distutils.spawn import find_executable
 from setuptools.command.bdist_egg import bdist_egg as _bdist_egg
 from setuptools.command.develop import develop as _develop
 
-version = "0.4.2"
+version = "0.4.3"
 
 class develop(_develop):
 
