@@ -167,7 +167,7 @@ def export_lorenz(sets, outfile, fg_genome_fp, header=True):
 
 def validate_order_field(field, model):
     '''Ensures the given field exists in the model.'''
-    if field and field not in model.fields():
+    if field and (field not in model.fields()):
         swga.error(
             "Cannot order by '{}'. Valid choices are {}"
-            .format(field, ", ".join(Primer.fields())))
+            .format(field, ", ".join(model.fields())))
