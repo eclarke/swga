@@ -18,8 +18,8 @@ max_fg_bind_dist:
   help: Max distance between primers on the foreground genome
   type: int
 max_sets:
-  default: 500
-  help: Max number of sets to check
+  default: -1
+  help: Max number of sets to check (if < 0, will find as many sets as possible)
   type: int
 reset:
   _exclude: True

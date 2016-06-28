@@ -27,11 +27,11 @@ max_bg_bind:
     genome length and binding rate of 1/150000)
   type: int
 min_tm:
-  default: 25
+  default: 15
   help: minimum primer melting temperature (C)
   type: float
 max_tm:
-  default: 75
+  default: 45
   help: maximum primer melting temperature (C)
   type: float
 max_gini:
