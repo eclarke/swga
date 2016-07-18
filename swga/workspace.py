@@ -220,13 +220,14 @@ class Set(SwgaModel):
 
         if ((not primers) or
             (isinstance(primers, pw.SelectQuery) and primers.count == 0) or
-            (len(primers) == 0)):
+                (len(primers) == 0)):
             raise ValueError("Cannot add an empty set.")
 
         # We convert the primers into a hashable set to check and see if a set
         # with the same primers already exists in the db
         _hash = hash(frozenset([p.seq for p in primers]))
-        s, created = Set.get_or_create(_hash=_hash, defaults=dict(_id=_id, **kwargs))
+        s, created = Set.get_or_create(
+            _hash=_hash, defaults=dict(_id=_id, **kwargs))
         if created:
             s.primers.add(primers)
         return s, created
@@ -242,6 +243,7 @@ class _metadata(SwgaModel):
     version = pw.TextField(null=True)
     fg_file = pw.TextField(null=True)
     bg_file = pw.TextField(null=True)
+    het_bg = pw.BooleanField(null=True)
     ex_file = pw.TextField(null=True)
     fg_length = pw.IntegerField(null=True)
     bg_length = pw.IntegerField(null=True)
@@ -265,4 +267,3 @@ def connection(db_name):
     _db.connect()
     yield _db
     _db.close()
-

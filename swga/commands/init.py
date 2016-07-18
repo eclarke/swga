@@ -56,6 +56,11 @@ Background filepath: {bg_genome_fp}
   Length:  {bg_length} bp
 '''
 
+het_bg_prompt = '''\
+Is your background an assembled genome or contigs? Answer 'no' if you are
+working with unassembled reads. The metrics we use change based on whether they
+are reads or assembled sequences.'''
+
 excl_prompt = '''\
 Do you want to add a FASTA file of sequences that will be used to exclude
 primers? For instance, to avoid primers that bind to a mitochondrial genome,
@@ -72,6 +77,8 @@ fin_msg = '''\
 Done!
 
 Created pre-filled config file `{}'. Workspace data: `{}'
+
+Background file are reads: {}
 
 This file has been pre-filled with reasonable defaults. However, you will
 probably want to modify them to suit your needs. You can override the values
@@ -94,6 +101,10 @@ def main(argv=None):
         help='Path to background genome/sequences (in FASTA format)',
         type=argparse.FileType('r'))
     parser.add_argument(
+        '--bg_are_reads',
+        help='Background sequences are raw reads',
+        action='store_true')
+    parser.add_argument(
         '-e', '--exclude_fp',
         help='Path to sequences to exclude from analysis (in FASTA format)',
         type=argparse.FileType('r'))
@@ -107,6 +118,7 @@ def main(argv=None):
     # Convert to local variables
     fg_genome_fp = args.fg_genome_fp
     bg_genome_fp = args.bg_genome_fp
+    het_bg = args.bg_are_reads
     exclude_fp = args.exclude_fp
 
     # Sanity check our default files for read/write
@@ -139,6 +151,10 @@ def main(argv=None):
     click.secho(bg_parsing.format(**locals()), fg='blue')
     bg_length = fasta_len_quick(bg_genome_fp)
     click.secho(bg_msg.format(**locals()), fg="green")
+
+    # 03(b). Prompt about nature of background genome
+    if (not het_bg):
+        het_bg = click.confirm(het_bg_prompt)
 
     # 04. Prompt for a file containing sequences to exclude, if not already
     #     given
@@ -176,13 +192,14 @@ def main(argv=None):
             'version': version,
             'fg_file': fg_genome_fp,
             'bg_file': bg_genome_fp,
+            'het_bg': het_bg,
             'ex_file': exclude_fp,
             'fg_length': fg_length,
             'bg_length': bg_length
         }
 
     # Done!
-    click.secho(fin_msg.format(cfg_fp, db_fp), fg="green")
+    click.secho(fin_msg.format(cfg_fp, db_fp, het_bg), fg="green")
 
 
 def reset_workspace(db_file, force):
@@ -190,7 +207,6 @@ def reset_workspace(db_file, force):
         click.confirm("This directory already appears to be a swga workspace. "
                       "Do you want to re-initialize it?", abort=True)
         os.remove(db_file)
-
 
 
 def fasta_len_quick(fasta_fp):
