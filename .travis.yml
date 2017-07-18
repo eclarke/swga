@@ -6,6 +6,6 @@ install:
   - pip install --editable .
 before_script:
   - pip install python-coveralls pytest-cov
-script: py.test --cov=swga swga
+script: travis_wait py.test --cov=swga swga
 after_success:
   - coveralls
