@@ -27,13 +27,13 @@ def fastafile(request, testdata_fp):
 @pytest.fixture
 def fg_fasta(fastafile):
     """Foreground genome in integration tests"""
-    return fastafile("bburgdorferi_wgs.fa")
+    return fastafile("bburgdorferi_1k.fa")
 
 
 @pytest.fixture
 def bg_fasta(fastafile):
     """Background genome in integration tests"""
-    return fastafile("ecoli_wgs.fa")
+    return fastafile("ecoli_2k.fa")
 
 
 @pytest.fixture
@@ -67,11 +67,11 @@ class TestIntegration:
         check_call(command, shell=True)
 
     def test_find_sets(self):
-        command = "swga find_sets"
+        command = "swga find_sets --max_fg_bind_dist 1000000 --max_sets 10"
         check_call(command, shell=True)
 
     def test_find_sets_randomized(self):
-        command = "swga find_sets --workers=2 --force"
+        command = "swga find_sets --workers=2 --force --max_fg_bind_dist 1000000 --max_sets 10"
         check_call(command, shell=True)
 
     def test_export_sets(self):
