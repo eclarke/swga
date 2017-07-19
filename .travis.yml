@@ -6,6 +6,8 @@ install:
   - pip install --editable .
 before_script:
   - pip install python-coveralls pytest-cov
-script: travis_wait py.test --cov=swga swga
+script:
+  - if [[ $TRAVIS_PYTHON_VERSION != pypy* ]]; then py.test --cov=swga swga; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == pypy* ]]; then py.test swga; fi
 after_success:
-  - coveralls
+  - if [[ $TRAVIS_PYTHON_VERSION != pypy* ]]; then coveralls; fi
