@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 import stat
 import re
@@ -10,7 +11,11 @@ from distutils.spawn import find_executable
 from setuptools.command.bdist_egg import bdist_egg as _bdist_egg
 from setuptools.command.develop import develop as _develop
 
-version = "0.4.3"
+version = "0.4.4"
+
+# Test to ensure Python < 3 (if pip doesn't check for it later)
+if not sys.version_info[0] == 2:
+    sys.exit("Python 3 is not supported (sorry)")
 
 class develop(_develop):
 
@@ -117,10 +122,10 @@ setup(
     author_email='ecl@mail.med.upenn.edu',
     packages=find_packages(),
     install_requires=[
-        'pyfaidx',
+        'pyfaidx>0.4.5.2',
         'click',
         'pyyaml',
-        'peewee',
+        'peewee>=2.7.3,<3.0',
         'melt',
         'pytest',
         'argutils',
