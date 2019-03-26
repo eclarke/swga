@@ -4,5 +4,5 @@ pyyaml
 pytest
 peewee>=2.7.3,<3.0
 melt
-argutils
+argutils>=0.3.3
 semantic_version
